@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '/services/database_service.dart';
-import 'view_choreography_screen.dart';
-import 'add_choreography_screen.dart';
+import '/screens/notes/add_choreography_screen.dart';
+import '/screens/notes/view_choreography_screen.dart' as ViewScreen;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class NotesScreen extends StatefulWidget {
   @override
@@ -9,98 +11,443 @@ class NotesScreen extends StatefulWidget {
 }
 
 class _NotesScreenState extends State<NotesScreen> {
-  List<Map<String, dynamic>> _choreographies = [];
+  Map<String, Map<String, List<Map<String, dynamic>>>> _choreographiesByStyleAndDance = {};
+  List<Map<String, dynamic>> _searchResults = [];
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     _loadChoreographies();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _importChoreographyFromLink() async {
+    final TextEditingController _linkController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Import Choreography"),
+          content: TextField(
+            controller: _linkController,
+            decoration: InputDecoration(labelText: "Paste the link here"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                final link = _linkController.text.trim();
+                if (link.isNotEmpty) {
+                  Navigator.pop(context);
+                  await _downloadAndImportChoreography(link);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Please provide a valid link.")),
+                  );
+                }
+              },
+              child: Text("Import"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _downloadAndImportChoreography(String link) async {
+    try {
+      final response = await http.get(Uri.parse(link));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Process the choreography
+        final choreography = data['choreography'];
+        final figures = data['figures'];
+
+        if (choreography == null || figures == null) {
+          throw FormatException("Invalid file format");
+        }
+
+        final choreographyId = await DatabaseService.addChoreography(
+          name: choreography['name'],
+          styleId: choreography['style_id'],
+          danceId: choreography['dance_id'],
+          level: choreography['level'],
+        );
+
+        for (var figure in figures) {
+          await DatabaseService.addFigureToChoreography(
+            choreographyId: choreographyId,
+            figureId: figure['id'],
+          );
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")),
+        );
+
+        // Navigate to the ViewChoreographyScreen
+        _navigateToViewChoreography(
+          choreographyId,
+          choreography['style_id'],
+          choreography['dance_id'],
+          choreography['level'],
+        );
+      } else {
+        throw Exception("Failed to download choreography.");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to import choreography: $e")),
+      );
+    }
   }
 
   Future<void> _loadChoreographies() async {
     try {
+      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
+      Map<String, Map<String, List<Map<String, dynamic>>>> organizedChoreographies = {};
+
+      stylesAndDances.forEach((style, dances) {
+        organizedChoreographies[style] = {};
+        for (var dance in dances) {
+          organizedChoreographies[style]![dance] = [];
+        }
+      });
+
       final choreographies = await DatabaseService.getChoreographies();
+
+      for (var choreo in choreographies) {
+        final style = choreo['style_name'] as String;
+        final dance = choreo['dance_name'] as String;
+
+        if (organizedChoreographies.containsKey(style) &&
+            organizedChoreographies[style]!.containsKey(dance)) {
+          organizedChoreographies[style]![dance]!.add(choreo);
+        }
+      }
+
       setState(() {
-        _choreographies = choreographies;
+        _choreographiesByStyleAndDance = organizedChoreographies;
       });
     } catch (e) {
       print("Error loading choreographies: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load data.")),
+      );
     }
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      setState(() {
+        _searchQuery = '';
+        _searchResults = [];
+      });
+      return;
+    }
+
+    List<Map<String, dynamic>> results = [];
+    _choreographiesByStyleAndDance.forEach((style, dances) {
+      dances.forEach((dance, choreos) {
+        for (var choreo in choreos) {
+          final name = (choreo['name'] as String).toLowerCase();
+          final level = (choreo['level'] as String).toLowerCase();
+          final styleName = (choreo['style_name'] as String).toLowerCase();
+          final danceName = (choreo['dance_name'] as String).toLowerCase();
+
+          // Check if query matches any field
+          if (name.contains(query) ||
+              level.contains(query) ||
+              styleName.contains(query) ||
+              danceName.contains(query)) {
+            results.add(choreo);
+          }
+        }
+      });
+    });
+
+    setState(() {
+      _searchQuery = query;
+      _searchResults = results;
+    });
   }
 
   void _deleteChoreography(int id) async {
     try {
       await DatabaseService.deleteChoreography(id);
-      _loadChoreographies(); // Refresh the list after deletion
+      _loadChoreographies();
     } catch (e) {
       print("Error deleting choreography: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to delete choreography.")),
+      );
+    }
+  }
+
+  void _navigateToViewChoreography(int choreographyId, int styleId, int danceId, String level) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ViewScreen.ViewChoreographyScreen(
+          choreographyId: choreographyId,
+          styleId: styleId,
+          danceId: danceId,
+          level: level,
+        ),
+      ),
+    );
+  }
+
+  void _addChoreography() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddChoreographyScreen(
+          onSave: (choreographyId, styleId, danceId, level) {
+            _loadChoreographies(); // Call this function after saving
+            _navigateToViewChoreography(choreographyId, styleId, danceId, level);
+          },
+        ),
+      ),
+    );
+
+    if (result == true) {
+      _loadChoreographies(); // Reload choreographies if the user saves and navigates back
+    }
+  }
+
+  void _viewChoreography(int id, int styleId, int danceId, String level) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ViewScreen.ViewChoreographyScreen(
+          choreographyId: id,
+          styleId: styleId,
+          danceId: danceId,
+          level: level,
+        ),
+      ),
+    );
+  }
+
+  void _editChoreography(int id, String name, int styleId, int danceId, String level) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddChoreographyScreen(
+          onSave: (choreographyId, styleId, danceId, level) {
+            _loadChoreographies(); // Reload the choreographies
+            _navigateToViewChoreography(choreographyId, styleId, danceId, level); // Navigate to the saved choreography
+          },
+          choreographyId: id,
+          initialName: name,
+          initialStyleId: styleId,
+          initialDanceId: danceId,
+          initialLevel: level,
+        ),
+      ),
+    );
+
+    if (result == true) {
+      _loadChoreographies();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Choreographies")),
-      body: _choreographies.isEmpty
-          ? Center(child: Text("No choreographies created yet."))
-          : ListView.builder(
-        itemCount: _choreographies.length,
-        itemBuilder: (context, index) {
-          final choreo = _choreographies[index];
-          return ListTile(
-            title: Text(choreo['name']),
-            subtitle: Text(
-                "${choreo['style_name']} - ${choreo['dance_name']} (${choreo['level']})"),
-            trailing: IconButton(
-              icon: Icon(Icons.delete),
-              color: Colors.red,
-              onPressed: () => _deleteChoreography(choreo['id']),
-            ),
-            onTap: () async {
-              try {
-                print("Tapped on choreography: ${choreo['name']}");
-
-                // Navigate to the ViewChoreographyScreen
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ViewChoreographyScreen(
-                      choreographyId: choreo['id'],
-                      styleId: choreo['style_id'] as int,
-                      danceId: choreo['dance_id'] as int,
-                      level: choreo['level'] as String,
-                    ),
-                  ),
-                );
-
-                // Refresh data after returning
-                if (mounted) {
-                  _loadChoreographies();
-                }
-              } catch (e) {
-                print("Error navigating to ViewChoreographyScreen: $e");
-              }
-            },
-          );
-        },
+      appBar: AppBar(
+        elevation: 6,
+        backgroundColor: Colors.white,
+        shadowColor: Colors.black26,
+        title: Text(
+          "Choreographies",
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddChoreographyScreen(
-                onSave: _loadChoreographies,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: "Search name, style, dance, level...",
+                prefixIcon: Icon(Icons.search, color: Colors.black54),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.deepPurple),
+                ),
               ),
             ),
-          );
-          // Reload choreographies after adding a new one
-          if (result == true) {
-            _loadChoreographies();
-          }
-        },
-        child: Icon(Icons.add),
+          ),
+          Expanded(
+            child: _searchQuery.isNotEmpty
+                ? _buildSearchResultsWithActions()
+                : _buildChoreographyListWithActions(),
+          ),
+        ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Stack(
+        children: [
+          // Import Choreography Button
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 16),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: FloatingActionButton(
+                heroTag: "importChoreography",
+                onPressed: _importChoreographyFromLink, // Import from link functionality
+                child: Icon(Icons.link), // Icon for importing
+              ),
+            ),
+          ),
+          // Add Choreography Button
+          Padding(
+            padding: const EdgeInsets.only(right: 16, bottom: 16),
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: FloatingActionButton(
+                heroTag: "addChoreography",
+                onPressed: _addChoreography, // Add new choreography functionality
+                child: Icon(Icons.add, color: Colors.deepPurple), // Icon for adding
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.grey.shade100,
+    );
+  }
+
+  Widget _buildSearchResultsWithActions() {
+    if (_searchResults.isEmpty) {
+      return Center(child: Text("No results found."));
+    }
+
+    return ListView.builder(
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final choreo = _searchResults[index];
+        return Card(
+          elevation: 3,
+          margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+          child: ListTile(
+            title: Text(choreo['name'], style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text("${choreo['style_name']} - ${choreo['dance_name']} (${choreo['level']})"),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit, color: Colors.deepPurple),
+                  onPressed: () => _editChoreography(
+                    choreo['id'] as int,
+                    choreo['name'] as String,
+                    choreo['style_id'] as int,
+                    choreo['dance_id'] as int,
+                    choreo['level'] as String,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _deleteChoreography(choreo['id'] as int),
+                ),
+              ],
+            ),
+            onTap: () => _viewChoreography(
+              choreo['id'] as int,
+              choreo['style_id'] as int,
+              choreo['dance_id'] as int,
+              choreo['level'] as String,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildChoreographyListWithActions() {
+    return ListView(
+      children: _choreographiesByStyleAndDance.entries.map((styleEntry) {
+        final style = styleEntry.key;
+        final dances = styleEntry.value;
+
+        return Card(
+          elevation: 3,
+          margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+          child: ExpansionTile(
+            title: Text(style, style: TextStyle(fontWeight: FontWeight.w400)),
+            children: dances.entries.map((danceEntry) {
+              final dance = danceEntry.key;
+              final choreos = danceEntry.value;
+
+              return ExpansionTile(
+                title: Text(dance, style: TextStyle(fontWeight: FontWeight.w400)),
+                children: choreos.isEmpty
+                    ? [ListTile(title: Text("No choreographies available."))]
+                    : choreos.map((choreo) {
+                  return ListTile(
+                    title: Text(choreo['name']),
+                    subtitle: Text("Level: ${choreo['level']}"),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.deepPurple),
+                          onPressed: () => _editChoreography(
+                            choreo['id'] as int,
+                            choreo['name'] as String,
+                            choreo['style_id'] as int,
+                            choreo['dance_id'] as int,
+                            choreo['level'] as String,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteChoreography(choreo['id'] as int),
+                        ),
+                      ],
+                    ),
+                    onTap: () => _viewChoreography(
+                      choreo['id'] as int,
+                      choreo['style_id'] as int,
+                      choreo['dance_id'] as int,
+                      choreo['level'] as String,
+                    ),
+                  );
+                }).toList(),
+              );
+            }).toList(),
+          ),
+        );
+      }).toList(),
     );
   }
 }

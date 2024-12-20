@@ -1,19 +1,40 @@
 import 'package:flutter/material.dart';
-import 'screens/notes/notes_screen.dart';
+import 'package:just_audio/just_audio.dart';
 import 'screens/music/music_screen.dart';
+import 'screens/notes/notes_screen.dart';
 import 'screens/learn/learn_screen.dart';
+import 'screens/notes/view_choreography_screen.dart';
+import 'widgets/floating_music_player.dart';
+import '/services/database_service.dart';
+import 'dart:io';
+import 'dart:convert';
 
-void main() => runApp(BallroomDanceBuddy());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Handle file intents if the app is launched with one
+  String? fileUri;
+  if (Platform.isAndroid) {
+    // Check for file intent
+    final args = await File.fromUri(Uri.base).exists() ? Uri.base.toString() : null;
+    fileUri = args;
+  }
+  runApp(BallroomDanceBuddy(fileUri: fileUri));
+}
 
 class BallroomDanceBuddy extends StatelessWidget {
-  const BallroomDanceBuddy({super.key});
+  final String? fileUri;
+
+  const BallroomDanceBuddy({super.key, this.fileUri});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.purple),
-      home: MainScreen(),
+      home: fileUri != null
+          ? ImportHandlerScreen(fileUri: fileUri!) // Handle file import
+          : const MainScreen(),
     );
   }
 }
@@ -26,13 +47,26 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlayerExpanded = false;
+  bool _isInFullscreen = false;
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    NotesScreen(),
-    MusicScreen(),
-    LearnScreen(),
-  ];
+  void _onSongsReady(List<String> songs) {
+    setState(() {});
+  }
+
+  void _togglePlayerExpanded(bool isExpanded) {
+    setState(() {
+      _isPlayerExpanded = isExpanded;
+    });
+  }
+
+  void _onFullscreenChange(bool isFullscreen) {
+    setState(() {
+      _isInFullscreen = isFullscreen;
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -43,18 +77,123 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Ballroom Dance Buddy"),
+      body: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: !_isInFullscreen ? (_isPlayerExpanded ? 180 : 60) : 0,
+            ),
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                NotesScreen(),
+                MusicScreen(
+                  audioPlayer: _audioPlayer,
+                  onSongsReady: _onSongsReady,
+                ),
+                LearnScreen(
+                  onFullscreenChange: _onFullscreenChange,
+                ),
+              ],
+            ),
+          ),
+          if (!_isInFullscreen)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: FloatingMusicPlayer(
+                audioPlayer: _audioPlayer,
+                onExpandToggle: _togglePlayerExpanded,
+              ),
+            ),
+        ],
       ),
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: !_isInFullscreen
+          ? BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.note), label: 'Notes'),
+          BottomNavigationBarItem(icon: Icon(Icons.note), label: 'Choreo'),
           BottomNavigationBarItem(icon: Icon(Icons.music_note), label: 'Music'),
           BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Learn'),
         ],
+      )
+          : null,
+    );
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+}
+
+class ImportHandlerScreen extends StatelessWidget {
+  final String fileUri;
+
+  ImportHandlerScreen({required this.fileUri});
+
+  Future<void> _handleFile(BuildContext context) async {
+    try {
+      // Read the file
+      final file = File(Uri.parse(fileUri).path);
+      final content = await file.readAsString();
+      final data = jsonDecode(content);
+
+      // Import choreography into the database
+      final choreography = data['choreography'];
+      final figures = data['figures'];
+
+      if (choreography == null || figures == null) {
+        throw FormatException("Invalid file format");
+      }
+
+      final choreographyId = await DatabaseService.addChoreography(
+        name: choreography['name'],
+        styleId: choreography['style_id'],
+        danceId: choreography['dance_id'],
+        level: choreography['level'],
+      );
+
+      for (var figure in figures) {
+        await DatabaseService.addFigureToChoreography(
+          choreographyId: choreographyId,
+          figureId: figure['id'],
+        );
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")));
+
+      // Navigate to the ViewChoreographyScreen for the imported choreography
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewChoreographyScreen(
+            choreographyId: choreographyId,
+            styleId: choreography['style_id'],
+            danceId: choreography['dance_id'],
+            level: choreography['level'],
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to import choreography: $e")),
+      );
+      Navigator.pop(context); // Return to the main screen if failed
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Importing File...")),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () => _handleFile(context),
+          child: Text("Import Choreography"),
+        ),
       ),
     );
   }
