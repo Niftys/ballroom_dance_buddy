@@ -99,6 +99,8 @@ class _NotesScreenState extends State<NotesScreen> {
           SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")),
         );
 
+        _loadChoreographies();
+
         // Navigate to the ViewChoreographyScreen
         _navigateToViewChoreography(
           choreographyId,
@@ -273,9 +275,9 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 6,
+        elevation: 5,
         backgroundColor: Colors.white,
-        shadowColor: Colors.black26,
+        shadowColor: Colors.black54,
         title: Text(
           "Choreographies",
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
@@ -337,7 +339,7 @@ class _NotesScreenState extends State<NotesScreen> {
               child: FloatingActionButton(
                 heroTag: "addChoreography",
                 onPressed: _addChoreography, // Add new choreography functionality
-                child: Icon(Icons.add, color: Colors.deepPurple), // Icon for adding
+                child: Icon(Icons.add), // Icon for adding
               ),
             ),
           ),
@@ -358,6 +360,7 @@ class _NotesScreenState extends State<NotesScreen> {
         final choreo = _searchResults[index];
         return Card(
           elevation: 3,
+          shadowColor: Colors.black54,
           margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           child: ListTile(
             title: Text(choreo['name'], style: TextStyle(fontWeight: FontWeight.bold)),
@@ -401,6 +404,7 @@ class _NotesScreenState extends State<NotesScreen> {
 
         return Card(
           elevation: 3,
+          shadowColor: Colors.black54,
           margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           child: ExpansionTile(
             title: Text(style, style: TextStyle(fontWeight: FontWeight.w400)),

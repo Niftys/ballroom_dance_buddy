@@ -47,13 +47,16 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
 
   Future<void> _loadStyles() async {
     try {
-      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
+      final stylesAndDances = await DatabaseService
+          .getStylesAndDancesFromJson();
 
       setState(() {
         _styles = stylesAndDances.keys.toList();
         _selectedStyle = _styles.isNotEmpty ? _styles.first : null;
-        _availableDances = _selectedStyle != null ? stylesAndDances[_selectedStyle!] ?? [] : [];
-        _selectedDance = _availableDances.isNotEmpty ? _availableDances.first : null;
+        _availableDances =
+        _selectedStyle != null ? stylesAndDances[_selectedStyle!] ?? [] : [];
+        _selectedDance =
+        _availableDances.isNotEmpty ? _availableDances.first : null;
         _selectedLevel = _levels.first;
       });
     } catch (e) {
@@ -64,7 +67,8 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
     }
   }
 
-  Future<void> _initializeForEditing(Map<String, List<String>> stylesAndDances) async {
+  Future<void> _initializeForEditing(
+      Map<String, List<String>> stylesAndDances) async {
     try {
       setState(() {
         _nameController.text = widget.initialName ?? '';
@@ -73,14 +77,16 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
       });
 
       if (widget.initialStyleId != null) {
-        final styleName = await DatabaseService.getStyleNameById(widget.initialStyleId!);
+        final styleName = await DatabaseService.getStyleNameById(
+            widget.initialStyleId!);
         setState(() {
           _selectedStyle = styleName;
           _availableDances = stylesAndDances[styleName] ?? [];
         });
 
         if (widget.initialDanceId != null) {
-          final danceName = await DatabaseService.getDanceNameById(widget.initialDanceId!);
+          final danceName = await DatabaseService.getDanceNameById(
+              widget.initialDanceId!);
           setState(() {
             _selectedDance = danceName;
           });
@@ -94,13 +100,28 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
     }
   }
 
+  final List<String> _countryWesternLevels = [
+    'Newcomer IV',
+    'Newcomer III',
+    'Newcomer II'
+  ];
+
   Future<void> _loadDancesForStyle(String styleName) async {
     try {
-      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
+      final stylesAndDances = await DatabaseService
+          .getStylesAndDancesFromJson();
 
       setState(() {
         _availableDances = stylesAndDances[styleName] ?? [];
-        _selectedDance = _availableDances.isNotEmpty ? _availableDances.first : null;
+        _selectedDance =
+        _availableDances.isNotEmpty ? _availableDances.first : null;
+
+        // Check if the selected style is Country Western and adjust levels
+        if (styleName.toLowerCase().contains('country western')) {
+          _selectedLevel = _countryWesternLevels.first;
+        } else {
+          _selectedLevel = _levels.first;
+        }
       });
     } catch (e) {
       print("Error loading dances for style '$styleName': $e");
@@ -111,7 +132,8 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   }
 
   void _saveChoreography() async {
-    if (_nameController.text.isEmpty || _selectedStyle == null || _selectedDance == null || _selectedLevel == null) {
+    if (_nameController.text.isEmpty || _selectedStyle == null ||
+        _selectedDance == null || _selectedLevel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Please fill all fields")),
       );
@@ -120,7 +142,8 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
 
     try {
       final styleId = await DatabaseService.getStyleIdByName(_selectedStyle!);
-      final danceId = await DatabaseService.getDanceIdByNameAndStyle(_selectedDance!, styleId);
+      final danceId = await DatabaseService.getDanceIdByNameAndStyle(
+          _selectedDance!, styleId);
 
       int choreographyId;
 
@@ -150,12 +173,13 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => ViewChoreographyScreen(
-            choreographyId: choreographyId,
-            styleId: styleId,
-            danceId: danceId,
-            level: _selectedLevel!,
-          ),
+          builder: (context) =>
+              ViewChoreographyScreen(
+                choreographyId: choreographyId,
+                styleId: styleId,
+                danceId: danceId,
+                level: _selectedLevel!,
+              ),
         ),
             (route) => route.isFirst, // Keep only the first screen in the stack
       );
@@ -175,7 +199,9 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
         backgroundColor: Colors.white,
         shadowColor: Colors.black26,
         title: Text(
-          widget.choreographyId != null ? "Edit Choreography" : "Add Choreography",
+          widget.choreographyId != null
+              ? "Edit Choreography"
+              : "Add Choreography",
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
@@ -194,6 +220,12 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   }
 
   Widget _buildForm() {
+    final bool isCountryWestern = _selectedStyle?.toLowerCase().contains(
+        'country western') ?? false;
+    final List<String> levelsToShow = isCountryWestern
+        ? _countryWesternLevels
+        : _levels;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -210,7 +242,8 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
           DropdownButtonFormField<String>(
             value: _selectedStyle,
             items: _styles
-                .map((style) => DropdownMenuItem(value: style, child: Text(style)))
+                .map((style) =>
+                DropdownMenuItem(value: style, child: Text(style)))
                 .toList(),
             onChanged: (value) {
               setState(() {
@@ -218,25 +251,30 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
                 _loadDancesForStyle(value);
               });
             },
-            decoration: InputDecoration(labelText: "Style", border: OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: "Style", border: OutlineInputBorder()),
           ),
           SizedBox(height: 20),
           DropdownButtonFormField<String>(
             value: _selectedDance,
             items: _availableDances
-                .map((dance) => DropdownMenuItem(value: dance, child: Text(dance)))
+                .map((dance) =>
+                DropdownMenuItem(value: dance, child: Text(dance)))
                 .toList(),
             onChanged: (value) => setState(() => _selectedDance = value),
-            decoration: InputDecoration(labelText: "Dance", border: OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: "Dance", border: OutlineInputBorder()),
           ),
           SizedBox(height: 20),
           DropdownButtonFormField<String>(
             value: _selectedLevel,
-            items: _levels
-                .map((level) => DropdownMenuItem(value: level, child: Text(level)))
+            items: levelsToShow
+                .map((level) =>
+                DropdownMenuItem(value: level, child: Text(level)))
                 .toList(),
             onChanged: (value) => setState(() => _selectedLevel = value),
-            decoration: InputDecoration(labelText: "Level", border: OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: "Level", border: OutlineInputBorder()),
           ),
           Spacer(),
           ElevatedButton(

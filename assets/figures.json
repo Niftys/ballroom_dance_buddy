@@ -785,5 +785,277 @@
         }
       }
     ]
+  },
+  {
+    "style": "Country Western",
+    "dances":  [
+      {
+        "name": "Triple Two",
+        "levels": {
+          "Newcomer IV": [
+            { "description": "Forward Basic in Closed and Forward Basic to Promenade" },
+            { "description": "Flares" },
+            { "description": "Closed Right Rotating Basic (Natural, Right Loop)" },
+            { "description": "Closed Left Rotating Basic (Reverse, Left Loop)" },
+            { "description": "Transition from Promenade to Counter Promenade, Back LOD" },
+            { "description": "Follower’s Right (Outside) Turn" }
+          ],
+          "Newcomer III": [
+            { "description": "Left Rotating Basic with Follower’s Left (Inside) Turn" },
+            { "description": "Left Rotating Basic in Two Hand Open to Diagonal Wall" },
+            { "description": "Half Right Rotating Basic to Wrap with Release" },
+            { "description": "Right Rotating Basic in Two Hand Open to Diagonal center" },
+            { "description": "Left turning Weave" },
+            { "description": "Right turning Weave" },
+            { "description": "Balancés with Side-by-Side Feather" },
+            { "description": "Right Rotating Basic with Follower’s Left (Inside) Turn" }
+          ],
+          "Newcomer II": [
+            { "description": "8-Count Basics" },
+            { "description": "Follower’s Right (Outside) Turn" },
+            { "description": "Promenade to Dual Balancés" },
+            { "description": "8-Count Right Rotating Basic" },
+            { "description": "8-Count Left Rotating Basic with Follower’s Left (Inside) Turn" },
+            { "description": "Left turning Weave to Follower’s Left Turn" },
+            { "description": "Waterfall (Patty Cake)" },
+            { "description": "Shadow with Balancé and French Cross" }
+          ]
+        }
+      },
+      {
+        "name": "Country Waltz",
+        "levels": {
+          "Newcomer IV": [
+            { "description": "Hesitations" },
+            { "description": "Box Step and Change Steps" },
+            { "description": "Box and Follower’s Right (Outside) Underarm Turn" },
+            { "description": "Face-to-Face, Back-to-Back (Pattycakes)" },
+            { "description": "Quarter Turns on Diagonal - Right then Left" },
+            { "description": "Right (Natural) 3/8 Turn" },
+            { "description": "Left (Reverse) 3/8 Turn" },
+            { "description": "Simple Twinkle" },
+            { "description": "Turning Twinkle - Left and Right" },
+            { "description": "Progressive Outside Partner Twinkles" }
+          ],
+          "Newcomer III": [
+            { "description": "Open Twinkle with Closed Ending" },
+            { "description": "Spirals" },
+            { "description": "Open Twinkle to Promenade Chassé" },
+            { "description": "Weave from Promenade" },
+            { "description": "Toss Across (Flip-flops)" },
+            { "description": "Back Twinkle" },
+            { "description": "Right (Natural) Spin Turn" },
+            { "description": "Open Left Box (Reverse)" },
+            { "description": "Open Right (Natural) Turn" },
+            { "description": "Open Right (Natural) Turn with Folloer's Right Turn" },
+            { "description": "Open Left (Reverse) Turn with Follower’s Turn" }
+          ],
+          "Newcomer II": [
+            { "description": "Open check to Face-to-Face, Back-to-Back" },
+            { "description": "Spiral Turn with Developé Ending" },
+            { "description": "Open Right (Natural) to Chassé and Follower’s Turn" },
+            { "description": "Hairpin from Left (Reverse) Turn" },
+            { "description": "Curved Feather from Promenade" },
+            { "description": "Twinkle to Shadow Position" },
+            { "description": "Open Left (Reverse) Turn to Shadow Position" },
+            { "description": "Streamline and Feather in Shadow" },
+            { "description": "Spirals in Shadow" },
+            { "description": "Right and Left Turns in Shadow" }
+          ]
+        }
+      },
+      {
+        "name": "Polka",
+        "levels": {
+          "Newcomer IV": [
+            { "description": "Forward Basic and Forward Two-Hand Hold Basic" },
+            { "description": "Couples Half Right Rotating Basic, Half Back Basic, Half Left Rotating Basic" },
+            { "description": "Couples Half Right Rotating Basic, Back Basic, Couples 2nd Half Right Rotating Basic" },
+            { "description": "Follower’s Slow Right (Outside) Turn" },
+            { "description": "Chassés" },
+            { "description": "Follower’s Slow Right (Outside) Turn with Hand Change to Right-to-Right Hand Hold and Slow Left (Inside) Turn to Closed" },
+            { "description": "Follower’s Slow Right (Outside) Turn to Counter Open Promenade, Back LOD" },
+            { "description": "Shoulder Catch (Bow-and-Arrow) with Follower’s Slow Left Turn to Counter Open Promenade, Back LOD" },
+            { "description": "Half Right Rotating Basic to Wrap (Cuddle) and Release to Closed" },
+            { "description": "In-Line Pattycakes" },
+            { "description": "Right Rotating Basic" }
+          ],
+          "Newcomer III": [
+            { "description": "Basic with Coaster on 2nd Triple to Basket (Slingshot) and Release" },
+            { "description": "Follower’s Slow Right 1.5 Turn with Hand Change to Sweetheart (Cape)" },
+            { "description": "Follower’s Single Syncopated Left Turn" },
+            { "description": "Transition from Open Promenade, Forward LOD" },
+            { "description": "Counter Open Promenade, Back LOD to Follower’s Right ½ turn to Shoulder Catch and Follower’s Left Turn to Wrap" },
+            { "description": "Left Turning (Check) Weave" },
+            { "description": "Belt Loop Left Turning (Check) Weave" },
+            { "description": "Follower’s 1.5 Turns" }
+          ],
+          "Newcomer II": [
+            { "description": "In-line Pattycakes with Dual Syncopated Turn" },
+            { "description": "Right Turning (Chase) Weave" },
+            { "description": "Checks" },
+            { "description": "Dual Free Spins" },
+            { "description": "Hand-to-Hand Chassés (Face-to-Face, Back-to-Back)" },
+            { "description": "Wrap-Unwrap (Roll-in-Roll out, Yo-Yo)" },
+            { "description": "Leader’s Foot Change to Windmills or Slow Tick Tock" },
+            { "description": "Gallops" }
+          ]
+        }
+      },
+      {
+        "name": "Country Cha Cha",
+        "levels": {
+          "Newcomer IV": [
+            { "description": "Side Basic" },
+            { "description": "Progressive Basic" },
+            { "description": "Time Step" },
+            { "description": "Fifth Position Breaks (Fall Aways, Hand-to-Hand)" },
+            { "description": "Crossover Breaks (New York)" },
+            { "description": "Outside Partner (Parallel, Shoulder to Shoulder) Breaks" },
+            { "description": "Cross Body Lead" },
+            { "description": "Open Break, Follower’s Right Underarm Turn" },
+            { "description": "Walk Around Turns (Apart Turns, Spot Turns)" },
+            { "description": "Alternating Underarm Turns" }
+          ],
+          "Newcomer III": [
+            { "description": "Progressive Chase Turns" },
+            { "description": "Right Side Pass with Follower's Left Underarm Turn (Hockey Stick)" },
+            { "description": "Shoulder Checks (Peek-a-Boo, Stop and Go)" },
+            { "description": "Sweetheart (Cape) Breaks (Sweetheart Switch)" },
+            { "description": "Alternating Progressive Underarm Turns" },
+            { "description": "Alternating Crossover/Fallaway (Butterfly)" },
+            { "description": "Back Spot Turn" }
+          ],
+          "Newcomer II": [
+            { "description": "Three Cha Cha’s Forward and Back (Triple Cha Cha’s)" },
+            { "description": "Cross Body Lead with Follower’s Left 1.75 Turn" },
+            { "description": "Crossover Variation: Three Cha Cha’s" },
+            { "description": "Open Box" },
+            { "description": "Sliding Doors" },
+            { "description": "Cross Body Pull Back (Check and Pop)" },
+            { "description": "Paseo (Crossover Flick to Side Break)" }
+          ]
+        }
+      },
+      {
+        "name": "East Coast Swing",
+        "levels": {
+          "Newcomer IV": [
+            { "description": "Six Count Basic: Closed to Open and Return to Closed" },
+            { "description": "Left Rotating Basic" },
+            { "description": "Right Rotating Basic" },
+            { "description": "Throw-out and Follower’s Left Underarm Return" },
+            { "description": "Follower’s Right and Left Underarm Turns with Optional Hand Change" },
+            { "description": "Tuck Turns with Optional Hand Change" },
+            { "description": "Wrap (Cuddle) with Unwind or Release" },
+            { "description": "Leader’s Left Turn and Follow’s Left Turn with Optional Belt Loop Variations" }
+          ],
+          "Newcomer III": [
+            { "description": "Alternating Left (inside) Turns (Trailing Turns)" },
+            { "description": "Follower/Leader Underarm Turns (She/He Turns)" },
+            { "description": "Peek-a-boo (Shoulder Check, Stop and Go)" },
+            { "description": "Sliding Doors" },
+            { "description": "Hammerlock with Unwind or Leader’s Left Turn Ending" },
+            { "description": "Rotating Sugar Push with Optional Double Arm Slide (Bowtie) Ending" },
+            { "description": "Double Face Loop" }
+          ],
+          "Newcomer II": [
+            { "description": "Shoulder Taps" },
+            { "description": "Continuous Rotating Basic (Walk, Walk Rotation)" },
+            { "description": "Tuck with Dual Free Spins" },
+            { "description": "Tuck with Follower’s Right Double Turn" },
+            { "description": "Continuous Tuck with Open Rock" },
+            { "description": "Fallaway Back Walks and Points (Kansas City)" },
+            { "description": "Lindy Basic (Whip, Rotating Basic with Pivot)" },
+            { "description": "Double Face Loop with Leader’s Side Break" }
+          ]
+        }
+      },
+      {
+        "name": "Two Step",
+        "levels": {
+          "Newcomer IV": [
+            { "description": "Forward Basic" },
+            { "description": "Couples Half Right Turn with French Cross Footwork and Half Left Turn (Cross Body)" },
+            { "description": "Couples Right Rotating Basic (Couples Full Right Turn)" },
+            { "description": "Follower’s Right (Outside) Underarm Turn to Closed Position" },
+            { "description": "Forward Basic to Promenade" },
+            { "description": "Follower’s Right (Outside) Underarm Turn to Closed Promenade" },
+            { "description": "Promenade Basic" },
+            { "description": "Back Basic, Cross Body to Fan with Follower’s Left (Inside) Underarm Turn to Closed Position" },
+            { "description": "Promenade Basic with Follower’s Left (Inside) Underarm Turn to Closed Position" }
+          ],
+          "Newcomer III": [
+            { "description": "Promenade Basic" },
+            { "description": "Couples Half Right Turn" },
+            { "description": "Follower’s Left (Inside) Underarm Turns" },
+            { "description": "Chassés from Counter Open Promenade to Open Promenade" },
+            { "description": "Chassé and Grapevine in Counter Open Promenade" },
+            { "description": "Chassé and Grapevine in Open Promenade" },
+            { "description": "Chassé to Open Promenade with Follower’s Left 1.5 Turn" },
+            { "description": "Check (Break Away) to Wrap or Sweetheart" },
+            { "description": "Follower’s Right 1.5 Turn to Open Promenade and Left Turn to Wrap" },
+            { "description": "Follower’s Right 1.5 Turn with Hand Change to Sweetheart" },
+            { "description": "Chassé to Counter Open Promenade with Follower’s Right 1.5 Turn to Open Promenade" }
+          ],
+          "Newcomer II": [
+            { "description": "Follower’s Right 1.75 Underarm Turn to Check" },
+            { "description": "Follower’s Right 1.5 Turn to Shoulder Catch and Left 1.5 Underarm Turn" },
+            { "description": "Right-to-Right Facing with Follower’s Right 1½ Turn" },
+            { "description": "Check Weaves with Follower’s Left (Inside) Turns" },
+            { "description": "Chase Weaves with Follower’s Right Turn" },
+            { "description": "Couples Left Rotating Basic (Full Left Turn)" },
+            { "description": "Dual Free Spins" },
+            { "description": "Lariats with Follower’s Right Turns" },
+            { "description": "Check to Basket with Follower’s Right Turn" },
+            { "description": "Check (Break Away) to Two Step Whip" },
+            { "description": "8-Count Patterns (Wrap-Unwrap, Check Weave to Samba Turns)" },
+            { "description": "8-Count Turns (Sweetheart, Check Weave, Lariat)" }
+          ]
+        }
+      },
+      {
+        "name": "West Coast Swing",
+        "levels": {
+          "Newcomer IV": [
+            { "description": "Starter Steps" },
+            { "description": "Sugar Push (Basic)" },
+            { "description": "Right Side Pass" },
+            { "description": "Left Side Pass" },
+            { "description": "Sugar Tuck (Push Tuck)" },
+            { "description": "Left Side Tuck" },
+            { "description": "Whips" },
+            { "description": "Same Side Whip with Follower’s Underarm Pass" },
+            { "description": "Right Side Pass with Hand Change to Right-to-Right and Back to Left-to-Right" }
+          ],
+          "Newcomer III": [
+            { "description": "Cut Off" },
+            { "description": "Partial Whip (Fake Whip)" },
+            { "description": "Closed Left Offset Sugar Push" },
+            { "description": "Left Side Pass with Follower’s Left 1.5 Turn" },
+            { "description": "Right Side Pass with Follower’s 1.5 Turns" },
+            { "description": "Basket Whips" },
+            { "description": "Two-Hand Open Whips (Hustle Whips)" },
+            { "description": "Closed Whip Remaining in Closed" },
+            { "description": "Wrap and Unwrap (Roll In, Roll Out)" },
+            { "description": "Cross-Hand Hold Right Side Pass and Sugar Tuck" },
+            { "description": "Reverse Whip" }
+          ],
+          "Newcomer II": [
+            { "description": "Follower’s Right Side Pass with Right Turns" },
+            { "description": "Right-to-Right Left Side Roll-in and Walk (8-Count)" },
+            { "description": "Continuous (Revolving) Whip (10-Count)" },
+            { "description": "Right-to-Right Left Side Roll-in to Sweetheart Whip" },
+            { "description": "Right Side Pass with Leader's Left Belt Loop Turn" },
+            { "description": "Cross-Shoulder Release (Bowtie)" },
+            { "description": "Basket with Leader’s Right Turn and Hand Change Behind Back" },
+            { "description": "Cross-Hand Whip (Lariat)" },
+            { "description": "Sugar Push with Paseo Triple and Dual Free Spin" },
+            { "description": "Sugar Push with Hitch" },
+            { "description": "Flash with Side Rock" }
+          ]
+        }
+      }
+    ]
   }
 ]

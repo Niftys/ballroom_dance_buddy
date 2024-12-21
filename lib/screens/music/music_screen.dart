@@ -117,7 +117,7 @@ class _MusicScreenState extends State<MusicScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 6,
+        elevation: 5,
         backgroundColor: Colors.white,
         shadowColor: Colors.black26,
         title: Text(
@@ -142,6 +142,14 @@ class _MusicScreenState extends State<MusicScreen> {
           },
         )
             : null,
+        actions: _selectedGenre != null
+            ? [
+          IconButton(
+            icon: Icon(Icons.add, color: Colors.black87),
+            onPressed: () => _addCustomSongToGenre(_selectedGenre!),
+          )
+        ]
+            : [],
       ),
       body: AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
@@ -149,12 +157,6 @@ class _MusicScreenState extends State<MusicScreen> {
         switchOutCurve: Curves.easeInOut,
         child: _buildContent(),
       ),
-      floatingActionButton: _selectedGenre != null
-          ? FloatingActionButton(
-        onPressed: () => _addCustomSongToGenre(_selectedGenre!),
-        child: Icon(Icons.add),
-      )
-          : null,
       backgroundColor: Colors.grey.shade100,
     );
   }
@@ -226,7 +228,7 @@ class _MusicScreenState extends State<MusicScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           child: Card(
             elevation: 3,
-            shadowColor: Colors.black26,
+            shadowColor: Colors.black54,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -258,7 +260,7 @@ class _MusicScreenState extends State<MusicScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Card(
         elevation: 3,
-        shadowColor: Colors.black26,
+        shadowColor: Colors.black54,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),

@@ -35,21 +35,18 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
         level: widget.level,
       );
 
-      // Fetch custom figures linked to the choreography
-      final customFigures = await DatabaseService.getFiguresForChoreography(widget.choreographyId);
+      final customFigures = await DatabaseService.getCustomFiguresByStyleAndDance(
+        styleId: widget.styleId,
+        danceId: widget.danceId,
+      );
 
-      final organized = {
-        'Bronze': figures.where((f) => f['level'] == 'Bronze').toList(),
-        'Silver': figures.where((f) => f['level'] == 'Silver').toList(),
-        'Gold': figures.where((f) => f['level'] == 'Gold').toList(),
-        'Custom': customFigures.where((f) => f['custom'] == 1).toList(), // Custom figures
-      };
+      // Group figures by level
+      final organized = _groupFiguresByLevel(figures);
+      organized['Custom'] = customFigures;
 
-      if (widget.level == 'Bronze') {
-        organized.removeWhere((key, value) => key != 'Bronze' && key != 'Custom');
-      } else if (widget.level == 'Silver') {
-        organized.removeWhere((key, value) => key == 'Gold' && key != 'Custom');
-      }
+      print("Organized figures by levels: ${organized.keys}");
+
+      organized.removeWhere((key, value) => value.isEmpty);
 
       setState(() {
         _organizedFigures = organized;
@@ -57,19 +54,32 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
     } catch (e) {
       print("Error loading figures: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load figures")),
+        SnackBar(content: Text("Failed to load figures.")),
       );
     }
   }
 
+  Map<String, List<Map<String, dynamic>>> _groupFiguresByLevel(List<Map<String, dynamic>> figures) {
+    final Map<String, List<Map<String, dynamic>>> grouped = {};
+
+    for (final figure in figures) {
+      final level = figure['level'] as String;
+      grouped[level] = (grouped[level] ?? [])..add(figure);
+    }
+
+    return grouped;
+  }
+
   void _addFigure(int figureId) async {
     try {
-      await DatabaseService.addFigureToChoreography(
+      final choreographyFigureId = await DatabaseService.addFigureToChoreography(
         choreographyId: widget.choreographyId,
         figureId: figureId,
       );
-      _loadAvailableFigures(); // Refresh the UI
-      Navigator.pop(context, true); // Ensure single navigation
+
+      print("Figure added to choreography with ID: $choreographyFigureId");
+      _loadAvailableFigures();  // Refresh the list after adding
+      Navigator.pop(context, true);  // Close and refresh the View Choreography screen
     } catch (e) {
       print("Error adding figure: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -120,17 +130,32 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
 
     if (result != null) {
       try {
-        await DatabaseService.addCustomFigure(
+        final figureId = await DatabaseService.addCustomFigure(
           choreographyId: widget.choreographyId,
+          styleId: widget.styleId,
+          danceId: widget.danceId,
           description: result['description']!,
           notes: result['notes'] ?? '',
         );
-        _loadAvailableFigures(); // Refresh the list
+
+        _loadAvailableFigures();  // Refresh the list
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to add custom figure")),
+          SnackBar(content: Text("Failed to add custom figure.")),
         );
       }
+    }
+  }
+
+  void _deleteCustomFigure(int figureId) async {
+    try {
+      await DatabaseService.deleteCustomFigure(figureId);
+      _loadAvailableFigures();  // Refresh the list after deletion
+    } catch (e) {
+      print("Error deleting custom figure: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to delete custom figure.")),
+      );
     }
   }
 
@@ -180,6 +205,12 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
                 return ListTile(
                   title: Text(figure['description']),
                   onTap: () => _addFigure(figure['id']),
+                  trailing: figure['custom'] == 1
+                      ? IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteCustomFigure(figure['id']),
+                  )
+                      : null,
                 );
               }).toList(),
             ),

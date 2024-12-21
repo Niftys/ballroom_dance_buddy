@@ -8,7 +8,7 @@ class DatabaseService {
     final String path = join(await getDatabasesPath(), 'choreography.db');
     return openDatabase(
       path,
-      version: 25,
+      version: 27,
       onCreate: (database, version) async {
         print("Creating database...");
         await _createTables(database);
@@ -98,17 +98,14 @@ class DatabaseService {
     final List<dynamic> stylesData = json.decode(figuresJson);
 
     for (var style in stylesData) {
-      // Insert style
       final styleId = await database.insert('styles', {'name': style['style']});
 
       for (var dance in style['dances']) {
-        // Insert dance
         final danceId = await database.insert('dances', {
           'style_id': styleId,
           'name': dance['name'],
         });
 
-        // Insert figures
         final levels = dance['levels'];
         levels.forEach((level, figures) async {
           for (var figure in figures) {
@@ -116,12 +113,12 @@ class DatabaseService {
               await database.insert('figures', {
                 'style_id': styleId,
                 'dance_id': danceId,
-                'level': level,
+                'level': level,  // Newcomer levels from JSON
                 'description': figure['description'],
-                'notes': figure['notes'] ?? '', // Default empty notes
-                'video_url': figure['video_url'] ?? '', // Fallback to empty string
-                'start': figure['start'] ?? 0, // Default start time to 0
-                'end': figure['end'] ?? 0, // Default end time to 0
+                'notes': figure['notes'] ?? '',
+                'video_url': figure['video_url'] ?? '',
+                'start': figure['start'] ?? 0,
+                'end': figure['end'] ?? 0,
               });
             } catch (e) {
               print("Error inserting figure: ${figure['description']}, $e");
@@ -252,33 +249,22 @@ class DatabaseService {
 
   static Future<int> addCustomFigure({
     required int choreographyId,
+    required int styleId,
+    required int danceId,
     required String description,
     String notes = '',
   }) async {
     final db = await _db();
 
-    // Insert the custom figure into the `figures` table
+    // Insert the custom figure into the figures table for the specific style and dance
     final figureId = await db.insert('figures', {
-      'style_id': 0, // Default or placeholder for style_id
-      'dance_id': 0, // Default or placeholder for dance_id
-      'level': 'Custom', // Custom level
+      'style_id': styleId,
+      'dance_id': danceId,
+      'level': 'Custom',  // Mark it as a custom figure
       'description': description,
       'notes': notes,
-      'custom': 1, // Mark as custom
+      'custom': 1,
     });
-
-    // Link the custom figure to the choreography
-    final existingLink = await db.query('choreography_figures',
-        where: 'choreography_id = ? AND figure_id = ?',
-        whereArgs: [choreographyId, figureId]);
-
-    if (existingLink.isEmpty) {
-      await db.insert('choreography_figures', {
-        'choreography_id': choreographyId,
-        'figure_id': figureId,
-        'position': 0, // Add default position
-      });
-    }
 
     return figureId;
   }
@@ -334,6 +320,19 @@ class DatabaseService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> getCustomFiguresByStyleAndDance({
+    required int styleId,
+    required int danceId,
+  }) async {
+    final db = await _db();
+
+    return await db.query(
+      'figures',
+      where: 'custom = 1 AND style_id = ? AND dance_id = ?',
+      whereArgs: [styleId, danceId],
+    );
+  }
+
   // Fetch methods
   static Future<List<Map<String, dynamic>>> getAllStyles() async {
     final db = await _db();
@@ -375,23 +374,34 @@ class DatabaseService {
   }) async {
     final db = await _db();
 
-    // Determine levels to include based on choreography level
-    final levelsToInclude = level == 'Bronze'
+    // Check if the style is Country Western
+    final isCountryWestern = await isCountryWesternStyle(styleId);
+
+    // Level filtering for Country Western (like Intl. styles)
+    final levelsToInclude = isCountryWestern
+        ? (level == 'Newcomer IV'
+        ? ['Newcomer IV']
+        : level == 'Newcomer III'
+        ? ['Newcomer IV', 'Newcomer III']
+        : ['Newcomer IV', 'Newcomer III', 'Newcomer II'])  // Show all for Newcomer II
+        : (level == 'Bronze'
         ? ['Bronze']
         : level == 'Silver'
         ? ['Bronze', 'Silver']
-        : ['Bronze', 'Silver', 'Gold'];
+        : ['Bronze', 'Silver', 'Gold']);  // Intl. filtering logic
 
-    // Query figures with video details
+    print("Fetching figures for ${isCountryWestern ? 'Country Western' : 'International'} - Levels: $levelsToInclude");
+
+    // Fetch figures based on filtered levels
     return await db.query(
       'figures',
       columns: [
         'id',
         'description',
         'level',
-        'video_url', // Include video URL
-        'start', // Include start time
-        'end', // Include end time
+        'video_url',
+        'start',
+        'end',
       ],
       where: 'style_id = ? AND dance_id = ? AND level IN (${List.filled(levelsToInclude.length, '?').join(', ')})',
       whereArgs: [styleId, danceId, ...levelsToInclude],
@@ -400,58 +410,89 @@ class DatabaseService {
 
   static Future<List<Map<String, dynamic>>> getFiguresForChoreography(int choreographyId) async {
     final db = await _db();
-    return await db.rawQuery('''
-    SELECT figures.*, choreography_figures.id AS choreography_figure_id, choreography_figures.notes
+    final result = await db.rawQuery('''
+    SELECT figures.*, 
+           choreography_figures.id AS choreography_figure_id,
+           choreography_figures.notes AS notes  -- Fetch the correct notes
     FROM figures
     JOIN choreography_figures ON figures.id = choreography_figures.figure_id
     WHERE choreography_figures.choreography_id = ?
-    ORDER BY choreography_figures.position
   ''', [choreographyId]);
+
+    return List<Map<String, dynamic>>.from(result);
   }
 
   // Add and update methods
-  static Future<void> addFigureToChoreography({
+  static Future<int> addFigureToChoreography({
     required int choreographyId,
     required int figureId,
   }) async {
     final db = await _db();
+    final maxPosition = await _getMaxPositionInChoreography(choreographyId);
 
-    // Check if the figure already exists in the choreography
-    final existingLink = await db.query(
-      'choreography_figures',
-      where: 'choreography_id = ? AND figure_id = ?',
-      whereArgs: [choreographyId, figureId],
-    );
+    final choreographyFigureId = await db.insert('choreography_figures', {
+      'choreography_id': choreographyId,
+      'figure_id': figureId,
+      'position': maxPosition + 1,
+      'notes': '',
+    });
 
-    if (existingLink.isEmpty) {
-      // Add the figure only if it doesn't already exist
-      final maxPosition = await _getMaxPositionInChoreography(choreographyId);
-      await db.insert('choreography_figures', {
-        'choreography_id': choreographyId,
-        'figure_id': figureId,
-        'position': maxPosition + 1,
-      });
-    }
+    print("Inserted into choreography_figures with ID: $choreographyFigureId");
+    return choreographyFigureId;
   }
 
   static Future<void> updateFigureNotes(int choreographyFigureId, String notes) async {
     final db = await _db();
-    await db.update(
+    int updatedRows = await db.update(
       'choreography_figures',
-      {'notes': notes}, // Update notes
-      where: 'id = ?', // Match by choreography_figure_id
+      {'notes': notes},
+      where: 'id = ?',
       whereArgs: [choreographyFigureId],
     );
+
+    print("Rows updated: $updatedRows");
+    if (updatedRows == 0) {
+      print("No row found with id: $choreographyFigureId");
+    }
   }
 
   static Future<void> removeFigureFromChoreography({
     required int choreographyFigureId,
   }) async {
     final db = await _db();
+
+    // Unlink the figure by deleting from choreography_figures
     await db.delete(
       'choreography_figures',
       where: 'id = ?',
       whereArgs: [choreographyFigureId],
+    );
+  }
+
+  static Future<void> deleteCustomFigure(int figureId) async {
+    final db = await _db();
+
+    // Delete from figures and unlink from all choreographies
+    await db.delete(
+      'figures',
+      where: 'id = ? AND custom = 1',
+      whereArgs: [figureId],
+    );
+
+    await db.delete(
+      'choreography_figures',
+      where: 'figure_id = ?',
+      whereArgs: [figureId],
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getCustomFigures() async {
+    final db = await _db();
+
+    // Query all custom figures from the figures table
+    return await db.query(
+      'figures',
+      where: 'custom = 1',
     );
   }
 
@@ -522,5 +563,16 @@ class DatabaseService {
         'SELECT MAX(position) as max_position FROM choreography_figures WHERE choreography_id = ?',
         [choreographyId]);
     return (result.first['max_position'] as int?) ?? 0;
+  }
+
+  static Future<bool> isCountryWesternStyle(int styleId) async {
+    final db = await _db();
+    final result = await db.query(
+      'styles',
+      where: 'id = ? AND name LIKE ?',
+      whereArgs: [styleId, '%Country Western%'],
+      limit: 1,
+    );
+    return result.isNotEmpty;
   }
 }

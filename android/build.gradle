@@ -1,4 +1,5 @@
 allprojects {
+    ext.kotlin_version = '2.1.0'  // Match the version in settings.gradle
     repositories {
         google()
         mavenCentral()

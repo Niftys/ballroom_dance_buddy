@@ -106,6 +106,11 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
       setState(() {
         _figures = figures;
       });
+
+      print("Figures loaded: ${figures.length}");
+      for (var figure in figures) {
+        print("Loaded figure: ${figure['description']} with ID: ${figure['choreography_figure_id']} and notes: ${figure['notes']}");
+      }
     } catch (e) {
       print("Error loading figures: $e");
     }
@@ -151,24 +156,13 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
             maxLines: null,
           ),
           actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, null), // Cancel
-                  child: Text(
-                    "Cancel",
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, _notesController.text),
-                  child: Text(
-                    "Save",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: Text("Cancel", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, _notesController.text),
+              child: Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -177,10 +171,17 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
 
     if (updatedNotes != null) {
       try {
+        print("Updating notes for: $choreographyFigureId");
         await DatabaseService.updateFigureNotes(choreographyFigureId, updatedNotes);
-        _loadFigures();
+        await _loadFigures();  // Force re-fetch after updating notes
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Notes updated successfully.")),
+        );
       } catch (e) {
         print("Error updating notes: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to save notes.")),
+        );
       }
     }
   }
@@ -199,7 +200,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
     );
 
     if (result == true) {
-      _loadFigures();
+      _loadFigures();  // Refresh to reflect the newly added figure with choreography_figure_id
     }
   }
 
@@ -208,7 +209,10 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
       await DatabaseService.removeFigureFromChoreography(
         choreographyFigureId: choreographyFigureId,
       );
-      _loadFigures();
+      _loadFigures();  // Refresh the list after removing the figure
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Figure removed from choreography.")),
+      );
     } catch (e) {
       print("Error removing figure: $e");
       ScaffoldMessenger.of(context).showSnackBar(

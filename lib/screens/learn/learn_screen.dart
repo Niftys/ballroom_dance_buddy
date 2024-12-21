@@ -74,9 +74,9 @@ class _LearnScreenState extends State<LearnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 6,
+        elevation: 5,
         backgroundColor: Colors.white,
-        shadowColor: Colors.black26,
+        shadowColor: Colors.black54,
         title: Text(
           _currentStyleId == null
               ? "Figure Finder"
@@ -130,19 +130,23 @@ class _LearnScreenState extends State<LearnScreen> {
     );
   }
 
-  Map<String, List<Map<String, dynamic>>> _groupFiguresByLevel(List<Map<String, dynamic>> figures) {
-    final Map<String, List<Map<String, dynamic>>> grouped = {
-      'Bronze': [],
-      'Silver': [],
-      'Gold': []
-    };
+  Map<String, List<Map<String, dynamic>>> _groupFiguresDynamically(List<Map<String, dynamic>> figures) {
+    final Map<String, List<Map<String, dynamic>>> grouped = {};
 
+    // Group figures by their level
     for (final figure in figures) {
-      final level = figure['level'] ?? 'Bronze';
-      if (grouped.containsKey(level)) {
-        grouped[level]!.add(figure);
+      final level = figure['level'] as String;
+
+      if (!grouped.containsKey(level)) {
+        grouped[level] = [];
       }
+      grouped[level]!.add(figure);
     }
+
+    // Sort each level by insertion order (ID)
+    grouped.forEach((key, value) {
+      value.sort((a, b) => a['id'].compareTo(b['id']));
+    });
 
     return grouped;
   }
@@ -170,7 +174,6 @@ class _LearnScreenState extends State<LearnScreen> {
 
   Widget _buildContent() {
     if (_isSearching) {
-      // Show search results with subtitles
       return _buildSearchResultList(_filteredMoves);
     }
 
@@ -192,7 +195,8 @@ class _LearnScreenState extends State<LearnScreen> {
               return description != 'long wall' && description != 'short wall';
             }).toList();
 
-            final groupedFigures = _groupFiguresByLevel(filteredFigures);
+            // Dynamically group figures based on levels
+            final groupedFigures = _groupFiguresDynamically(filteredFigures);
 
             return ListView(
               children: groupedFigures.entries.map((entry) {
@@ -207,7 +211,9 @@ class _LearnScreenState extends State<LearnScreen> {
                           ? Colors.brown
                           : level == 'Silver'
                           ? Colors.grey
-                          : Colors.amber,
+                          : level == 'Gold'
+                          ? Colors.amber
+                          : Colors.deepPurple,
                     ),
                   ),
                   children: moves.map((move) {
@@ -294,7 +300,7 @@ class _LearnScreenState extends State<LearnScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Card(
         elevation: 3,
-        shadowColor: Colors.black26,
+        shadowColor: Colors.black54,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
