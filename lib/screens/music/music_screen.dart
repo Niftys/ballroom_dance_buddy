@@ -144,8 +144,9 @@ class _MusicScreenState extends State<MusicScreen> {
             : null,
         actions: _selectedGenre != null
             ? [
-          IconButton(
+          TextButton.icon(
             icon: Icon(Icons.add, color: Colors.black87),
+            label: Text('Add Song'),
             onPressed: () => _addCustomSongToGenre(_selectedGenre!),
           )
         ]
@@ -243,7 +244,7 @@ class _MusicScreenState extends State<MusicScreen> {
               ),
               trailing: isCustomSong
                   ? IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
+                icon: Icon(Icons.delete, color: Colors.red.shade300),
                 onPressed: () => _removeCustomSong(songUrl),
               )
                   : null,
@@ -267,8 +268,8 @@ class _MusicScreenState extends State<MusicScreen> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          highlightColor: Colors.purple.withOpacity(0.2),
-          splashColor: Colors.purple.withOpacity(0.3),
+          highlightColor: Colors.purple.withValues(alpha: 0.2),
+          splashColor: Colors.purple.withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(

@@ -15,7 +15,7 @@
     </queries>
 
     <application
-        android:label="ballroom_dance_buddy"
+        android:label="Ballroom Dance Buddy"
         android:name="android.app.Application"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true">

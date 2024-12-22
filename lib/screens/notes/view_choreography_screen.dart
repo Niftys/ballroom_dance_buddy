@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import '/screens/learn/move_screen.dart';
 
 class ViewChoreographyScreen extends StatefulWidget {
   final int choreographyId;
@@ -114,6 +115,15 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
     } catch (e) {
       print("Error loading figures: $e");
     }
+  }
+
+  void _playVideo(Map<String, dynamic> figure) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MoveScreen(move: figure),
+      ),
+    );
   }
 
   void reorderFigures(int oldIndex, int newIndex) async {
@@ -294,6 +304,20 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
+                    icon: Icon(
+                      figure['video_url'] != null
+                          ? Icons.play_circle_outline
+                          : Icons.block,
+                      color: figure['video_url'] != null
+                          ? Colors.blueAccent
+                          : Colors.grey,
+                    ),
+                    onPressed: figure['video_url'] != null
+                        ? () => _playVideo(figure)
+                        : null,
+                    tooltip: figure['video_url'] != null ? 'Play Video' : 'No Video Available',
+                  ),
+                  IconButton(
                     icon: Icon(Icons.edit_note_rounded, color: Colors.deepPurple),
                     onPressed: () => _editNotes(
                       figure['choreography_figure_id'],
@@ -301,7 +325,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
+                    icon: Icon(Icons.delete, color: Colors.red.shade300),
                     onPressed: () => _removeFigure(figure['choreography_figure_id']),
                   ),
                 ],
@@ -311,7 +335,6 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
         }).toList(),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.purple.shade100,
         onPressed: _addFigure,
         child: Icon(Icons.add, color: Colors.deepPurple),
       ),

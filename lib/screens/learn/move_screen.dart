@@ -17,17 +17,15 @@ class _MoveScreenState extends State<MoveScreen> {
   bool _isFullScreen = false;
 
   late int start; // Start time in seconds
-  late int end; // End time in seconds
+  late int end;   // End time in seconds
 
   @override
   void initState() {
     super.initState();
-
     final String videoUrl = widget.move['video_url'] ?? '';
     start = widget.move['start'] ?? 0;
     end = widget.move['end'] ?? 0;
 
-    // Extract the video ID from the URL
     final String? videoId = YoutubePlayer.convertUrlToId(videoUrl);
 
     if (videoId != null) {
@@ -39,44 +37,31 @@ class _MoveScreenState extends State<MoveScreen> {
           startAt: start,
           enableCaption: false,
         ),
-      );
-
-      // Add listener to enforce seamless loop
-      _controller.addListener(_videoListener);
+      )..addListener(_videoListener);  // Attach listener
     }
   }
 
+  // Video loop and restrict seek logic
   void _videoListener() {
-    if (_controller.value.position.inSeconds >= end) {
-      // Immediately loop back to the start time
+    final currentPosition = _controller.value.position.inSeconds;
+
+    if (currentPosition >= end) {
+      _controller.seekTo(Duration(seconds: start));
+    } else if (currentPosition < start) {
       _controller.seekTo(Duration(seconds: start));
     }
   }
 
+  // Fullscreen toggle handling
   void _toggleFullscreen(bool isEntering) {
     setState(() => _isFullScreen = isEntering);
-
     if (isEntering) {
       widget.onFullscreenChange?.call(true);
-      // Hide system UI for fullscreen mode
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     } else {
       widget.onFullscreenChange?.call(false);
-      // Restore system UI
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
-  }
-
-  void _skipAhead() {
-    final currentPosition = _controller.value.position.inSeconds;
-    final newPosition = (currentPosition + 1).clamp(start, end);
-    _controller.seekTo(Duration(seconds: newPosition));
-  }
-
-  void _rewind() {
-    final currentPosition = _controller.value.position.inSeconds;
-    final newPosition = (currentPosition - 1).clamp(start, end);
-    _controller.seekTo(Duration(seconds: newPosition));
   }
 
   @override
@@ -124,7 +109,10 @@ class _MoveScreenState extends State<MoveScreen> {
               player: YoutubePlayer(
                 controller: _controller,
                 showVideoProgressIndicator: true,
-                onReady: () => _controller.play(),
+                onReady: () {
+                  _controller.play();
+                  _controller.seekTo(Duration(seconds: start));
+                },
               ),
               builder: (context, player) {
                 return Center(
@@ -136,32 +124,6 @@ class _MoveScreenState extends State<MoveScreen> {
               },
             ),
           ),
-          // Rewind and Skip Buttons
-          if (!_isFullScreen) // Show only when not in fullscreen mode
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_ios_outlined, size: 40),
-                    onPressed: _rewind,
-                    tooltip: "Rewind 1 second",
-                  ),
-                  SizedBox(width: 10), // Space between the left arrow and text
-                  Text(
-                    "1 sec.",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 10), // Space between the text and right arrow
-                  IconButton(
-                    icon: Icon(Icons.arrow_forward_ios_outlined, size: 40),
-                    onPressed: _skipAhead,
-                    tooltip: "Skip ahead 1 second",
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );

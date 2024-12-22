@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -8,55 +9,61 @@ class DatabaseService {
     final String path = join(await getDatabasesPath(), 'choreography.db');
     return openDatabase(
       path,
-      version: 27,
+      version: 41,
       onCreate: (database, version) async {
-        print("Creating database...");
+        if (kDebugMode) {
+          print("Creating database...");
+        }
         await _createTables(database);
         await _insertInitialData(database);
       },
       onUpgrade: (database, oldVersion, newVersion) async {
-        print("Upgrading database from version $oldVersion to $newVersion...");
-        await _dropTables(database);
-        await _createTables(database);
-        await _insertInitialData(database);
-        print("Database upgraded successfully.");
+        if (kDebugMode) {
+          print("Upgrading database from version \$oldVersion to \$newVersion...");
+        }
+        await _syncData(database);
+        if (kDebugMode) {
+          print("Database upgraded successfully.");
+        }
       },
     );
   }
 
   static Future<void> _createTables(Database database) async {
     await database.execute('''
-      CREATE TABLE styles (
+      CREATE TABLE IF NOT EXISTS styles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
+        name TEXT NOT NULL UNIQUE
       );
     ''');
     await database.execute('''
-      CREATE TABLE dances (
+      CREATE TABLE IF NOT EXISTS dances (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         style_id INTEGER NOT NULL,
         name TEXT NOT NULL,
+        UNIQUE(style_id, name),
         FOREIGN KEY(style_id) REFERENCES styles(id)
       );
     ''');
     await database.execute('''
-      CREATE TABLE figures (
+      CREATE TABLE IF NOT EXISTS figures (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         style_id INTEGER NOT NULL,
         dance_id INTEGER NOT NULL,
         level TEXT NOT NULL,
         description TEXT NOT NULL COLLATE NOCASE,
+        UNIQUE(style_id, dance_id, description),
         notes TEXT DEFAULT '' COLLATE NOCASE,
         video_url TEXT,
         start INTEGER DEFAULT 0,
         end INTEGER DEFAULT 0,
-        custom BOOLEAN DEFAULT 0, -- Custom figure flag
+        custom BOOLEAN DEFAULT 0,
         FOREIGN KEY(style_id) REFERENCES styles(id),
         FOREIGN KEY(dance_id) REFERENCES dances(id)
       );
     ''');
     await database.execute('''
-      CREATE TABLE choreographies (
+      CREATE TABLE IF NOT EXISTS choreographies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         style_id INTEGER NOT NULL,
@@ -67,7 +74,7 @@ class DatabaseService {
       );
     ''');
     await database.execute('''
-      CREATE TABLE choreography_figures (
+      CREATE TABLE IF NOT EXISTS choreography_figures (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         choreography_id INTEGER NOT NULL,
         figure_id INTEGER NOT NULL,
@@ -79,52 +86,164 @@ class DatabaseService {
     ''');
   }
 
-  static Future<void> _dropTables(Database database) async {
-    await database.execute("DROP TABLE IF EXISTS styles");
-    await database.execute("DROP TABLE IF EXISTS dances");
-    await database.execute("DROP TABLE IF EXISTS figures");
-    await database.execute("DROP TABLE IF EXISTS choreographies");
-    await database.execute("DROP TABLE IF EXISTS choreography_figures");
-  }
-
   static Future<void> _insertInitialData(Database database) async {
-    print("Inserting data from JSON...");
-    await _insertFiguresFromJson(database);
-    print("Data successfully inserted from JSON.");
+    if (kDebugMode) {
+      print("Inserting data from JSON...");
+    }
+    await _syncData(database);
+    if (kDebugMode) {
+      print("Data successfully inserted from JSON.");
+    }
   }
 
-  static Future<void> _insertFiguresFromJson(Database database) async {
+  static Future<void> _syncData(Database database) async {
     final String figuresJson = await rootBundle.loadString('assets/figures.json');
     final List<dynamic> stylesData = json.decode(figuresJson);
 
+    // Remove duplicates from tables
+    await _removeStyleDuplicates(database);
+    await database.execute('DELETE FROM dances WHERE id NOT IN (SELECT MIN(id) FROM dances GROUP BY style_id, name)');
+    await database.execute('DELETE FROM figures WHERE id NOT IN (SELECT MIN(id) FROM figures GROUP BY style_id, dance_id, description)');
+
+    final insertedStyles = <String>[];
+
     for (var style in stylesData) {
-      final styleId = await database.insert('styles', {'name': style['style']});
+      if (!insertedStyles.contains(style['style'])) {
+        await database.insert(
+          'styles',
+          {'name': style['style'] as String},
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        insertedStyles.add(style['style'] as String);
+      }
 
       for (var dance in style['dances']) {
-        final danceId = await database.insert('dances', {
-          'style_id': styleId,
-          'name': dance['name'],
-        });
+        final styleId = await _getStyleId(database, style['style'] as String);
 
-        final levels = dance['levels'];
-        levels.forEach((level, figures) async {
+        final existingDance = await database.query(
+          'dances',
+          where: 'name = ? AND style_id = ?',
+          whereArgs: [dance['name'], styleId],
+        );
+
+        if (existingDance.isEmpty) {
+          await database.insert(
+            'dances',
+            {
+              'style_id': styleId,
+              'name': dance['name'] as String,
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+        }
+
+        final levels = dance['levels'] as Map<String, dynamic>;
+        for (var entry in levels.entries) {
+          final level = entry.key;
+          final figures = entry.value as List<dynamic>;
+
           for (var figure in figures) {
-            try {
-              await database.insert('figures', {
-                'style_id': styleId,
-                'dance_id': danceId,
-                'level': level,  // Newcomer levels from JSON
-                'description': figure['description'],
-                'notes': figure['notes'] ?? '',
-                'video_url': figure['video_url'] ?? '',
-                'start': figure['start'] ?? 0,
-                'end': figure['end'] ?? 0,
-              });
-            } catch (e) {
-              print("Error inserting figure: ${figure['description']}, $e");
+            final danceId = await _getDanceId(database, dance['name'] as String, style['style'] as String);
+
+            final existingFigure = await database.query(
+              'figures',
+              where: 'description = ? AND dance_id = ? AND style_id = ?',
+              whereArgs: [figure['description'], danceId, styleId],
+            );
+
+            if (existingFigure.isEmpty) {
+              await database.insert(
+                'figures',
+                {
+                  'style_id': styleId,
+                  'dance_id': danceId,
+                  'level': level,
+                  'description': figure['description'] as String,
+                  'notes': figure['notes'] as String? ?? '',
+                  'video_url': figure['video_url'] as String? ?? '',
+                  'start': figure['start'] as int? ?? 0,
+                  'end': figure['end'] as int? ?? 0,
+                },
+                conflictAlgorithm: ConflictAlgorithm.ignore,
+              );
             }
           }
-        });
+        }
+      }
+    }
+  }
+
+  static Future<void> _removeStyleDuplicates(Database database) async {
+    final duplicates = await database.rawQuery('''
+    SELECT name, MIN(id) as min_id FROM styles
+    GROUP BY name HAVING COUNT(name) > 1
+  ''');
+
+    for (final duplicate in duplicates) {
+      final name = duplicate['name'] as String;
+      final minId = duplicate['min_id'] as int;
+
+      await database.execute('''
+      UPDATE dances SET style_id = ? WHERE style_id IN (
+        SELECT id FROM styles WHERE name = ? AND id != ?
+      )
+    ''', [minId, name, minId]);
+
+      await database.execute('''
+      UPDATE figures SET style_id = ? WHERE style_id IN (
+        SELECT id FROM styles WHERE name = ? AND id != ?
+      )
+    ''', [minId, name, minId]);
+
+      await database.execute('''
+      DELETE FROM styles WHERE name = ? AND id != ?
+    ''', [name, minId]);
+    }
+  }
+
+  static Future<int> _getStyleId(Database db, String styleName) async {
+    final result = await db.query('styles', where: 'name = ?', whereArgs: [styleName], limit: 1);
+    return result.first['id'] as int;
+  }
+
+  static Future<int> _getDanceId(Database db, String danceName, String styleName) async {
+    final styleId = await _getStyleId(db, styleName);
+    final result = await db.query(
+      'dances',
+      where: 'name = ? AND style_id = ?',
+      whereArgs: [danceName, styleId],
+      limit: 1,
+    );
+    return result.first['id'] as int;
+  }
+
+  static Future<void> addOrUpdateChoreography({
+    required String name,
+    required int styleId,
+    required int danceId,
+    required String level,
+  }) async {
+    final db = await initializeDB();
+
+    await db.insert(
+      'choreographies',
+      {
+        'name': name,
+        'style_id': styleId,
+        'dance_id': danceId,
+        'level': level,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<void> deleteMissingChoreographies(List<int> currentIds) async {
+    final db = await initializeDB();
+
+    final existingIds = (await db.query('choreographies')).map((e) => e['id'] as int).toList();
+    for (var id in existingIds) {
+      if (!currentIds.contains(id)) {
+        await db.delete('choreographies', where: 'id = ?', whereArgs: [id]);
       }
     }
   }
@@ -336,7 +455,10 @@ class DatabaseService {
   // Fetch methods
   static Future<List<Map<String, dynamic>>> getAllStyles() async {
     final db = await _db();
-    return await db.query('styles');
+    return await db.query(
+      'styles',
+      where: 'id IN (1, 2, 3)',  // Only show styles with ids 1, 2, and 3
+    );
   }
 
   static Future<List<Map<String, dynamic>>> getAllFigures() async {

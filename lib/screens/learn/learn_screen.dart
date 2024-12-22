@@ -37,8 +37,9 @@ class _LearnScreenState extends State<LearnScreen> {
     try {
       final moves = await DatabaseService.getAllFigures();
       setState(() {
-        _allMoves = moves;
-        _filteredMoves = moves;
+        _allMoves.clear();  // Clear before inserting new data
+        _allMoves.addAll(moves);
+        _filteredMoves = List.from(_allMoves);
       });
     } catch (e) {
       print("Error loading all moves: $e");
@@ -133,14 +134,15 @@ class _LearnScreenState extends State<LearnScreen> {
   Map<String, List<Map<String, dynamic>>> _groupFiguresDynamically(List<Map<String, dynamic>> figures) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
 
-    // Group figures by their level
     for (final figure in figures) {
       final level = figure['level'] as String;
 
-      if (!grouped.containsKey(level)) {
-        grouped[level] = [];
+      grouped.putIfAbsent(level, () => []);
+
+      // Check if description already exists to avoid duplicates
+      if (!grouped[level]!.any((item) => item['description'] == figure['description'])) {
+        grouped[level]!.add(figure);
       }
-      grouped[level]!.add(figure);
     }
 
     // Sort each level by insertion order (ID)
@@ -307,8 +309,8 @@ class _LearnScreenState extends State<LearnScreen> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          highlightColor: Colors.purple.withOpacity(0.2),
-          splashColor: Colors.purple.withOpacity(0.3),
+          highlightColor: Colors.purple.withValues(alpha: 0.2),
+          splashColor: Colors.purple.withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(

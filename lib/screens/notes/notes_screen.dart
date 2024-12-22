@@ -379,7 +379,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete, color: Colors.red.shade300),
                   onPressed: () => _deleteChoreography(choreo['id'] as int),
                 ),
               ],
@@ -434,7 +434,7 @@ class _NotesScreenState extends State<NotesScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
+                          icon: Icon(Icons.delete, color: Colors.red.shade300),
                           onPressed: () => _deleteChoreography(choreo['id'] as int),
                         ),
                       ],

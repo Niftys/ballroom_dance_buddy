@@ -90,7 +90,6 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
 
   void _addCustomFigure() async {
     final TextEditingController _descriptionController = TextEditingController();
-    final TextEditingController _notesController = TextEditingController();
 
     final result = await showDialog<Map<String, String>>(
       context: context,
@@ -104,11 +103,6 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
                 controller: _descriptionController,
                 decoration: InputDecoration(labelText: "Description"),
               ),
-              TextField(
-                controller: _notesController,
-                decoration: InputDecoration(labelText: "Notes"),
-                maxLines: null,
-              ),
             ],
           ),
           actions: [
@@ -119,7 +113,6 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context, {
                 'description': _descriptionController.text,
-                'notes': _notesController.text,
               }),
               child: Text("Save"),
             ),
@@ -207,7 +200,7 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
                   onTap: () => _addFigure(figure['id']),
                   trailing: figure['custom'] == 1
                       ? IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
+                    icon: Icon(Icons.delete, color: Colors.red.shade300),
                     onPressed: () => _deleteCustomFigure(figure['id']),
                   )
                       : null,
