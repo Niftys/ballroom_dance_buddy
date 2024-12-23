@@ -11,15 +11,8 @@ import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Handle file intents if the app is launched with one
-  String? fileUri;
-  if (Platform.isAndroid) {
-    // Check for file intent
-    final args = await File.fromUri(Uri.base).exists() ? Uri.base.toString() : null;
-    fileUri = args;
-  }
-  runApp(BallroomDanceBuddy(fileUri: fileUri));
+  await DatabaseService.initializeDB();
+  runApp(BallroomDanceBuddy());
 }
 
 class BallroomDanceBuddy extends StatelessWidget {
