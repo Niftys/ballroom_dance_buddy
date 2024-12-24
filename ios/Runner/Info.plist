@@ -10,8 +10,11 @@
     <string>This app uses the microphone to record notes or music during dance practice.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>This app accesses the photo library to import and save dance-related media files.</string>
-    <key>NSUserDocumentsUsageDescription</key>
+    <key>NSDocumentsDirectoryUsageDescription</key>
     <string>Access files for choreography and music files.</string>
+    <key>NSFileProviderDomainUsageDescription</key>
+    <string>Access files from external locations for choreography and music files.</string>
+
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
@@ -32,14 +35,17 @@
     <string>????</string>
     <key>CFBundleVersion</key>
     <string>$(FLUTTER_BUILD_NUMBER)</string>
+
     <key>UIBackgroundModes</key>
     <array>
       <string>audio</string>
     </array>
+
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UILaunchStoryboardName</key>
     <string>LaunchScreen</string>
+
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
@@ -73,6 +79,7 @@
     <true/>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
+
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
