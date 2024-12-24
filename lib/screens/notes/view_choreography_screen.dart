@@ -118,10 +118,18 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
   }
 
   void _playVideo(Map<String, dynamic> figure) {
+    final String? videoUrl = figure['video_url'];
+    if (videoUrl == null || videoUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No video available for this move.")),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MoveScreen(move: figure),
+        builder: (context) => MoveScreen(move: figure),  // Pass figure to MoveScreen
       ),
     );
   }

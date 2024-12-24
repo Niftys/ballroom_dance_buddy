@@ -8,7 +8,7 @@ class DatabaseService {
     final String path = join(await getDatabasesPath(), 'choreography.db');
     return openDatabase(
       path,
-      version: 41,
+      version: 46,
       onCreate: (database, version) async {
         print("Creating database...");
         await _createTables(database);
@@ -50,7 +50,8 @@ class DatabaseService {
         video_url TEXT,
         start INTEGER DEFAULT 0,
         end INTEGER DEFAULT 0,
-        custom BOOLEAN DEFAULT 0, -- Custom figure flag
+        custom BOOLEAN DEFAULT 0,
+        UNIQUE(style_id, dance_id, description),
         FOREIGN KEY(style_id) REFERENCES styles(id),
         FOREIGN KEY(dance_id) REFERENCES dances(id)
       );
@@ -96,30 +97,42 @@ class DatabaseService {
     final List<dynamic> stylesData = json.decode(figuresJson);
 
     for (var style in stylesData) {
-      final styleId = await database.insert('styles', {'name': style['style']});
+      final styleId = await database.insert(
+        'styles',
+        {'name': style['style']},
+        conflictAlgorithm: ConflictAlgorithm.ignore,  // Avoid duplicate styles
+      );
 
       for (var dance in style['dances']) {
-        final danceId = await database.insert('dances', {
-          'style_id': styleId,
-          'name': dance['name'],
-        });
+        final danceId = await database.insert(
+          'dances',
+          {
+            'style_id': styleId,
+            'name': dance['name'],
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore,  // Avoid duplicate dances
+        );
 
         final levels = dance['levels'];
         levels.forEach((level, figures) async {
           for (var figure in figures) {
             try {
-              await database.insert('figures', {
-                'style_id': styleId,
-                'dance_id': danceId,
-                'level': level,
-                'description': figure['description'],
-                'notes': figure['notes'] ?? '',
-                'video_url': figure['video_url'] ?? '',
-                'start': figure['start'] ?? 0,
-                'end': figure['end'] ?? 0,
-              });
+              await database.insert(
+                'figures',
+                {
+                  'style_id': styleId,
+                  'dance_id': danceId,
+                  'level': level,
+                  'description': figure['description'],
+                  'notes': figure['notes'] ?? '',
+                  'video_url': figure['video_url'] ?? '',
+                  'start': figure['start'] ?? 0,
+                  'end': figure['end'] ?? 0,
+                },
+                conflictAlgorithm: ConflictAlgorithm.ignore,  // Skip duplicate figures
+              );
             } catch (e) {
-              print("Error inserting figure: \${figure['description']}, \$e");
+              print("Duplicate figure skipped: ${figure['description']}");
             }
           }
         });

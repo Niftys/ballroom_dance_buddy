@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 class MoveScreen extends StatefulWidget {
   final Map<String, dynamic> move;
@@ -15,9 +15,11 @@ class MoveScreen extends StatefulWidget {
 class _MoveScreenState extends State<MoveScreen> {
   late YoutubePlayerController _controller;
   bool _isFullScreen = false;
+  bool _videoError = false;
+  Timer? _loopTimer;
 
-  late int start; // Start time in seconds
-  late int end;   // End time in seconds
+  late int start;
+  late int end;
 
   @override
   void initState() {
@@ -26,64 +28,79 @@ class _MoveScreenState extends State<MoveScreen> {
     start = widget.move['start'] ?? 0;
     end = widget.move['end'] ?? 0;
 
-    final String? videoId = YoutubePlayer.convertUrlToId(videoUrl);
+    final String? videoId = YoutubePlayerController.convertUrlToId(videoUrl);
 
-    if (videoId != null) {
-      _controller = YoutubePlayerController(
-        initialVideoId: videoId,
-        flags: YoutubePlayerFlags(
-          autoPlay: true,
+    if (videoId == null) {
+      setState(() {
+        _videoError = true;
+      });
+      return;
+    }
+
+    try {
+      _controller = YoutubePlayerController.fromVideoId(
+        videoId: videoId,
+        params: YoutubePlayerParams(
+          showControls: true,
+          showFullscreenButton: true,
           mute: false,
-          startAt: start,
-          enableCaption: false,
         ),
-      )..addListener(_videoListener);  // Attach listener
+      );
+
+      _controller.cueVideoById(
+        videoId: videoId,
+        startSeconds: start.toDouble(),
+      );
+
+      // Start looping check
+      _startLoopCheck(videoId);
+    } catch (e) {
+      print("Error initializing video: $e");
+      setState(() {
+        _videoError = true;
+      });
     }
   }
 
-  // Video loop and restrict seek logic
-  void _videoListener() {
-    final currentPosition = _controller.value.position.inSeconds;
+  // Periodic check for video loop
+  void _startLoopCheck(String videoId) {
+    _loopTimer = Timer.periodic(Duration(milliseconds: 300), (timer) async {
+      final currentPosition = await _controller.currentTime;
 
-    if (currentPosition >= end) {
-      _controller.seekTo(Duration(seconds: start));
-    } else if (currentPosition < start) {
-      _controller.seekTo(Duration(seconds: start));
-    }
-  }
+      if (currentPosition >= end) {
 
-  // Fullscreen toggle handling
-  void _toggleFullscreen(bool isEntering) {
-    setState(() => _isFullScreen = isEntering);
-    if (isEntering) {
-      widget.onFullscreenChange?.call(true);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    } else {
-      widget.onFullscreenChange?.call(false);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    }
+        // Pause and reload video from start
+        _controller.pauseVideo();
+        await Future.delayed(Duration(milliseconds: 100));
+
+        // Force reload from start time to avoid playback continuation
+        _controller.loadVideoById(
+          videoId: videoId,
+          startSeconds: start.toDouble(),
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_videoListener);
-    _controller.dispose();
+    _loopTimer?.cancel();
+    _controller.stopVideo();
+    _controller.close();
+    _controller = YoutubePlayerController(); // Reset controller to avoid lingering references
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final String videoUrl = widget.move['video_url'] ?? '';
-    final String? videoId = YoutubePlayer.convertUrlToId(videoUrl);
-
-    if (videoId == null) {
+    if (_videoError) {
       return Scaffold(
         appBar: AppBar(
           title: Text(widget.move['description'] ?? 'Move Details'),
         ),
         body: Center(
           child: Text(
-            'No video available for this move.',
+            'Failed to load video.',
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
         ),
@@ -103,25 +120,9 @@ class _MoveScreenState extends State<MoveScreen> {
       body: Column(
         children: [
           Expanded(
-            child: YoutubePlayerBuilder(
-              onEnterFullScreen: () => _toggleFullscreen(true),
-              onExitFullScreen: () => _toggleFullscreen(false),
-              player: YoutubePlayer(
-                controller: _controller,
-                showVideoProgressIndicator: true,
-                onReady: () {
-                  _controller.play();
-                  _controller.seekTo(Duration(seconds: start));
-                },
-              ),
-              builder: (context, player) {
-                return Center(
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: player,
-                  ),
-                );
-              },
+            child: YoutubePlayer(
+              controller: _controller,
+              aspectRatio: 16 / 9,
             ),
           ),
         ],
