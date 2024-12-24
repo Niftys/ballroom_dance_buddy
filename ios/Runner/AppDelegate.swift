@@ -11,7 +11,10 @@ import youtube_player_iframe
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
+    // Direct import of GeneratedPluginRegistrant if needed
+    let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
+    GeneratedPluginRegistrant.register(with: controller)
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
