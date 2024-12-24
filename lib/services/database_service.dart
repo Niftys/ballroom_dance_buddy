@@ -8,7 +8,7 @@ class DatabaseService {
     final String path = join(await getDatabasesPath(), 'choreography.db');
     return openDatabase(
       path,
-      version: 40,
+      version: 41,
       onCreate: (database, version) async {
         print("Creating database...");
         await _createTables(database);
@@ -56,7 +56,7 @@ class DatabaseService {
       );
     ''');
     await database.execute('''
-      CREATE TABLE choreographies (
+      CREATE TABLE IF NOT EXISTS choreographies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         style_id INTEGER NOT NULL,
@@ -67,7 +67,7 @@ class DatabaseService {
       );
     ''');
     await database.execute('''
-      CREATE TABLE choreography_figures (
+      CREATE TABLE IF NOT EXISTS choreography_figures (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         choreography_id INTEGER NOT NULL,
         figure_id INTEGER NOT NULL,
@@ -83,8 +83,6 @@ class DatabaseService {
     await database.execute("DROP TABLE IF EXISTS styles");
     await database.execute("DROP TABLE IF EXISTS dances");
     await database.execute("DROP TABLE IF EXISTS figures");
-    await database.execute("DROP TABLE IF EXISTS choreographies");
-    await database.execute("DROP TABLE IF EXISTS choreography_figures");
   }
 
   static Future<void> _insertInitialData(Database database) async {
