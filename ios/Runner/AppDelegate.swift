@@ -10,4 +10,7 @@ import UIKit
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
+  if #available(iOS 14.0, *) {
+    application.registerForRemoteNotifications()
+  }
 }

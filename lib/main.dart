@@ -11,7 +11,11 @@ import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseService.initializeDB();
+  try {
+    await DatabaseService.initializeDB();
+  } catch (e) {
+    print("Database failed to initialize: $e");
+  }
   runApp(BallroomDanceBuddy());
 }
 
@@ -128,17 +132,38 @@ class ImportHandlerScreen extends StatelessWidget {
 
   Future<void> _handleFile(BuildContext context) async {
     try {
-      // Read the file
+      // Parse the file URI and check if the file exists
       final file = File(Uri.parse(fileUri).path);
-      final content = await file.readAsString();
-      final data = jsonDecode(content);
 
-      // Import choreography into the database
+      if (!file.existsSync()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("File not found. Please check the path and try again.")),
+        );
+        Navigator.pop(context); // Go back if file is missing
+        return;
+      }
+
+      // Read and decode the file
+      final content = await file.readAsString();
+
+      // Validate JSON content
+      late final dynamic data;
+      try {
+        data = jsonDecode(content);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid file format. Unable to parse JSON.")),
+        );
+        Navigator.pop(context);  // Return to main screen if JSON is invalid
+        return;
+      }
+
+      // Process choreography and figures
       final choreography = data['choreography'];
       final figures = data['figures'];
 
       if (choreography == null || figures == null) {
-        throw FormatException("Invalid file format");
+        throw const FormatException("Invalid file structure. Missing choreography or figures.");
       }
 
       final choreographyId = await DatabaseService.addChoreography(
@@ -156,9 +181,9 @@ class ImportHandlerScreen extends StatelessWidget {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")));
+        SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")),
+      );
 
-      // Navigate to the ViewChoreographyScreen for the imported choreography
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -174,7 +199,7 @@ class ImportHandlerScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to import choreography: $e")),
       );
-      Navigator.pop(context); // Return to the main screen if failed
+      Navigator.pop(context);  // Return to main screen if any error occurs
     }
   }
 
