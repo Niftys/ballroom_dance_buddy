@@ -2,13 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>Required for capturing dance videos and images.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>This app does not use the microphone.</string>
+    <string>This app uses the microphone to record notes or music during dance practice.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>This app does not use the photo library.</string>
-    <key>NSDocumentsDirectoryUsageDescription</key>
+    <string>This app accesses the photo library to import and save dance-related media files.</string>
+    <key>NSUserDocumentsUsageDescription</key>
     <string>Access files for choreography and music files.</string>
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
@@ -38,10 +38,6 @@
     <true/>
     <key>UILaunchStoryboardName</key>
     <string>LaunchScreen</string>
-    <key>UIMainStoryboardFile</key>
-    <string>Main</string>
-
-    <!-- Fix applied here -->
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
