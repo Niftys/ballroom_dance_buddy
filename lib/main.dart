@@ -163,13 +163,12 @@ class ImportHandlerScreen extends StatelessWidget {
   ImportHandlerScreen({required this.fileUri});
 
   Future<Directory> _getSafeDirectory() async {
-    try {
-      return await getApplicationDocumentsDirectory();
-    } catch (e) {
-      print("Fallback to system temp directory: $e");
+    if (Platform.isIOS) {
       return Directory.systemTemp;
     }
+    return getApplicationDocumentsDirectory();
   }
+
 
   // Modify _handleFile to use safe directory loading
   Future<void> _handleFile(BuildContext context) async {
