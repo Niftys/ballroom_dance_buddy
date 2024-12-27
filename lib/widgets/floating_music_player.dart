@@ -20,7 +20,7 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
   bool _isPlaying = false;
 
   // Tempo estimation variables
-  List<DateTime> _tapTimes = [];
+  final _tapTimes = [];
   int _baseBPM = 0; // Original tapped BPM
   int _adjustedBPM = 0; // BPM adjusted by tempo multiplier
 

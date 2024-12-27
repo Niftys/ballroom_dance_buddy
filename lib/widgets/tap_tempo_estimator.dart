@@ -10,7 +10,7 @@ class TapTempoEstimator extends StatefulWidget {
 }
 
 class _TapTempoEstimatorState extends State<TapTempoEstimator> {
-  List<DateTime> _tapTimes = []; // Store tap timestamps
+  final _tapTimes = []; // Store tap timestamps
   int _calculatedBPM = 0; // Displayed BPM
 
   void _recordTap() {
