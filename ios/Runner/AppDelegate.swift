@@ -9,10 +9,6 @@ import Flutter
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
 
-    DispatchQueue.main.async {
-      PathProviderPlugin.register(with: self.registrar(forPlugin: "PathProviderPlugin")!)
-    }
-
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
