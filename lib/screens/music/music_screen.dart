@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:just_audio/just_audio.dart';
 
 class MusicScreen extends StatefulWidget {
@@ -52,26 +51,20 @@ class _MusicScreenState extends State<MusicScreen> {
   Directory? _appDocDir;
 
   Future<Directory> _getAppDocDir() async {
-    _appDocDir ??= await getApplicationDocumentsDirectory();
-    return _appDocDir!;
+    return Directory.systemTemp;  // Store music in temp directory
   }
 
   Future<Directory> _getGenreSpecificCustomSongsDirectory(String genre) async {
-    try {
-      final directory = await _getAppDocDir();
-      final customSongsDir = Directory('${directory.path}/CustomSongs/$genre');
+    final directory = await _getAppDocDir();
+    final customSongsDir = Directory('${directory.path}/CustomSongs/$genre');
 
-      if (!await customSongsDir.exists()) {
-        await customSongsDir.create(recursive: true);
-        if (kDebugMode) {
-          print('Directory created at: ${customSongsDir.path}');
-        }
+    if (!await customSongsDir.exists()) {
+      await customSongsDir.create(recursive: true);
+      if (kDebugMode) {
+        print('Directory created at: ${customSongsDir.path}');
       }
-      return customSongsDir;
-    } catch (e) {
-      print('Error accessing or creating directory: $e');
-      return await getTemporaryDirectory();
     }
+    return customSongsDir;
   }
 
   Future<void> _loadCustomSongsForGenre(String genre) async {

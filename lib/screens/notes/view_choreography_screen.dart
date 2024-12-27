@@ -5,7 +5,6 @@ import 'add_figure_screen.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import '/screens/learn/move_screen.dart';
 
@@ -54,8 +53,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
   Directory? _appDocDir;
 
   Future<Directory> _getAppDocDir() async {
-    _appDocDir ??= await getApplicationDocumentsDirectory();
-    return _appDocDir!;
+    return Directory.systemTemp;  // Use temp directory directly
   }
 
   Future<void> _exportChoreography() async {

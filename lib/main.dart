@@ -9,7 +9,6 @@ import 'widgets/floating_music_player.dart';
 import '/services/database_service.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:path_provider/path_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -163,10 +162,7 @@ class ImportHandlerScreen extends StatelessWidget {
   ImportHandlerScreen({required this.fileUri});
 
   Future<Directory> _getSafeDirectory() async {
-    if (Platform.isIOS) {
-      return Directory.systemTemp;
-    }
-    return getApplicationDocumentsDirectory();
+    return Directory.systemTemp;
   }
 
 
