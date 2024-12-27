@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '/services/database_service.dart';
 import 'view_choreography_screen.dart';
@@ -60,7 +61,9 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
         _selectedLevel = _levels.first;
       });
     } catch (e) {
-      print("Error loading styles: $e");
+      if (kDebugMode) {
+        print("Error loading styles: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load styles")),
       );
@@ -93,7 +96,9 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
         }
       }
     } catch (e) {
-      print("Error initializing editor for editing: $e");
+      if (kDebugMode) {
+        print("Error initializing editor for editing: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to initialize editor")),
       );
@@ -124,7 +129,9 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
         }
       });
     } catch (e) {
-      print("Error loading dances for style '$styleName': $e");
+      if (kDebugMode) {
+        print("Error loading dances for style '$styleName': $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load dances for the selected style")),
       );
@@ -184,7 +191,9 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
             (route) => route.isFirst, // Keep only the first screen in the stack
       );
     } catch (e) {
-      print("Error saving choreography: $e");
+      if (kDebugMode) {
+        print("Error saving choreography: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to save choreography: ${e.toString()}")),
       );

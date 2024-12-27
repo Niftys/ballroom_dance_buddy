@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '/services/database_service.dart';
 
@@ -44,7 +45,9 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
       final organized = _groupFiguresByLevel(figures);
       organized['Custom'] = customFigures;
 
-      print("Organized figures by levels: ${organized.keys}");
+      if (kDebugMode) {
+        print("Organized figures by levels: ${organized.keys}");
+      }
 
       organized.removeWhere((key, value) => value.isEmpty);
 
@@ -52,7 +55,9 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
         _organizedFigures = organized;
       });
     } catch (e) {
-      print("Error loading figures: $e");
+      if (kDebugMode) {
+        print("Error loading figures: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load figures.")),
       );
@@ -77,11 +82,15 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
         figureId: figureId,
       );
 
-      print("Figure added to choreography with ID: $choreographyFigureId");
+      if (kDebugMode) {
+        print("Figure added to choreography with ID: $choreographyFigureId");
+      }
       _loadAvailableFigures();  // Refresh the list after adding
       Navigator.pop(context, true);  // Close and refresh the View Choreography screen
     } catch (e) {
-      print("Error adding figure: $e");
+      if (kDebugMode) {
+        print("Error adding figure: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to add figure")),
       );
@@ -123,14 +132,6 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
 
     if (result != null) {
       try {
-        final figureId = await DatabaseService.addCustomFigure(
-          choreographyId: widget.choreographyId,
-          styleId: widget.styleId,
-          danceId: widget.danceId,
-          description: result['description']!,
-          notes: result['notes'] ?? '',
-        );
-
         _loadAvailableFigures();  // Refresh the list
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +146,9 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
       await DatabaseService.deleteCustomFigure(figureId);
       _loadAvailableFigures();  // Refresh the list after deletion
     } catch (e) {
-      print("Error deleting custom figure: $e");
+      if (kDebugMode) {
+        print("Error deleting custom figure: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to delete custom figure.")),
       );

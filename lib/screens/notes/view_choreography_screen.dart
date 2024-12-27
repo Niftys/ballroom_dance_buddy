@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '/services/database_service.dart';
 import 'add_figure_screen.dart';
@@ -84,17 +85,25 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
         final data = jsonDecode(responseBody);
         final shareableLink = data['link']; // File.io returns a 'link' field
 
-        print("Upload successful: $shareableLink. This link will expire after 14 days or one use.");
+        if (kDebugMode) {
+          print("Upload successful: $shareableLink. This link will expire after 14 days or one use.");
+        }
 
         // Share the link
         await Share.share("Check my new choreography, ${_choreographyName}! Copy this link into your app: $shareableLink");
       } else {
-        print("Response code: ${response.statusCode}");
-        print("Response reason: ${response.reasonPhrase}");
+        if (kDebugMode) {
+          print("Response code: ${response.statusCode}");
+        }
+        if (kDebugMode) {
+          print("Response reason: ${response.reasonPhrase}");
+        }
         throw Exception("Failed to upload choreography. Status: ${response.statusCode}");
       }
     } catch (e) {
-      print("Export error: $e");
+      if (kDebugMode) {
+        print("Export error: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to export choreography: $e")),
       );
@@ -108,12 +117,18 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
         _figures = figures;
       });
 
-      print("Figures loaded: ${figures.length}");
+      if (kDebugMode) {
+        print("Figures loaded: ${figures.length}");
+      }
       for (var figure in figures) {
-        print("Loaded figure: ${figure['description']} with ID: ${figure['choreography_figure_id']} and notes: ${figure['notes']}");
+        if (kDebugMode) {
+          print("Loaded figure: ${figure['description']} with ID: ${figure['choreography_figure_id']} and notes: ${figure['notes']}");
+        }
       }
     } catch (e) {
-      print("Error loading figures: $e");
+      if (kDebugMode) {
+        print("Error loading figures: $e");
+      }
     }
   }
 
@@ -152,9 +167,13 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
           newPosition: i,
         );
       }
-      print("Figure order updated successfully.");
+      if (kDebugMode) {
+        print("Figure order updated successfully.");
+      }
     } catch (e) {
-      print("Error updating figure order in the database: $e");
+      if (kDebugMode) {
+        print("Error updating figure order in the database: $e");
+      }
       await _loadFigures();
     }
   }
@@ -189,14 +208,18 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
 
     if (updatedNotes != null) {
       try {
-        print("Updating notes for: $choreographyFigureId");
+        if (kDebugMode) {
+          print("Updating notes for: $choreographyFigureId");
+        }
         await DatabaseService.updateFigureNotes(choreographyFigureId, updatedNotes);
         await _loadFigures();  // Force re-fetch after updating notes
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Notes updated successfully.")),
         );
       } catch (e) {
-        print("Error updating notes: $e");
+        if (kDebugMode) {
+          print("Error updating notes: $e");
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to save notes.")),
         );
@@ -232,7 +255,9 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
         SnackBar(content: Text("Figure removed from choreography.")),
       );
     } catch (e) {
-      print("Error removing figure: $e");
+      if (kDebugMode) {
+        print("Error removing figure: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to delete figure.")),
       );
@@ -254,7 +279,9 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
           IconButton(
             icon: Icon(Icons.share),
             onPressed: () {
-              print("Share button clicked"); // Debug log
+              if (kDebugMode) {
+                print("Share button clicked");
+              } // Debug log
               _exportChoreography(); // Call the function
             },
           ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -49,12 +50,34 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Future<Directory> _getGenreSpecificCustomSongsDirectory(String genre) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final customSongsDir = Directory('${directory.path}/CustomSongs/$genre');
-    if (!await customSongsDir.exists()) {
-      await customSongsDir.create(recursive: true);
+    try {
+      // Get the application documents directory
+      final directory = await getApplicationDocumentsDirectory();
+
+      // Construct the custom songs directory path
+      final customSongsDir = Directory('${directory.path}/CustomSongs/$genre');
+
+      // Check if the directory exists, create if not
+      if (!await customSongsDir.exists()) {
+        await customSongsDir.create(recursive: true);
+        if (kDebugMode) {
+          print('Directory created at: ${customSongsDir.path}');
+        }
+      } else {
+        if (kDebugMode) {
+          print('Directory already exists at: ${customSongsDir.path}');
+        }
+      }
+
+      return customSongsDir;
+    } catch (e) {
+      // Catch any errors during the process
+      if (kDebugMode) {
+        print('Error accessing or creating directory: $e');
+      }
+      // Fallback to a temporary directory if something goes wrong
+      return await getTemporaryDirectory();
     }
-    return customSongsDir;
   }
 
   Future<void> _loadCustomSongsForGenre(String genre) async {

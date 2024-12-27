@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -10,16 +11,22 @@ class DatabaseService {
       path,
       version: 46,
       onCreate: (database, version) async {
-        print("Creating database...");
+        if (kDebugMode) {
+          print("Creating database...");
+        }
         await _createTables(database);
         await _insertInitialData(database);
       },
       onUpgrade: (database, oldVersion, newVersion) async {
-        print("Upgrading database from version \$oldVersion to \$newVersion...");
+        if (kDebugMode) {
+          print("Upgrading database from version \$oldVersion to \$newVersion...");
+        }
         await _dropTables(database);
         await _createTables(database);
         await _insertInitialData(database);
-        print("Database upgraded successfully.");
+        if (kDebugMode) {
+          print("Database upgraded successfully.");
+        }
       },
     );
   }
@@ -87,9 +94,13 @@ class DatabaseService {
   }
 
   static Future<void> _insertInitialData(Database database) async {
-    print("Inserting data from JSON...");
+    if (kDebugMode) {
+      print("Inserting data from JSON...");
+    }
     await _insertFiguresFromJson(database);
-    print("Data successfully inserted from JSON.");
+    if (kDebugMode) {
+      print("Data successfully inserted from JSON.");
+    }
   }
 
   static Future<void> _insertFiguresFromJson(Database database) async {
@@ -132,7 +143,9 @@ class DatabaseService {
                 conflictAlgorithm: ConflictAlgorithm.ignore,  // Skip duplicate figures
               );
             } catch (e) {
-              print("Duplicate figure skipped: ${figure['description']}");
+              if (kDebugMode) {
+                print("Duplicate figure skipped: ${figure['description']}");
+              }
             }
           }
         });
@@ -357,7 +370,9 @@ static Future<void> addOrUpdateChoreography({
 
       return stylesAndDances;
     } catch (e) {
-      print("Error reading JSON: $e");
+      if (kDebugMode) {
+        print("Error reading JSON: $e");
+      }
       return {};
     }
   }
@@ -432,7 +447,9 @@ static Future<void> addOrUpdateChoreography({
         ? ['Bronze', 'Silver']
         : ['Bronze', 'Silver', 'Gold']);  // Intl. filtering logic
 
-    print("Fetching figures for ${isCountryWestern ? 'Country Western' : 'International'} - Levels: $levelsToInclude");
+    if (kDebugMode) {
+      print("Fetching figures for ${isCountryWestern ? 'Country Western' : 'International'} - Levels: $levelsToInclude");
+    }
 
     // Fetch figures based on filtered levels
     return await db.query(
@@ -479,7 +496,9 @@ static Future<void> addOrUpdateChoreography({
       'notes': '',
     });
 
-    print("Inserted into choreography_figures with ID: $choreographyFigureId");
+    if (kDebugMode) {
+      print("Inserted into choreography_figures with ID: $choreographyFigureId");
+    }
     return choreographyFigureId;
   }
 
@@ -492,9 +511,13 @@ static Future<void> addOrUpdateChoreography({
       whereArgs: [choreographyFigureId],
     );
 
-    print("Rows updated: $updatedRows");
+    if (kDebugMode) {
+      print("Rows updated: $updatedRows");
+    }
     if (updatedRows == 0) {
-      print("No row found with id: $choreographyFigureId");
+      if (kDebugMode) {
+        print("No row found with id: $choreographyFigureId");
+      }
     }
   }
 

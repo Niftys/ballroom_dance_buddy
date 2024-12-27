@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '/services/database_service.dart';
 import 'move_screen.dart';
@@ -42,7 +43,9 @@ class _LearnScreenState extends State<LearnScreen> {
         _filteredMoves = List.from(_allMoves);
       });
     } catch (e) {
-      print("Error loading all moves: $e");
+      if (kDebugMode) {
+        print("Error loading all moves: $e");
+      }
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'screens/music/music_screen.dart';
@@ -14,7 +15,9 @@ void main() async {
   try {
     await DatabaseService.initializeDB();
   } catch (e) {
-    print("Database failed to initialize: $e");
+    if (kDebugMode) {
+      print("Database failed to initialize: $e");
+    }
   }
   runApp(BallroomDanceBuddy());
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '/services/database_service.dart';
 import '/screens/notes/add_choreography_screen.dart';
@@ -146,7 +147,9 @@ class _NotesScreenState extends State<NotesScreen> {
         _choreographiesByStyleAndDance = organizedChoreographies;
       });
     } catch (e) {
-      print("Error loading choreographies: $e");
+      if (kDebugMode) {
+        print("Error loading choreographies: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load data.")),
       );
@@ -195,7 +198,9 @@ class _NotesScreenState extends State<NotesScreen> {
       await DatabaseService.deleteChoreography(id);
       _loadChoreographies();
     } catch (e) {
-      print("Error deleting choreography: $e");
+      if (kDebugMode) {
+        print("Error deleting choreography: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to delete choreography.")),
       );

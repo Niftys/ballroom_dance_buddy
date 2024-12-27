@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -55,7 +56,9 @@ class _MoveScreenState extends State<MoveScreen> {
       // Start looping check
       _startLoopCheck(videoId);
     } catch (e) {
-      print("Error initializing video: $e");
+      if (kDebugMode) {
+        print("Error initializing video: $e");
+      }
       setState(() {
         _videoError = true;
       });
