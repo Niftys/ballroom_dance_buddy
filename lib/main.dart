@@ -9,17 +9,43 @@ import 'widgets/floating_music_player.dart';
 import '/services/database_service.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await DatabaseService.initializeDB();
-  } catch (e) {
-    if (kDebugMode) {
-      print("Database failed to initialize: $e");
+  runApp(const FutureBuilderApp());
+}
+
+class FutureBuilderApp extends StatelessWidget {
+  const FutureBuilderApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: _initializeApp(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return const BallroomDanceBuddy();
+        } else {
+          return const MaterialApp(
+            home: Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      await DatabaseService.initializeDB();
+    } catch (e) {
+      if (kDebugMode) {
+        print("Database failed to initialize: $e");
+      }
     }
   }
-  runApp(BallroomDanceBuddy());
 }
 
 class BallroomDanceBuddy extends StatelessWidget {
@@ -112,9 +138,12 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.note), label: 'Choreo'),
-          BottomNavigationBarItem(icon: Icon(Icons.music_note), label: 'Music'),
-          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Learn'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.note), label: 'Choreo'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.music_note), label: 'Music'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.school), label: 'Learn'),
         ],
       )
           : null,
@@ -133,40 +162,54 @@ class ImportHandlerScreen extends StatelessWidget {
 
   ImportHandlerScreen({required this.fileUri});
 
+  // Lazy-load and fetch directory
+  Future<Directory> _getSafeDirectory() async {
+    try {
+      return await getApplicationDocumentsDirectory();
+    } catch (e) {
+      print("Fallback to system temp directory: $e");
+      return Directory.systemTemp;
+    }
+  }
+
+  // Modify _handleFile to use safe directory loading
   Future<void> _handleFile(BuildContext context) async {
     try {
-      // Parse the file URI and check if the file exists
-      final file = File(Uri.parse(fileUri).path);
+      // Lazy load directory only when necessary
+      final directory = await _getSafeDirectory();
+      final filePath =
+          '${directory.path}/${Uri.parse(fileUri).path.split('/').last}';
+      final file = File(filePath);
 
       if (!file.existsSync()) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("File not found. Please check the path and try again.")),
+          const SnackBar(
+              content: Text("File not found. Please check the path and try again.")),
         );
         Navigator.pop(context); // Go back if file is missing
         return;
       }
 
-      // Read and decode the file
       final content = await file.readAsString();
 
-      // Validate JSON content
       late final dynamic data;
       try {
         data = jsonDecode(content);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid file format. Unable to parse JSON.")),
+          const SnackBar(
+              content: Text("Invalid file format. Unable to parse JSON.")),
         );
-        Navigator.pop(context);  // Return to main screen if JSON is invalid
+        Navigator.pop(context);
         return;
       }
 
-      // Process choreography and figures
       final choreography = data['choreography'];
       final figures = data['figures'];
 
       if (choreography == null || figures == null) {
-        throw const FormatException("Invalid file structure. Missing choreography or figures.");
+        throw const FormatException(
+            "Invalid file structure. Missing choreography or figures.");
       }
 
       final choreographyId = await DatabaseService.addChoreography(
@@ -184,7 +227,9 @@ class ImportHandlerScreen extends StatelessWidget {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")),
+        SnackBar(
+            content: Text(
+                "Choreography '${choreography['name']}' imported successfully!")),
       );
 
       Navigator.pushReplacement(
@@ -202,18 +247,18 @@ class ImportHandlerScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to import choreography: $e")),
       );
-      Navigator.pop(context);  // Return to main screen if any error occurs
+      Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Importing File...")),
+      appBar: AppBar(title: const Text("Importing File...")),
       body: Center(
         child: ElevatedButton(
           onPressed: () => _handleFile(context),
-          child: Text("Import Choreography"),
+          child: const Text("Import Choreography"),
         ),
       ),
     );

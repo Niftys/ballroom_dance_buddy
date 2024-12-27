@@ -51,6 +51,13 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
     }
   }
 
+  Directory? _appDocDir;
+
+  Future<Directory> _getAppDocDir() async {
+    _appDocDir ??= await getApplicationDocumentsDirectory();
+    return _appDocDir!;
+  }
+
   Future<void> _exportChoreography() async {
     final exportData = {
       'choreography': {
@@ -63,8 +70,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
     };
 
     try {
-      // Save JSON file locally
-      final directory = await getApplicationDocumentsDirectory();
+      final directory = await _getAppDocDir();
       final filePath = '${directory.path}/${_choreographyName ?? "choreography"}.json';
       final file = File(filePath);
       await file.writeAsString(jsonEncode(exportData));
