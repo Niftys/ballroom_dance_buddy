@@ -162,7 +162,6 @@ class ImportHandlerScreen extends StatelessWidget {
 
   ImportHandlerScreen({required this.fileUri});
 
-  // Lazy-load and fetch directory
   Future<Directory> _getSafeDirectory() async {
     try {
       return await getApplicationDocumentsDirectory();

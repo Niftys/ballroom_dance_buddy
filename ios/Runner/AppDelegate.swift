@@ -1,13 +1,18 @@
-import Flutter
 import UIKit
+import Flutter
 
-@main
+@UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+
+    DispatchQueue.main.async {
+      PathProviderPlugin.register(with: self.registrar(forPlugin: "PathProviderPlugin")!)
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

@@ -64,6 +64,8 @@
     <true/>
     <key>UIFileSharingEnabled</key>
     <true/>
+    <key>NSDocumentsDirectoryUsageDescription</key>
+    <string>This app needs access to the documents directory to store user files.</string>
 
     <!-- Audio & Background Playback -->
     <key>NSMicrophoneUsageDescription</key>
