@@ -5,82 +5,96 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 class MoveScreen extends StatefulWidget {
   final Map<String, dynamic> move;
-  final void Function(bool)? onFullscreenChange;
 
-  MoveScreen({required this.move, this.onFullscreenChange});
+  const MoveScreen({super.key, required this.move});
 
   @override
   _MoveScreenState createState() => _MoveScreenState();
 }
 
 class _MoveScreenState extends State<MoveScreen> {
-  late YoutubePlayerController _controller;
-  bool _isFullScreen = false;
-  bool _videoError = false;
+  YoutubePlayerController? _controller;
   Timer? _loopTimer;
+  bool _videoError = false;
+  String? videoId;
 
-  late int start;
-  late int end;
+  late double start;
+  late double end;
+  String videoUrl = '';
 
   @override
   void initState() {
     super.initState();
-    final String videoUrl = widget.move['video_url'] ?? '';
-    start = widget.move['start'] ?? 0;
-    end = widget.move['end'] ?? 0;
+    _loadFigureData(); // Load video and figure data
+  }
 
-    final String? videoId = YoutubePlayerController.convertUrlToId(videoUrl);
+  Future<void> _loadFigureData() async {
+    setState(() {
+      videoUrl = widget.move['video_url'] ?? '';
+      start = widget.move['start']?.toDouble() ?? 0;
+      end = widget.move['end']?.toDouble() ?? 0;
+    });
 
-    if (videoId == null) {
-      setState(() {
-        _videoError = true;
-      });
+    if (videoUrl.isEmpty || start >= end) {
+      setState(() => _videoError = true);
       return;
     }
 
-    try {
-      _controller = YoutubePlayerController.fromVideoId(
-        videoId: videoId,
-        params: YoutubePlayerParams(
-          showControls: true,
-          showFullscreenButton: true,
-          mute: false,
-        ),
-      );
-
-      _controller.cueVideoById(
-        videoId: videoId,
-        startSeconds: start.toDouble(),
-      );
-
-      // Start looping check
-      _startLoopCheck(videoId);
-    } catch (e) {
-      if (kDebugMode) {
-        print("Error initializing video: $e");
-      }
-      setState(() {
-        _videoError = true;
-      });
-    }
+    _initializePlayer();
   }
 
-  // Periodic check for video loop
-  void _startLoopCheck(String videoId) {
-    _loopTimer = Timer.periodic(Duration(milliseconds: 300), (timer) async {
-      final currentPosition = await _controller.currentTime;
+  Future<void> _initializePlayer() async {
+    final RegExp regExp = RegExp(
+      r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([^&\n?#]+)',
+    );
+    final match = regExp.firstMatch(videoUrl);
+    videoId = match?.group(1);
 
-      if (currentPosition >= end) {
+    print(videoId);
 
-        // Pause and reload video from start
-        _controller.pauseVideo();
-        await Future.delayed(Duration(milliseconds: 100));
+    if (videoId == null) {
+      print("Error: Unable to extract video ID from URL: $videoUrl");
+      setState(() => _videoError = true);
+      return;
+    }
 
-        // Force reload from start time to avoid playback continuation
-        _controller.loadVideoById(
-          videoId: videoId,
-          startSeconds: start.toDouble(),
-        );
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: videoId!,
+      params: YoutubePlayerParams(
+        showControls: true,
+        showFullscreenButton: true,
+        enableCaption: false,
+      ),
+      startSeconds: start,
+    );
+
+    _startLoopCheck();
+  }
+
+  void _startLoopCheck() {
+    _loopTimer?.cancel(); // Cancel any existing timer
+    _loopTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      // Get the current time
+      final currentTime = await _controller!.currentTime;
+
+      // Check if the video needs to loop
+      if (currentTime >= end) {
+        try {
+          // Reload the video at the start time
+          _controller!.loadVideoById(
+            videoId: videoId!,
+            startSeconds: start,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print("Error reloading video: $e");
+          }
+        }
       }
     });
   }
@@ -88,9 +102,7 @@ class _MoveScreenState extends State<MoveScreen> {
   @override
   void dispose() {
     _loopTimer?.cancel();
-    _controller.stopVideo();
-    _controller.close();
-    _controller = YoutubePlayerController(); // Reset controller to avoid lingering references
+    _controller!.close();
     super.dispose();
   }
 
@@ -101,9 +113,9 @@ class _MoveScreenState extends State<MoveScreen> {
         appBar: AppBar(
           title: Text(widget.move['description'] ?? 'Move Details'),
         ),
-        body: Center(
+        body: const Center(
           child: Text(
-            'Failed to load video.',
+            'Error loading video. Please check the URL and try again.',
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
         ),
@@ -111,24 +123,16 @@ class _MoveScreenState extends State<MoveScreen> {
     }
 
     return Scaffold(
-      appBar: _isFullScreen
-          ? null
-          : AppBar(
+      appBar: AppBar(
         title: Text(widget.move['description'] ?? 'Move Details'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: YoutubePlayer(
-              controller: _controller,
-              aspectRatio: 16 / 9,
-            ),
-          ),
-        ],
+      body: YoutubePlayer(
+        controller: _controller!,
+        aspectRatio: 16 / 9,
       ),
     );
   }

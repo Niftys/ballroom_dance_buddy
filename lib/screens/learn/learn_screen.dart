@@ -21,6 +21,9 @@ class _LearnScreenState extends State<LearnScreen> {
   int? _currentStyleId;
   int? _currentDanceId;
 
+  List<Map<String, dynamic>> _styles = [];
+  List<Map<String, dynamic>> _dances = [];
+
   @override
   void initState() {
     super.initState();
@@ -59,18 +62,6 @@ class _LearnScreenState extends State<LearnScreen> {
         final dance = move['dance_name'].toLowerCase();
         return description.contains(query) || style.contains(query) || dance.contains(query);
       }).toList();
-    });
-  }
-
-  void _selectStyle(int styleId) {
-    setState(() {
-      _currentStyleId = styleId;
-    });
-  }
-
-  void _selectDance(int danceId) {
-    setState(() {
-      _currentDanceId = danceId;
     });
   }
 
@@ -142,16 +133,11 @@ class _LearnScreenState extends State<LearnScreen> {
 
       grouped.putIfAbsent(level, () => []);
 
-      // Check if description already exists to avoid duplicates
+      // Ensure no duplicates in the list for the level
       if (!grouped[level]!.any((item) => item['description'] == figure['description'])) {
         grouped[level]!.add(figure);
       }
     }
-
-    // Sort each level by insertion order (ID)
-    grouped.forEach((key, value) {
-      value.sort((a, b) => a['id'].compareTo(b['id']));
-    });
 
     return grouped;
   }
@@ -182,70 +168,44 @@ class _LearnScreenState extends State<LearnScreen> {
       return _buildSearchResultList(_filteredMoves);
     }
 
-    if (_currentDanceId != null) {
-      return FutureBuilder<List<Map<String, dynamic>>>(
-        future: DatabaseService.getFigures(
-          styleId: _currentStyleId!,
-          danceId: _currentDanceId!,
-          level: '',
-        ),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: Colors.purple));
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error loading figures."));
-          } else {
-            final filteredFigures = (snapshot.data ?? []).where((figure) {
-              final description = figure['description'].toLowerCase();
-              return description != 'long wall' && description != 'short wall';
-            }).toList();
-
-            // Dynamically group figures based on levels
-            final groupedFigures = _groupFiguresDynamically(filteredFigures);
-
-            return ListView(
-              children: groupedFigures.entries.map((entry) {
-                final level = entry.key;
-                final moves = entry.value;
-                return ExpansionTile(
-                  title: Text(
-                    level,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: level == 'Bronze'
-                          ? Colors.brown
-                          : level == 'Silver'
-                          ? Colors.grey
-                          : level == 'Gold'
-                          ? Colors.amber
-                          : Colors.deepPurple,
-                    ),
-                  ),
-                  children: moves.map((move) {
-                    return Align(
-                      alignment: Alignment.centerLeft,
-                      child: _buildListTile(
-                        title: move['description'],
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MoveScreen(move: move),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  }).toList(),
-                );
-              }).toList(),
-            );
-          }
-        },
-      );
-    }
-
     if (_currentStyleId != null) {
+      if (_currentDanceId != null) {
+        // Fetch figures for the selected style and dance
+        return FutureBuilder<List<Map<String, dynamic>>>(
+          future: DatabaseService.getFigures(
+            styleId: _currentStyleId!,
+            danceId: _currentDanceId!,
+            level: '',
+          ),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator(color: Colors.purple));
+            } else if (snapshot.hasError) {
+              return Center(child: Text("Error loading figures."));
+            } else {
+              final filteredFigures = (snapshot.data ?? []).where((figure) {
+                final description = figure['description'];
+                return description != null &&
+                    description.toLowerCase() != 'long wall' &&
+                    description.toLowerCase() != 'short wall';
+              }).toList();
+
+              // Pass style and dance names into _buildFigureList
+              final styleName = _styles.firstWhere(
+                      (style) => style['id'] == _currentStyleId,
+                  orElse: () => {'name': 'Unknown'})['name'];
+
+              final danceName = _dances.firstWhere(
+                      (dance) => dance['id'] == _currentDanceId,
+                  orElse: () => {'name': 'Unknown'})['name'];
+
+              return _buildFigureList(filteredFigures, styleName, danceName);
+            }
+          },
+        );
+      }
+
+      // Fetch dances for the selected style
       return FutureBuilder<List<Map<String, dynamic>>>(
         future: DatabaseService.getDancesByStyleId(_currentStyleId!),
         builder: (context, snapshot) {
@@ -260,6 +220,7 @@ class _LearnScreenState extends State<LearnScreen> {
       );
     }
 
+    // Fetch and display styles
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: DatabaseService.getAllStyles(),
       builder: (context, snapshot) {
@@ -275,28 +236,97 @@ class _LearnScreenState extends State<LearnScreen> {
   }
 
   Widget _buildStyleList(List<Map<String, dynamic>> styles) {
+    _styles = styles;
+
     return ListView.builder(
       itemCount: styles.length,
       itemBuilder: (context, index) {
         final style = styles[index];
         return _buildListTile(
           title: style['name'],
-          onTap: () => _selectStyle(style['id']),
+          onTap: () {
+            setState(() {
+              _currentStyleId = style['id'];
+              _currentDanceId = null;
+            });
+          },
         );
       },
     );
   }
 
   Widget _buildDanceList(List<Map<String, dynamic>> dances) {
+    _dances = dances;
+
     return ListView.builder(
       itemCount: dances.length,
       itemBuilder: (context, index) {
         final dance = dances[index];
         return _buildListTile(
           title: dance['name'],
-          onTap: () => _selectDance(dance['id']),
+          onTap: () {
+            setState(() {
+              _currentDanceId = dance['id'];
+            });
+          },
         );
       },
+    );
+  }
+
+  Widget _buildFigureList(List<Map<String, dynamic>> figures, String styleName, String danceName) {
+    final groupedFigures = _groupFiguresDynamically(figures);
+
+    return ListView(
+      children: groupedFigures.entries.map((entry) {
+        final level = entry.key;
+        final moves = entry.value;
+
+        return ExpansionTile(
+          title: Text(
+            level,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: level == 'Bronze'
+                  ? Colors.brown
+                  : level == 'Silver'
+                  ? Colors.grey
+                  : level == 'Gold'
+                  ? Colors.amber
+                  : Colors.deepPurple,
+            ),
+          ),
+          children: moves.map((figure) {
+            final move = {
+              'style': styleName,
+              'dance': danceName,
+              'level': level,
+              'description': figure['description'] ?? 'Unknown Description',
+              'video_url': figure['video_url'] ?? '',
+              'start': figure['start'] ?? 0,
+              'end': figure['end'] ?? 0,
+            };
+
+            return Align(
+              alignment: Alignment.centerLeft,
+              child: _buildListTile(
+                title: figure['description'] ?? 'Unknown Description',
+                onTap: () {
+                  if (kDebugMode) {
+                    print("Navigating to MoveScreen with move: $move");
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MoveScreen(move: move),
+                    ),
+                  );
+                },
+              ),
+            );
+          }).toList(),
+        );
+      }).toList(),
     );
   }
 
@@ -312,8 +342,8 @@ class _LearnScreenState extends State<LearnScreen> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          highlightColor: Colors.purple.withValues(alpha: 0.2),
-          splashColor: Colors.purple.withValues(alpha: 0.3),
+          highlightColor: Colors.purple.withOpacity(0.2),
+          splashColor: Colors.purple.withOpacity(0.3),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -321,14 +351,21 @@ class _LearnScreenState extends State<LearnScreen> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black87,
+                  ),
                 ),
                 if (subtitle != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
                       subtitle,
-                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
                     ),
                   ),
               ],

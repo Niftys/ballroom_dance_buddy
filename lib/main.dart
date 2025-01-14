@@ -9,9 +9,13 @@ import 'widgets/floating_music_player.dart';
 import '/services/database_service.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb) {
+    sqfliteFfiInit();
+  }
   runApp(const FutureBuilderApp());
 }
 

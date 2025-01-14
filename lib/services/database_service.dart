@@ -2,31 +2,34 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static Future<Database> initializeDB() async {
-    final String path = join(await getDatabasesPath(), 'choreography.db');
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb; // Use web-compatible factory
+    } else {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi; // Use desktop-compatible factory
+    }
+
+    final String path = kIsWeb
+        ? 'choreography.db' // For web, no full path is needed
+        : join(await getDatabasesPath(), 'choreography.db');
     return openDatabase(
       path,
-      version: 46,
+      version: 49,
       onCreate: (database, version) async {
-        if (kDebugMode) {
-          print("Creating database...");
-        }
+        if (kDebugMode) print("Creating database...");
         await _createTables(database);
         await _insertInitialData(database);
       },
       onUpgrade: (database, oldVersion, newVersion) async {
-        if (kDebugMode) {
-          print("Upgrading database from version \$oldVersion to \$newVersion...");
-        }
+        if (kDebugMode) print("Upgrading database...");
         await _dropTables(database);
         await _createTables(database);
         await _insertInitialData(database);
-        if (kDebugMode) {
-          print("Database upgraded successfully.");
-        }
       },
     );
   }
@@ -410,7 +413,7 @@ static Future<void> addOrUpdateChoreography({
     FROM figures
     JOIN styles ON figures.style_id = styles.id
     JOIN dances ON figures.dance_id = dances.id
-    WHERE figures.description NOT IN ('Long Wall', 'Short Wall')
+    WHERE figures.description NOT IN ('Long Wall', 'Short Wall');
   ''');
   }
 

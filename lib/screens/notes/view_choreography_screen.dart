@@ -50,8 +50,6 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
     }
   }
 
-  Directory? _appDocDir;
-
   Future<Directory> _getAppDocDir() async {
     return Directory.systemTemp;  // Use temp directory directly
   }

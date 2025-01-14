@@ -48,8 +48,6 @@ class _MusicScreenState extends State<MusicScreen> {
     });
   }
 
-  Directory? _appDocDir;
-
   Future<Directory> _getAppDocDir() async {
     return Directory.systemTemp;  // Store music in temp directory
   }
