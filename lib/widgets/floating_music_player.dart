@@ -283,9 +283,15 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  minimumSize: Size(
+                    MediaQuery.of(context).size.width * 0.3, // Width expands linearly with height
+                    MediaQuery.of(context).size.height * 0.08, // Height is fixed relative to screen height
+                  ),
                 ),
-                child: Text("Tap"),
+                child: Text(
+                  "Tap",
+                  style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02), // Adjust text size
+                ),
               ),
               ElevatedButton(
                 onPressed: _togglePlayPause,
@@ -294,12 +300,18 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
                       ? Colors.purple.shade100
                       : Colors.purple.shade50,
                   shape: CircleBorder(),
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.all(
+                    MediaQuery.of(context).size.height * 0.02, // Adjust padding for circular button
+                  ),
+                  minimumSize: Size(
+                    MediaQuery.of(context).size.height * 0.1, // Width expands linearly with height
+                    MediaQuery.of(context).size.height * 0.08, // Ensure a circular size
+                  ),
                 ),
                 child: Icon(
                   _isPlaying ? Icons.pause : Icons.play_arrow,
                   color: Colors.deepPurple,
-                  size: 28,
+                  size: MediaQuery.of(context).size.height * 0.04, // Icon scales with height
                 ),
               ),
               ElevatedButton(
@@ -311,9 +323,15 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  minimumSize: Size(
+                    MediaQuery.of(context).size.width * 0.3, // Width expands linearly with height
+                    MediaQuery.of(context).size.height * 0.08, // Height is fixed relative to screen height
+                  ),
                 ),
-                child: Text("Reset"),
+                child: Text(
+                  "Reset",
+                  style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02), // Adjust text size
+                ),
               ),
             ],
           ),

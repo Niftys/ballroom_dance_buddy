@@ -289,6 +289,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
               ),
             )
           : ReorderableListView(
+        buildDefaultDragHandles: false, // Disable default drag handles
         onReorder: reorderFigures,
         children: _figures.map((figure) {
           final levelColor = figure['level'] == 'Bronze'
@@ -303,57 +304,60 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
             key: ValueKey(figure['choreography_figure_id']),
             elevation: 3,
             margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-            child: ListTile(
-              title: Text(
-                figure['description'],
-                textAlign: figure['notes'] == null || figure['notes']!.isEmpty
-                    ? TextAlign.left
-                    : TextAlign.start,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black87,
+            child: ReorderableDragStartListener( // Explicitly define the drag handle
+              index: _figures.indexOf(figure),
+              child: ListTile(
+                title: Text(
+                  figure['description'],
+                  textAlign: figure['notes'] == null || figure['notes']!.isEmpty
+                      ? TextAlign.left
+                      : TextAlign.start,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              subtitle: figure['notes'] != null && figure['notes']!.isNotEmpty
-                  ? Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  figure['notes']!,
-                  style: TextStyle(color: Colors.black54),
+                subtitle: figure['notes'] != null && figure['notes']!.isNotEmpty
+                    ? Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    figure['notes']!,
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                )
+                    : null,
+                leading: Icon(Icons.drag_handle, color: levelColor), // Your custom drag handle
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        figure['video_url'] != null
+                            ? Icons.play_circle_outline
+                            : Icons.block,
+                        color: figure['video_url'] != null
+                            ? Colors.blueAccent
+                            : Colors.grey,
+                      ),
+                      onPressed: figure['video_url'] != null
+                          ? () => _playVideo(figure)
+                          : null,
+                      tooltip: figure['video_url'] != null ? 'Play Video' : 'No Video Available',
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.edit_note_rounded, color: Colors.deepPurple),
+                      onPressed: () => _editNotes(
+                        figure['choreography_figure_id'],
+                        figure['notes'] ?? "",
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red.shade300),
+                      onPressed: () => _removeFigure(figure['choreography_figure_id']),
+                    ),
+                  ],
                 ),
-              )
-                  : null,
-              leading: Icon(Icons.drag_handle, color: levelColor),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      figure['video_url'] != null
-                          ? Icons.play_circle_outline
-                          : Icons.block,
-                      color: figure['video_url'] != null
-                          ? Colors.blueAccent
-                          : Colors.grey,
-                    ),
-                    onPressed: figure['video_url'] != null
-                        ? () => _playVideo(figure)
-                        : null,
-                    tooltip: figure['video_url'] != null ? 'Play Video' : 'No Video Available',
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.edit_note_rounded, color: Colors.deepPurple),
-                    onPressed: () => _editNotes(
-                      figure['choreography_figure_id'],
-                      figure['notes'] ?? "",
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red.shade300),
-                    onPressed: () => _removeFigure(figure['choreography_figure_id']),
-                  ),
-                ],
               ),
             ),
           );
