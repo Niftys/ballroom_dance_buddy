@@ -5,6 +5,7 @@ import '/screens/notes/add_choreography_screen.dart';
 import '/screens/notes/view_choreography_screen.dart' as ViewScreen;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class NotesScreen extends StatefulWidget {
   @override
@@ -80,12 +81,13 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Future<void> _downloadAndImportChoreography(String link) async {
+    await dotenv.load(fileName: ".env");
     try {
       // Detect Google Drive links and convert to direct API access
       if (link.contains('drive.google.com') && link.contains('/file/d/')) {
         final fileId = RegExp(r'/file/d/([^/]+)').firstMatch(link)?.group(1);
         if (fileId != null) {
-          final apiKey = 'AIzaSyBKy5Of6kXTPaWempXXbMSFTu7vylebfUE';
+          final apiKey = dotenv.env['GOOGLE_API_KEY'];
           link = 'https://www.googleapis.com/drive/v3/files/$fileId?alt=media&key=$apiKey';
         } else {
           throw Exception("Invalid Google Drive link format");
