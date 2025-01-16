@@ -81,7 +81,7 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Future<void> _downloadAndImportChoreography(String link) async {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: "assets/.env");
     try {
       // Detect Google Drive links and convert to direct API access
       if (link.contains('drive.google.com') && link.contains('/file/d/')) {
