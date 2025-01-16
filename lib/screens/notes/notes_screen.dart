@@ -5,7 +5,6 @@ import '/screens/notes/add_choreography_screen.dart';
 import '/screens/notes/view_choreography_screen.dart' as ViewScreen;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class NotesScreen extends StatefulWidget {
   @override
@@ -81,60 +80,57 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Future<void> _downloadAndImportChoreography(String link) async {
-    await dotenv.load(fileName: "assets/.env");
     try {
-      // Detect Google Drive links and convert to direct API access
+      // Detect Google Drive links and use the proxy
       if (link.contains('drive.google.com') && link.contains('/file/d/')) {
         final fileId = RegExp(r'/file/d/([^/]+)').firstMatch(link)?.group(1);
-        if (fileId != null) {
-          final apiKey = dotenv.env['GOOGLE_API_KEY'];
-          link = 'https://www.googleapis.com/drive/v3/files/$fileId?alt=media&key=$apiKey';
-        } else {
+        if (fileId == null) {
           throw Exception("Invalid Google Drive link format");
         }
-      }
 
-      final encodedUrl = Uri.encodeComponent(link); // Encode the link
-      final proxyUrl = 'https://us-central1-ballroom-dance-buddy.cloudfunctions.net/proxy?url=$encodedUrl';
-      print(proxyUrl);
+        // Construct the proxy URL
+        final encodedUrl = Uri.encodeComponent('https://www.googleapis.com/drive/v3/files/$fileId?alt=media');
+        final proxyUrl = 'https://us-central1-ballroom-dance-buddy.cloudfunctions.net/proxy?url=$encodedUrl';
+        print("Proxy URL: $proxyUrl");
 
-      // Fetch the JSON file
-      final response = await http.get(Uri.parse(proxyUrl));
+        // Fetch the JSON file
+        final response = await http.get(Uri.parse(proxyUrl));
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body);
 
-        // Validate the JSON structure
-        final choreography = jsonData['choreography'];
-        final figures = jsonData['figures'];
+          // Validate JSON structure
+          final choreography = jsonData['choreography'];
+          final figures = jsonData['figures'];
 
-        if (choreography == null || figures == null) {
-          throw FormatException("Invalid file format");
-        }
+          if (choreography == null || figures == null) {
+            throw FormatException("Invalid file format");
+          }
 
-        // Add choreography to the database
-        final choreographyId = await DatabaseService.addChoreography(
-          name: choreography['name'],
-          styleId: choreography['style_id'],
-          danceId: choreography['dance_id'],
-          level: choreography['level'],
-        );
-
-        for (var figure in figures) {
-          await DatabaseService.addFigureToChoreography(
-            choreographyId: choreographyId,
-            figureId: figure['id'],
-            notes: figure['notes'], // Pass notes from the JSON
+          // Save the choreography to the database
+          final choreographyId = await DatabaseService.addChoreography(
+            name: choreography['name'],
+            styleId: choreography['style_id'],
+            danceId: choreography['dance_id'],
+            level: choreography['level'],
           );
+
+          for (var figure in figures) {
+            await DatabaseService.addFigureToChoreography(
+              choreographyId: choreographyId,
+              figureId: figure['id'],
+              notes: figure['notes'] ?? '',
+            );
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Choreography imported successfully!")),
+          );
+
+          _loadChoreographies();
+        } else {
+          throw Exception("Failed to fetch file. Status code: ${response.statusCode}");
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Choreography imported successfully!")),
-        );
-
-        _loadChoreographies();
-      } else {
-        throw Exception("Failed to fetch file. Status code: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching choreography: $e");

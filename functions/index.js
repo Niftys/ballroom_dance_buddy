@@ -1,31 +1,33 @@
 const functions = require('firebase-functions');
+const cors = require('cors')({ origin: true });
 const axios = require('axios');
 
+// Proxy function for Google Drive API
 exports.proxy = functions.https.onRequest(async (req, res) => {
-  const targetUrl = req.query.url;
+  cors(req, res, async () => {
+    try {
+      // Decode the URL passed as a query parameter
+      const targetUrl = decodeURIComponent(req.query.url);
+      if (!targetUrl) {
+        return res.status(400).send('Missing URL parameter');
+      }
 
-  if (!targetUrl) {
-    return res.status(400).send('Missing URL parameter');
-  }
+      // Retrieve the API key securely from Firebase Config
+      const apiKey = functions.config().google.api_key;
 
-  try {
-    // Log the target URL for debugging
-    console.log(`Fetching URL: ${targetUrl}`);
+      // Append the API key to the target URL if it's a Google Drive link
+      const urlWithApiKey = targetUrl.includes('drive.google.com')
+        ? `${targetUrl}&key=${apiKey}`
+        : targetUrl;
 
-    // Fetch the target URL
-    const response = await axios.get(targetUrl, {
-      headers: {
-        // Include a Referer header if required by the API key restrictions
-        'Referer': 'https://ballroom-dance-buddy.web.app',
-      },
-    });
+      // Fetch the requested resource
+      const response = await axios.get(urlWithApiKey);
 
-    // Forward the response back to the client
-    res.set('Access-Control-Allow-Origin', '*'); // Allow cross-origin requests
-    res.set('Content-Type', response.headers['content-type']);
-    res.status(response.status).send(response.data);
-  } catch (error) {
-    console.error('Error in proxy function:', error.message);
-    res.status(500).send(`Error fetching resource: ${error.message}`);
-  }
+      // Pass the response back to the client
+      res.status(response.status).send(response.data);
+    } catch (error) {
+      console.error('Error in proxy function:', error.message);
+      res.status(500).send({ error: 'Error fetching resource', message: error.message });
+    }
+  });
 });

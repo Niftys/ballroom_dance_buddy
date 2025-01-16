@@ -44,7 +44,6 @@ dependencies:
   path: ^1.9.0
   universal_html: ^2.2.4
   spotify_sdk: ^3.0.2
-  flutter_dotenv: ^5.2.1
   idb_shim: ^2.6.1+7
 
 dev_dependencies:
@@ -65,6 +64,5 @@ flutter:
   assets:
     - assets/figures.json
     - assets/music-files.json
-    - assets/.env
 
   uses-material-design: true
