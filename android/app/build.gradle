@@ -27,6 +27,7 @@ android {
     defaultConfig {
         applicationId = "com.example.ballroom_dance_buddy"
         manifestPlaceholders = [applicationName: "com.example.ballroom_dance_buddy.MainApplication"]
+        manifestPlaceholders = [redirectSchemeName: "spotify-sdk", redirectHostName: "auth"]
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

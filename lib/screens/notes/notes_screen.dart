@@ -32,6 +32,7 @@ class _NotesScreenState extends State<NotesScreen> {
 
   Future<void> _importChoreographyFromLink() async {
     final TextEditingController _linkController = TextEditingController();
+    final FocusNode _focusNode = FocusNode();
 
     showDialog(
       context: context,
@@ -40,17 +41,28 @@ class _NotesScreenState extends State<NotesScreen> {
           title: Text("Import Choreography"),
           content: TextField(
             controller: _linkController,
-            decoration: InputDecoration(labelText: "Paste the link here"),
+            focusNode: _focusNode, // Attach FocusNode to manage focus
+            decoration: InputDecoration(
+              labelText: "Paste the link here",
+              hintText: "https://example.com",
+              border: OutlineInputBorder(),
+            ),
+            onEditingComplete: () => _focusNode.unfocus(), // Unfocus on completion
+            textInputAction: TextInputAction.done,
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                _focusNode.unfocus(); // Ensure the focus is removed before closing
+                Navigator.pop(context);
+              },
               child: Text("Cancel"),
             ),
             TextButton(
               onPressed: () async {
                 final link = _linkController.text.trim();
-                if (link.isNotEmpty) {
+                if (link.isNotEmpty && Uri.tryParse(link)?.isAbsolute == true) {
+                  _focusNode.unfocus(); // Remove focus to avoid keyboard issues
                   Navigator.pop(context);
                   await _downloadAndImportChoreography(link);
                 } else {
@@ -64,24 +76,41 @@ class _NotesScreenState extends State<NotesScreen> {
           ],
         );
       },
-    );
+    ).then((_) => _focusNode.dispose()); // Dispose of FocusNode after dialog closes
   }
 
   Future<void> _downloadAndImportChoreography(String link) async {
     try {
-      final response = await http.get(Uri.parse(link));
+      // Detect Google Drive links and convert to direct API access
+      if (link.contains('drive.google.com') && link.contains('/file/d/')) {
+        final fileId = RegExp(r'/file/d/([^/]+)').firstMatch(link)?.group(1);
+        if (fileId != null) {
+          final apiKey = 'AIzaSyBKy5Of6kXTPaWempXXbMSFTu7vylebfUE';
+          link = 'https://www.googleapis.com/drive/v3/files/$fileId?alt=media&key=$apiKey';
+        } else {
+          throw Exception("Invalid Google Drive link format");
+        }
+      }
+
+      final encodedUrl = Uri.encodeComponent(link); // Encode the link
+      final proxyUrl = 'https://us-central1-ballroom-dance-buddy.cloudfunctions.net/proxy?url=$encodedUrl';
+      print(proxyUrl);
+
+      // Fetch the JSON file
+      final response = await http.get(Uri.parse(proxyUrl));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final jsonData = jsonDecode(response.body);
 
-        // Process the choreography
-        final choreography = data['choreography'];
-        final figures = data['figures'];
+        // Validate the JSON structure
+        final choreography = jsonData['choreography'];
+        final figures = jsonData['figures'];
 
         if (choreography == null || figures == null) {
           throw FormatException("Invalid file format");
         }
 
+        // Add choreography to the database
         final choreographyId = await DatabaseService.addChoreography(
           name: choreography['name'],
           styleId: choreography['style_id'],
@@ -97,22 +126,15 @@ class _NotesScreenState extends State<NotesScreen> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")),
+          SnackBar(content: Text("Choreography imported successfully!")),
         );
 
         _loadChoreographies();
-
-        // Navigate to the ViewChoreographyScreen
-        _navigateToViewChoreography(
-          choreographyId,
-          choreography['style_id'],
-          choreography['dance_id'],
-          choreography['level'],
-        );
       } else {
-        throw Exception("Failed to download choreography.");
+        throw Exception("Failed to fetch file. Status code: ${response.statusCode}");
       }
     } catch (e) {
+      print("Error fetching choreography: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to import choreography: $e")),
       );
@@ -295,7 +317,7 @@ class _NotesScreenState extends State<NotesScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: "Search name, style, dance, level...",
+                hintText: "Search choreographies...",
                 prefixIcon: Icon(Icons.search, color: Colors.black54),
                 filled: true,
                 fillColor: Colors.white,

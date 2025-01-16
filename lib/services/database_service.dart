@@ -19,7 +19,7 @@ class DatabaseService {
         : join(await getDatabasesPath(), 'choreography.db');
     return openDatabase(
       path,
-      version: 49,
+      version: 55,
       onCreate: (database, version) async {
         if (kDebugMode) print("Creating database...");
         await _createTables(database);
@@ -475,10 +475,12 @@ static Future<void> addOrUpdateChoreography({
     final result = await db.rawQuery('''
     SELECT figures.*, 
            choreography_figures.id AS choreography_figure_id,
-           choreography_figures.notes AS notes  -- Fetch the correct notes
+           choreography_figures.notes AS notes,
+           choreography_figures.position AS position
     FROM figures
     JOIN choreography_figures ON figures.id = choreography_figures.figure_id
     WHERE choreography_figures.choreography_id = ?
+    ORDER BY choreography_figures.position ASC  -- Ensure consistent ordering
   ''', [choreographyId]);
 
     return List<Map<String, dynamic>>.from(result);
@@ -569,12 +571,14 @@ static Future<void> addOrUpdateChoreography({
     required int newPosition,
   }) async {
     final db = await _db();
-    await db.update(
-      'choreography_figures',
-      {'position': newPosition},
-      where: 'id = ?',
-      whereArgs: [choreographyFigureId],
-    );
+    await db.transaction((txn) async {
+      await txn.update(
+        'choreography_figures',
+        {'position': newPosition},
+        where: 'id = ?',
+        whereArgs: [choreographyFigureId],
+      );
+    });
   }
 
   static Future<Map<String, dynamic>> getChoreographyById(int choreographyId) async {

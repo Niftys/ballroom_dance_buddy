@@ -85,8 +85,8 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
       if (kDebugMode) {
         print("Figure added to choreography with ID: $choreographyFigureId");
       }
-      _loadAvailableFigures();  // Refresh the list after adding
-      Navigator.pop(context, true);  // Close and refresh the View Choreography screen
+      _loadAvailableFigures(); // Refresh the list after adding
+      Navigator.pop(context, true); // Close and refresh the View Choreography screen
     } catch (e) {
       if (kDebugMode) {
         print("Error adding figure: $e");
@@ -120,9 +120,16 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
               child: Text("Cancel"),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(context, {
-                'description': _descriptionController.text,
-              }),
+              onPressed: () {
+                final description = _descriptionController.text.trim();
+                if (description.isNotEmpty) {
+                  Navigator.pop(context, {'description': description});
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Description cannot be empty.")),
+                  );
+                }
+              },
               child: Text("Save"),
             ),
           ],
@@ -132,8 +139,16 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
 
     if (result != null) {
       try {
-        _loadAvailableFigures();  // Refresh the list
+        await DatabaseService.addCustomFigure(
+          description: result['description']!,
+          choreographyId: widget.choreographyId,
+          styleId: widget.styleId,
+          danceId: widget.danceId,
+        );
+        print("Custom figure added: ${result['description']}");
+        _loadAvailableFigures(); // Refresh the list
       } catch (e) {
+        print("Error adding custom figure: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to add custom figure.")),
         );
@@ -144,7 +159,7 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
   void _deleteCustomFigure(int figureId) async {
     try {
       await DatabaseService.deleteCustomFigure(figureId);
-      _loadAvailableFigures();  // Refresh the list after deletion
+      _loadAvailableFigures(); // Refresh the list after deletion
     } catch (e) {
       if (kDebugMode) {
         print("Error deleting custom figure: $e");
@@ -201,7 +216,7 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
                 return ListTile(
                   title: Text(figure['description']),
                   onTap: () => _addFigure(figure['id']),
-                  trailing: figure['custom'] == 1
+                  trailing: figure['is_custom'] == 1
                       ? IconButton(
                     icon: Icon(Icons.delete, color: Colors.red.shade300),
                     onPressed: () => _deleteCustomFigure(figure['id']),

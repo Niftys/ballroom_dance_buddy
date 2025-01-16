@@ -94,32 +94,41 @@ class _LearnScreenState extends State<LearnScreen> {
           },
         )
             : null,
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(_currentStyleId == null ? 60.0 : 0.0),
-          child: AnimatedSwitcher(
-            duration: Duration(milliseconds: 300),
-            child: _currentStyleId == null
-                ? Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                key: ValueKey("search_field"),
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: "Search figures...",
-                  prefixIcon: Icon(Icons.search, color: Colors.black54),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: "Search figures...",
+                prefixIcon: Icon(Icons.search, color: Colors.black54),
+                contentPadding: EdgeInsets.symmetric(vertical: 12.0),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.deepPurple),
                 ),
               ),
-            )
-                : SizedBox.shrink(),
+            ),
           ),
-        ),
-      ),
-      body: AnimatedSwitcher(
-        duration: Duration(milliseconds: 300),
-        child: _buildContent(),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              child: _buildContent(),
+            ),
+          ),
+        ],
       ),
       backgroundColor: Colors.grey.shade100,
     );
