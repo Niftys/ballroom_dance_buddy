@@ -202,35 +202,53 @@ class _MusicScreenState extends State<MusicScreen> {
     }
   }
 
-  Future<void> _playSong(String songName) async {
-    if (kIsWeb) {
-      final dbFactory = idbFactoryBrowser;
-      final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (event) {
-        final db = event.database;
-        if (!db.objectStoreNames.contains('songs')) {
-          db.createObjectStore('songs', autoIncrement: true); // Initialize store if it doesn't exist
+  Future<void> _playSong(String songUrl) async {
+    try {
+      if (kIsWeb && _customSongs.contains(songUrl)) {
+        // Handle custom songs on the web
+        final dbFactory = idbFactoryBrowser;
+        final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (event) {
+          final db = event.database;
+          if (!db.objectStoreNames.contains('songs')) {
+            db.createObjectStore('songs', autoIncrement: true); // Initialize store if it doesn't exist
+          }
+        });
+
+        final transaction = db.transaction('songs', 'readonly');
+        final store = transaction.objectStore('songs');
+        final records = await store.getAll();
+        final record = (records.firstWhere((r) => (r as Map<String, dynamic>)['songName'] == songUrl) as Map<String, dynamic>);
+
+        final Uint8List songData = record['data'];
+
+        // Convert song data to a Blob URL
+        final blob = html.Blob([songData]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+
+        widget.audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(url), tag: songUrl));
+        await widget.audioPlayer.play();
+        print("Playing custom song '$songUrl'");
+      } else {
+        // Handle online URLs and asset files
+        if (songUrl.startsWith('http')) {
+          // Play online song (S3 or other hosted URL)
+          widget.audioPlayer.setAudioSource(
+            AudioSource.uri(Uri.parse(songUrl), tag: _cleanSongName(songUrl)),
+          );
+        } else {
+          // Play local asset file
+          widget.audioPlayer.setAudioSource(
+            AudioSource.uri(Uri.parse('asset:///$songUrl'), tag: _cleanSongName(songUrl)),
+          );
         }
-      });
-
-      final transaction = db.transaction('songs', 'readonly');
-      final store = transaction.objectStore('songs');
-      final records = await store.getAll();
-      final record = (records.firstWhere((r) => (r as Map<String, dynamic>)['songName'] == songName) as Map<String, dynamic>);
-
-      final Uint8List songData = record['data'];
-
-      // Convert song data to a Blob URL
-      final blob = html.Blob([songData]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-
-      widget.audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(url), tag: songName));
-      await widget.audioPlayer.play();
-      print("Playing song '$songName'");
-    } else {
-      widget.audioPlayer.setAudioSource(
-        AudioSource.uri(Uri.parse(songName), tag: _cleanSongName(songName)),
+        await widget.audioPlayer.play();
+        print("Playing song '$songUrl'");
+      }
+    } catch (e) {
+      print("Error playing song '$songUrl': $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to play song: $e")),
       );
-      await widget.audioPlayer.play();
     }
   }
 

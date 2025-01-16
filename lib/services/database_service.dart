@@ -490,6 +490,7 @@ static Future<void> addOrUpdateChoreography({
   static Future<int> addFigureToChoreography({
     required int choreographyId,
     required int figureId,
+    String? notes, // Accept notes as an optional parameter
   }) async {
     final db = await _db();
     final maxPosition = await _getMaxPositionInChoreography(choreographyId);
@@ -498,11 +499,11 @@ static Future<void> addOrUpdateChoreography({
       'choreography_id': choreographyId,
       'figure_id': figureId,
       'position': maxPosition + 1,
-      'notes': '',
+      'notes': notes ?? '', // Save notes if provided, otherwise default to an empty string
     });
 
     if (kDebugMode) {
-      print("Inserted into choreography_figures with ID: $choreographyFigureId");
+      print("Inserted into choreography_figures with ID: $choreographyFigureId, Notes: $notes");
     }
     return choreographyFigureId;
   }

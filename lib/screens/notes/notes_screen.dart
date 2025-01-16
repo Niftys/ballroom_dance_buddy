@@ -124,6 +124,7 @@ class _NotesScreenState extends State<NotesScreen> {
           await DatabaseService.addFigureToChoreography(
             choreographyId: choreographyId,
             figureId: figure['id'],
+            notes: figure['notes'], // Pass notes from the JSON
           );
         }
 

@@ -65,6 +65,6 @@ flutter:
   assets:
     - assets/figures.json
     - assets/music-files.json
-    - .env
+    - assets/.env
 
   uses-material-design: true
