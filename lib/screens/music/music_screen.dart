@@ -5,6 +5,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:just_audio/just_audio.dart';
+import 'dart:html' as html;
+import 'dart:typed_data';
+import 'package:idb_shim/idb_browser.dart';
 
 class MusicScreen extends StatefulWidget {
   final AudioPlayer audioPlayer;
@@ -66,46 +69,169 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Future<void> _loadCustomSongsForGenre(String genre) async {
-    final directory = await _getGenreSpecificCustomSongsDirectory(genre);
-    final files = directory.listSync().where((file) => file.path.endsWith('.mp3'));
-    setState(() {
-      _customSongs = files.map((file) => file.path).toList();
-    });
-  }
+    if (kIsWeb) {
+      final dbFactory = idbFactoryBrowser;
+      final db = await dbFactory.open('music_app', version: 1);
 
-  Future<void> _addCustomSongToGenre(String genre) async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    if (result != null && result.files.isNotEmpty) {
-      final file = File(result.files.first.path!);
-      final directory = await _getGenreSpecificCustomSongsDirectory(genre);
-      final newFile = await file.copy('${directory.path}/${file.uri.pathSegments.last}');
+      final transaction = db.transaction('songs', 'readonly');
+      final store = transaction.objectStore('songs');
+      final records = await store.getAll();
+
       setState(() {
-        _customSongs.add(newFile.path);
+        _customSongs = records
+            .where((record) => (record as Map<String, dynamic>)['genre'] == genre) // Cast record
+            .map((record) => (record as Map<String, dynamic>)['songName'] as String) // Cast record
+            .toList();
+      });
+
+      print("Loaded songs for genre '$genre': $_customSongs");
+    } else {
+      final directory = await _getGenreSpecificCustomSongsDirectory(genre);
+      final files = directory.listSync().where((file) => file.path.endsWith('.mp3'));
+      setState(() {
+        _customSongs = files.map((file) => file.path).toList();
       });
     }
   }
 
-  Future<void> _removeCustomSong(String songPath) async {
-    try {
-      final file = File(songPath);
+  Future<void> _addCustomSongToGenre(String genre) async {
+    if (kIsWeb) {
+      // Web-specific implementation
+      final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+      uploadInput.accept = ".mp3"; // Accept only MP3 files
+      uploadInput.click();
+
+      uploadInput.onChange.listen((event) async {
+        final files = uploadInput.files;
+        if (files != null && files.isNotEmpty) {
+          final file = files.first;
+          final reader = html.FileReader();
+
+          reader.readAsArrayBuffer(file);
+          reader.onLoadEnd.listen((_) async {
+            final data = reader.result as Uint8List;
+
+            // Save song data to IndexedDB
+            await _saveSongToIndexedDB(genre, file.name, data);
+
+            // Update the UI with the new song
+            setState(() {
+              _customSongs.add(file.name); // Show the file name in the UI
+            });
+
+            print("File '${file.name}' added for genre '$genre'.");
+          });
+        }
+      });
+    } else {
+      // Mobile/Desktop implementation
+      final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+      if (result != null && result.files.isNotEmpty) {
+        final file = File(result.files.first.path!);
+        final directory = await _getGenreSpecificCustomSongsDirectory(genre);
+        final newFile = await file.copy('${directory.path}/${file.uri.pathSegments.last}');
+        setState(() {
+          _customSongs.add(newFile.path);
+        });
+      }
+    }
+  }
+
+  Future<void> _saveSongToIndexedDB(String genre, String songName, Uint8List data) async {
+    final dbFactory = idbFactoryBrowser;
+    final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (e) {
+      final db = e.database;
+      db.createObjectStore('songs', autoIncrement: true);
+    });
+
+    final transaction = db.transaction('songs', 'readwrite');
+    final store = transaction.objectStore('songs');
+    await store.put({'genre': genre, 'songName': songName, 'data': data});
+
+    await transaction.completed;
+    print("Song '$songName' saved in IndexedDB.");
+  }
+
+  Future<void> _removeCustomSong(String songName) async {
+    if (kIsWeb) {
+      // Open the IndexedDB with proper arguments
+      final dbFactory = idbFactoryBrowser;
+      final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (event) {
+        final db = event.database;
+        if (!db.objectStoreNames.contains('songs')) {
+          db.createObjectStore('songs', autoIncrement: true);
+        }
+      });
+
+      // Perform deletion in the database
+      final transaction = db.transaction('songs', 'readwrite');
+      final store = transaction.objectStore('songs');
+      final keys = await store.getAllKeys();
+      final records = await store.getAll();
+
+      final keyToDelete = keys.firstWhere(
+            (key) {
+          final record = records[keys.indexOf(key)] as Map<String, dynamic>;
+          return record['songName'] == songName;
+        },
+        orElse: () => -1,
+      );
+
+      if (keyToDelete != -1) {
+        await store.delete(keyToDelete);
+        print("Deleted song: $songName");
+      } else {
+        print("Song not found: $songName");
+      }
+
+      await transaction.completed;
+
+      // Update the UI
+      setState(() {
+        _customSongs.remove(songName);
+      });
+    } else {
+      // Mobile/Desktop implementation
+      final file = File(songName);
       if (await file.exists()) {
         await file.delete();
       }
       setState(() {
-        _customSongs.remove(songPath);
+        _customSongs.remove(songName);
       });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to remove song: $e")),
-      );
     }
   }
 
-  void _playSong(String songUrl) {
-    final cleanName = _cleanSongName(songUrl);
-    widget.audioPlayer.setAudioSource(
-      AudioSource.uri(Uri.parse(songUrl), tag: cleanName),
-    ).then((_) => widget.audioPlayer.play());
+  Future<void> _playSong(String songName) async {
+    if (kIsWeb) {
+      final dbFactory = idbFactoryBrowser;
+      final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (event) {
+        final db = event.database;
+        if (!db.objectStoreNames.contains('songs')) {
+          db.createObjectStore('songs', autoIncrement: true); // Initialize store if it doesn't exist
+        }
+      });
+
+      final transaction = db.transaction('songs', 'readonly');
+      final store = transaction.objectStore('songs');
+      final records = await store.getAll();
+      final record = (records.firstWhere((r) => (r as Map<String, dynamic>)['songName'] == songName) as Map<String, dynamic>);
+
+      final Uint8List songData = record['data'];
+
+      // Convert song data to a Blob URL
+      final blob = html.Blob([songData]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      widget.audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(url), tag: songName));
+      await widget.audioPlayer.play();
+      print("Playing song '$songName'");
+    } else {
+      widget.audioPlayer.setAudioSource(
+        AudioSource.uri(Uri.parse(songName), tag: _cleanSongName(songName)),
+      );
+      await widget.audioPlayer.play();
+    }
   }
 
   String _cleanSongName(String url) {
