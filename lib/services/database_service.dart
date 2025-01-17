@@ -9,6 +9,7 @@ class DatabaseService {
   static Future<Database> initializeDB() async {
     if (kIsWeb) {
       databaseFactory = databaseFactoryFfiWeb; // Use web-compatible factory
+      final sqfliteLogLevelSql = 0;
     } else {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi; // Use desktop-compatible factory

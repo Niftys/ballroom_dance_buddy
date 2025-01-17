@@ -73,13 +73,13 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
         final url = html.Url.createObjectUrlFromBlob(blob);
         final anchor = html.AnchorElement(href: url)
           ..target = 'blank'
-          ..download = "${_choreographyName ?? 'choreography'}.json"
+          ..download = "${_choreographyName ?? 'choreography'}.choreo"
           ..click();
         html.Url.revokeObjectUrl(url);
       } else {
         // Mobile/Desktop logic (e.g., File.io upload as implemented before)
         final directory = await _getAppDocDir();
-        final filePath = '${directory.path}/${_choreographyName ?? "choreography"}.json';
+        final filePath = '${directory.path}/${_choreographyName ?? "choreography"}.choreo';
         final file = File(filePath);
         await file.writeAsString(jsonString);
 
