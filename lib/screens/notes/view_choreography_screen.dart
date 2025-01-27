@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../themes/colors.dart';
 import '/services/database_service.dart';
 import 'add_figure_screen.dart';
 import 'dart:convert';
 import 'dart:io';
 import '/screens/learn/move_screen.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ViewChoreographyScreen extends StatefulWidget {
   final int choreographyId;
@@ -77,14 +80,16 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
           ..click();
         html.Url.revokeObjectUrl(url);
       } else {
-        // Mobile/Desktop logic (e.g., File.io upload as implemented before)
-        final directory = await _getAppDocDir();
+        // Mobile/Desktop logic
+        final directory = await getExternalStorageDirectory();
+        if (directory == null) throw Exception("Failed to access storage directory.");
+
         final filePath = '${directory.path}/${_choreographyName ?? "choreography"}.choreo';
         final file = File(filePath);
         await file.writeAsString(jsonString);
 
-        // You can retain the existing File.io logic here for non-web platforms
-        // ...
+        final xFile = XFile(filePath);
+        await Share.shareXFiles([xFile], text: 'Check out my choreography!');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -185,7 +190,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, null),
-              child: Text("Cancel", style: TextStyle(color: Colors.red)),
+              child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, _notesController.text),
@@ -258,12 +263,9 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 6,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.black26,
         title: Text(
           _choreographyName ?? "Loading...",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         actions: [
           IconButton(
@@ -279,85 +281,78 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
       ),
       body: _figures.isEmpty
           ? Center(
-              child: Text(
-                "No figures",
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 18,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            )
+        child: Text(
+          "No figures",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      )
           : ReorderableListView(
         buildDefaultDragHandles: false, // Disable default drag handles
         onReorder: reorderFigures,
         children: _figures.map((figure) {
           final levelColor = figure['level'] == 'Bronze'
-              ? Colors.brown
+              ? AppColors.bronze
               : figure['level'] == 'Silver'
-              ? Colors.grey
+              ? AppColors.silver
               : figure['level'] == 'Gold'
-              ? Colors.amber
-              : Colors.deepPurple;
+              ? AppColors.gold
+              : Theme.of(context).primaryColor;
 
           return Card(
             key: ValueKey(figure['choreography_figure_id']),
-            elevation: 3,
             margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-            child: ReorderableDragStartListener( // Explicitly define the drag handle
-              index: _figures.indexOf(figure),
-              child: ListTile(
-                title: Text(
-                  figure['description'],
-                  textAlign: figure['notes'] == null || figure['notes']!.isEmpty
-                      ? TextAlign.left
-                      : TextAlign.start,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black87,
-                  ),
+            child: ListTile(
+              title: Text(
+                figure['description'],
+                textAlign: figure['notes'] == null || figure['notes']!.isEmpty
+                    ? TextAlign.left
+                    : TextAlign.start,
+                style: Theme.of(context).textTheme.titleMedium
+              ),
+              subtitle: figure['notes'] != null && figure['notes']!.isNotEmpty
+                  ? Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  figure['notes']!,
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-                subtitle: figure['notes'] != null && figure['notes']!.isNotEmpty
-                    ? Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    figure['notes']!,
-                    style: TextStyle(color: Colors.black54),
+              )
+                  : null,
+              leading: ReorderableDragStartListener(
+                index: _figures.indexOf(figure),
+                child: Icon(Icons.drag_handle, color: levelColor), // Drag handle
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      figure['video_url'] != null
+                          ? Icons.play_circle_outline
+                          : Icons.block,
+                      color: figure['video_url'] != null
+                          ? AppColors.blueAccent
+                          : Colors.grey,
+                    ),
+                    onPressed: figure['video_url'] != null
+                        ? () => _playVideo(figure)
+                        : null,
+                    tooltip: figure['video_url'] != null
+                        ? 'Play Video'
+                        : 'No Video Available',
                   ),
-                )
-                    : null,
-                leading: Icon(Icons.drag_handle, color: levelColor), // Your custom drag handle
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        figure['video_url'] != null
-                            ? Icons.play_circle_outline
-                            : Icons.block,
-                        color: figure['video_url'] != null
-                            ? Colors.blueAccent
-                            : Colors.grey,
-                      ),
-                      onPressed: figure['video_url'] != null
-                          ? () => _playVideo(figure)
-                          : null,
-                      tooltip: figure['video_url'] != null ? 'Play Video' : 'No Video Available',
+                  IconButton(
+                    icon: Icon(Icons.edit_note_rounded, color: Theme.of(context).colorScheme.secondary),
+                    onPressed: () => _editNotes(
+                      figure['choreography_figure_id'],
+                      figure['notes'] ?? "",
                     ),
-                    IconButton(
-                      icon: Icon(Icons.edit_note_rounded, color: Colors.deepPurple),
-                      onPressed: () => _editNotes(
-                        figure['choreography_figure_id'],
-                        figure['notes'] ?? "",
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red.shade300),
-                      onPressed: () => _removeFigure(figure['choreography_figure_id']),
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                    onPressed: () => _removeFigure(figure['choreography_figure_id']),
+                  ),
+                ],
               ),
             ),
           );
@@ -365,7 +360,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addFigure,
-        child: Icon(Icons.add, color: Colors.deepPurple),
+        child: Icon(Icons.add),
       ),
     );
   }

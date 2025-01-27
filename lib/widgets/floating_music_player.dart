@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import '../themes/colors.dart';
 
 class FloatingMusicPlayer extends StatefulWidget {
   final AudioPlayer audioPlayer;
@@ -95,12 +96,15 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
     List<double> intervals = [];
     for (int i = 1; i < _tapTimes.length; i++) {
       intervals.add(
-        _tapTimes[i].difference(_tapTimes[i - 1]).inMilliseconds / 1000.0,
+        _tapTimes[i]
+            .difference(_tapTimes[i - 1])
+            .inMilliseconds / 1000.0,
       );
     }
 
     // Calculate average interval and BPM
-    final averageInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+    final averageInterval = intervals.reduce((a, b) => a + b) /
+        intervals.length;
     final newBPM = (60.0 / averageInterval).round();
 
     // Update base BPM and adjust based on current tempo
@@ -122,6 +126,8 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
       _tapTimes.clear();
       _baseBPM = 0;
       _adjustedBPM = 0;
+      _currentTempo = 1.0;
+      _adjustTempo(1.0);
     });
   }
 
@@ -133,6 +139,8 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final floatingPlayerColors = Theme.of(context).extension<FloatingMusicPlayerTheme>()!;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: GestureDetector(
@@ -142,90 +150,93 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
           });
           widget.onExpandToggle(_isExpanded);
         },
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          padding: EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                offset: Offset(0, -2),
-                blurRadius: 4.0,
-              ),
-            ],
+        child: FractionallySizedBox(
+          widthFactor: 0.9,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            decoration: BoxDecoration(
+              color: floatingPlayerColors.background,
+              border: Border.all(color: floatingPlayerColors.border),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              boxShadow: [
+                BoxShadow(
+                  color: floatingPlayerColors.border.withOpacity(0.3),
+                  offset: const Offset(0, -2),
+                  blurRadius: 4.0,
+                ),
+              ],
+            ),
+            height: _isExpanded ? 300 : 60,
+            child: _isExpanded ? _buildExpandedPlayer(floatingPlayerColors) : _buildMinimizedPlayer(floatingPlayerColors),
           ),
-          height: _isExpanded ? 290 : 60, // Adjusted height for tap tempo
-          width: MediaQuery.of(context).size.width,
-          child: _isExpanded ? _buildExpandedPlayer() : _buildMinimizedPlayer(),
         ),
       ),
     );
   }
 
-  Widget _buildMinimizedPlayer() {
+  Widget _buildMinimizedPlayer(FloatingMusicPlayerTheme colors) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Icon(Icons.music_note, color: Colors.deepPurple),
+        Padding(
+          padding: const EdgeInsets.all(8.0), // Add padding around the music note icon
+          child: Icon(Icons.music_note, color: colors.icon),
+        ),
         Expanded(
-          child: Center(
-            child: Text(
-              _currentSongName ?? "No Song Playing",
-              style: TextStyle(fontSize: 16, color: Colors.black87),
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
+          child: Text(
+            _currentSongName ?? "No Song Playing",
+            style: Theme.of(context).textTheme.titleMedium,
+            textAlign: TextAlign.center,
           ),
         ),
-        IconButton(
-          icon: Icon(
-            _isPlaying ? Icons.pause : Icons.play_arrow,
-            color: Colors.deepPurple,
+        Padding(
+          padding: const EdgeInsets.all(8.0), // Add padding around the play/pause icon
+          child: IconButton(
+            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: colors.icon),
+            onPressed: _togglePlayPause,
           ),
-          onPressed: _togglePlayPause,
         ),
       ],
     );
   }
 
-  Widget _buildExpandedPlayer() {
+
+  Widget _buildExpandedPlayer(FloatingMusicPlayerTheme floatingPlayerColors) {
+    final floatingPlayerColors = Theme.of(context).extension<FloatingMusicPlayerTheme>()!;
+
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Center(
-            child: Text(
-              _currentSongName ?? "No Song Playing",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+          // Song Name with Padding
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0), // Add padding
+            child: Center(
+              child: Text(
+                _currentSongName ?? "No Song Playing",
+                style: Theme.of(context).textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
             ),
           ),
+          // Song Progress Slider
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
                 Text(
                   _formatDuration(_currentPosition),
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: floatingPlayerColors.text.withOpacity(0.6)),
                 ),
                 Expanded(
                   child: Slider(
-                    value: _currentPosition.inMilliseconds
-                        .clamp(0, _songDuration.inMilliseconds)
-                        .toDouble(),
+                    value: _currentPosition.inMilliseconds.clamp(0, _songDuration.inMilliseconds).toDouble(),
                     min: 0.0,
                     max: _songDuration.inMilliseconds.toDouble(),
-                    activeColor: Colors.deepPurple,
-                    inactiveColor: Colors.grey.shade300,
+                    activeColor: floatingPlayerColors.sliderActiveTrack,
+                    inactiveColor: floatingPlayerColors.sliderInactiveTrack,
+                    thumbColor: floatingPlayerColors.sliderThumb,
                     onChanged: (value) {
                       final newPosition = Duration(milliseconds: value.toInt());
                       _seekSong(newPosition);
@@ -234,103 +245,121 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
                 ),
                 Text(
                   _formatDuration(_songDuration),
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: floatingPlayerColors.text.withOpacity(0.6)),
                 ),
               ],
             ),
           ),
+          // Tempo Slider
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
-                Text("Tempo:", style: TextStyle(color: Colors.grey)),
+                Text(
+                  "Tempo:",
+                  style: TextStyle(color: floatingPlayerColors.text.withOpacity(0.6)),
+                ),
                 Expanded(
-                  child: Slider(
-                    value: _currentTempo,
-                    min: 0.5,
-                    max: 1.5,
-                    divisions: 100,
-                    activeColor: Colors.deepPurple,
-                    inactiveColor: Colors.grey.shade300,
-                    label: "${_currentTempo.toStringAsFixed(2)}x",
-                    onChanged: _adjustTempo,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      valueIndicatorTextStyle: TextStyle(
+                        color: floatingPlayerColors.playPauseButtonIcon, // Text color for label
+                        fontSize: 12,
+                      ),
+                      valueIndicatorColor: floatingPlayerColors.tapButtonBackground, // Background color for label
+                    ),
+                    child: Slider(
+                      value: _currentTempo,
+                      min: 0.75,
+                      max: 1.25,
+                      divisions: 50,
+                      activeColor: floatingPlayerColors.sliderActiveTrack,
+                      inactiveColor: floatingPlayerColors.sliderInactiveTrack,
+                      thumbColor: floatingPlayerColors.sliderThumb,
+                      label: "${_currentTempo.toStringAsFixed(2)}x",
+                      onChanged: _adjustTempo,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          // BPM Display
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: Text(
               "BPM: $_adjustedBPM",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
           ),
+          // Buttons: Tap, Play/Pause, Reset
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              // Tap Button
               ElevatedButton(
                 onPressed: _recordTap,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple.shade50,
-                  foregroundColor: Colors.deepPurple,
-                  side: BorderSide(color: Colors.deepPurple, width: 1.5),
+                  backgroundColor: floatingPlayerColors.tapButtonBackground,
+                  foregroundColor: floatingPlayerColors.tapButtonText,
+                  side: BorderSide(color: floatingPlayerColors.tapButtonBorder, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   minimumSize: Size(
-                    MediaQuery.of(context).size.width * 0.3, // Width expands linearly with height
-                    MediaQuery.of(context).size.height * 0.08, // Height is fixed relative to screen height
+                    MediaQuery.of(context).size.width * 0.3,
+                    MediaQuery.of(context).size.height * 0.08,
                   ),
                 ),
                 child: Text(
                   "Tap",
-                  style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02), // Adjust text size
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.height * 0.02,
+                    color: floatingPlayerColors.tapButtonText,
+                  ),
                 ),
               ),
+              // Play/Pause Button
               ElevatedButton(
                 onPressed: _togglePlayPause,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isPlaying
-                      ? Colors.purple.shade100
-                      : Colors.purple.shade50,
-                  shape: CircleBorder(),
-                  padding: EdgeInsets.all(
-                    MediaQuery.of(context).size.height * 0.02, // Adjust padding for circular button
-                  ),
+                  backgroundColor: floatingPlayerColors.playPauseButtonBackground,
+                  foregroundColor: floatingPlayerColors.playPauseButtonIcon,
+                  shape: const CircleBorder(),
+                  padding: EdgeInsets.all(MediaQuery.of(context).size.height * 0.02),
                   minimumSize: Size(
-                    MediaQuery.of(context).size.height * 0.1, // Width expands linearly with height
-                    MediaQuery.of(context).size.height * 0.08, // Ensure a circular size
+                    MediaQuery.of(context).size.height * 0.1,
+                    MediaQuery.of(context).size.height * 0.08,
                   ),
                 ),
                 child: Icon(
                   _isPlaying ? Icons.pause : Icons.play_arrow,
-                  color: Colors.deepPurple,
-                  size: MediaQuery.of(context).size.height * 0.04, // Icon scales with height
+                  color: floatingPlayerColors.playPauseButtonIcon,
+                  size: MediaQuery.of(context).size.height * 0.04,
                 ),
               ),
+              // Reset Button
               ElevatedButton(
                 onPressed: _resetTapTempo,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade50,
-                  foregroundColor: Colors.redAccent,
-                  side: BorderSide(color: Colors.redAccent, width: 1.5),
+                  backgroundColor: floatingPlayerColors.resetButtonBackground,
+                  foregroundColor: floatingPlayerColors.resetButtonText,
+                  side: BorderSide(color: floatingPlayerColors.resetButtonBorder, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   minimumSize: Size(
-                    MediaQuery.of(context).size.width * 0.3, // Width expands linearly with height
-                    MediaQuery.of(context).size.height * 0.08, // Height is fixed relative to screen height
+                    MediaQuery.of(context).size.width * 0.3,
+                    MediaQuery.of(context).size.height * 0.08,
                   ),
                 ),
                 child: Text(
                   "Reset",
-                  style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02), // Adjust text size
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.height * 0.02,
+                    color: floatingPlayerColors.resetButtonText,
+                  ),
                 ),
               ),
             ],

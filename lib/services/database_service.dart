@@ -4,23 +4,25 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io' show Platform;
 
 class DatabaseService {
   static Future<Database> initializeDB() async {
+    // Use appropriate factory based on platform
     if (kIsWeb) {
-      databaseFactory = databaseFactoryFfiWeb; // Use web-compatible factory
-      final sqfliteLogLevelSql = 0;
-    } else {
+      databaseFactory = databaseFactoryFfiWeb;
+    } else if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
       sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi; // Use desktop-compatible factory
+      databaseFactory = databaseFactoryFfi;
     }
 
     final String path = kIsWeb
-        ? 'choreography.db' // For web, no full path is needed
+        ? 'choreography.db' // No full path for web
         : join(await getDatabasesPath(), 'choreography.db');
+
     return openDatabase(
       path,
-      version: 55,
+      version: 57,
       onCreate: (database, version) async {
         if (kDebugMode) print("Creating database...");
         await _createTables(database);

@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.ballroom_dance_buddy">
+    package="com.sethlowery.ballroom_dance_buddy">
 
     <!-- Internet and network permissions -->
     <uses-permission android:name="android.permission.INTERNET" />

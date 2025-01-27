@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../themes/colors.dart';
 import '/services/database_service.dart';
 import 'move_screen.dart';
 
@@ -69,20 +70,17 @@ class _LearnScreenState extends State<LearnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 5,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.black54,
         title: Text(
           _currentStyleId == null
               ? "Figure Finder"
               : _currentDanceId == null
               ? "Select Dance"
               : "Figures",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         leading: _currentStyleId != null
             ? IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back),
           onPressed: () {
             setState(() {
               if (_currentDanceId != null) {
@@ -98,27 +96,13 @@ class _LearnScreenState extends State<LearnScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(12.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: "Search figures...",
-                prefixIcon: Icon(Icons.search, color: Colors.black54),
-                contentPadding: EdgeInsets.symmetric(vertical: 12.0),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide(color: Colors.deepPurple),
-                ),
+                prefixIcon: Icon(Icons.search),
+                filled: true
               ),
             ),
           ),
@@ -130,7 +114,6 @@ class _LearnScreenState extends State<LearnScreen> {
           ),
         ],
       ),
-      backgroundColor: Colors.grey.shade100,
     );
   }
 
@@ -188,7 +171,7 @@ class _LearnScreenState extends State<LearnScreen> {
           ),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator(color: Colors.purple));
+              return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
             } else if (snapshot.hasError) {
               return Center(child: Text("Error loading figures."));
             } else {
@@ -219,7 +202,7 @@ class _LearnScreenState extends State<LearnScreen> {
         future: DatabaseService.getDancesByStyleId(_currentStyleId!),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: Colors.purple));
+            return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
           } else if (snapshot.hasError) {
             return Center(child: Text("Error loading dances."));
           } else {
@@ -234,7 +217,7 @@ class _LearnScreenState extends State<LearnScreen> {
       future: DatabaseService.getAllStyles(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: Colors.purple));
+          return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
         } else if (snapshot.hasError) {
           return Center(child: Text("Error loading styles."));
         } else {
@@ -297,12 +280,12 @@ class _LearnScreenState extends State<LearnScreen> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: level == 'Bronze'
-                  ? Colors.brown
+                  ? AppColors.bronze
                   : level == 'Silver'
-                  ? Colors.grey
+                  ? AppColors.silver
                   : level == 'Gold'
-                  ? Colors.amber
-                  : Colors.deepPurple,
+                  ? AppColors.gold
+                  : Theme.of(context).colorScheme.secondary,
             ),
           ),
           children: moves.map((figure) {
@@ -343,16 +326,9 @@ class _LearnScreenState extends State<LearnScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Card(
-        elevation: 3,
-        shadowColor: Colors.black54,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          highlightColor: Colors.purple.withOpacity(0.2),
-          splashColor: Colors.purple.withOpacity(0.3),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -360,21 +336,14 @@ class _LearnScreenState extends State<LearnScreen> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black87,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 if (subtitle != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
               ],

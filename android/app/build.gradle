@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ballroom_dance_buddy"
+    namespace = "com.sethlowery.ballroom_dance_buddy"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -25,8 +25,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.ballroom_dance_buddy"
-        manifestPlaceholders = [applicationName: "com.example.ballroom_dance_buddy.MainApplication"]
+        applicationId = "com.sethlowery.ballroom_dance_buddy"
+        manifestPlaceholders = [applicationName: "com.sethlowery.ballroom_dance_buddy.MainApplication"]
         manifestPlaceholders = [redirectSchemeName: "spotify-sdk", redirectHostName: "auth"]
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

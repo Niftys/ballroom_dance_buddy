@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../themes/colors.dart';
 import '/services/database_service.dart';
 
 class AddFigureScreen extends StatefulWidget {
@@ -115,11 +116,23 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, null),
-              child: Text("Cancel"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Optional: Adjust padding
+                ),
+                child: Text(
+                  "Cancel",
+                  style: Theme.of(context).textTheme.titleSmall, // Apply text style here
+                ),
+              ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 final description = _descriptionController.text.trim();
                 if (description.isNotEmpty) {
@@ -133,6 +146,8 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
               child: Text("Save"),
             ),
           ],
+        ),
+        ],
         );
       },
     );
@@ -174,28 +189,18 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 6,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.black26,
-        title: Text("Add Figure", style: TextStyle(color: Colors.black87)),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: Colors.deepPurple),
-            onPressed: _addCustomFigure,
-          ),
-        ],
+        title: Text("Add Figure", style: Theme.of(context).textTheme.titleLarge),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _organizedFigures.isEmpty
-          ? Center(child: CircularProgressIndicator(color: Colors.purple))
+          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
           : ListView(
         children: _organizedFigures.entries.map((entry) {
           final level = entry.key;
           return Card(
-            elevation: 3,
             margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             child: ExpansionTile(
@@ -204,21 +209,21 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: level == 'Bronze'
-                      ? Colors.brown
+                      ? AppColors.bronze
                       : level == 'Silver'
-                      ? Colors.grey
+                      ? AppColors.silver
                       : level == 'Gold'
-                      ? Colors.amber
-                      : Colors.deepPurple,
+                      ? AppColors.gold
+                      : Theme.of(context).colorScheme.secondary,
                 ),
               ),
               children: entry.value.map((figure) {
                 return ListTile(
                   title: Text(figure['description']),
                   onTap: () => _addFigure(figure['id']),
-                  trailing: figure['is_custom'] == 1
+                  trailing: figure['custom'] == 1
                       ? IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red.shade300),
+                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                     onPressed: () => _deleteCustomFigure(figure['id']),
                   )
                       : null,
@@ -228,7 +233,13 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
           );
         }).toList(),
       ),
-      backgroundColor: Colors.grey.shade100,
+      floatingActionButton: FloatingActionButton(
+        heroTag: "addCustomFigure",
+        onPressed: _addCustomFigure,
+        child: Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     );
   }
 }

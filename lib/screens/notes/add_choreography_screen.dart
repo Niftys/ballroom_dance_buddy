@@ -204,36 +204,29 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 6,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.black26,
         title: Text(
           widget.choreographyId != null
               ? "Edit Choreography"
               : "Add Choreography",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _styles.isEmpty
-          ? Center(child: CircularProgressIndicator(color: Colors.purple))
+          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
           : AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
         child: _buildForm(),
       ),
-      backgroundColor: Colors.grey.shade100,
     );
   }
 
   Widget _buildForm() {
-    final bool isCountryWestern = _selectedStyle?.toLowerCase().contains(
-        'country western') ?? false;
-    final List<String> levelsToShow = isCountryWestern
-        ? _countryWesternLevels
-        : _levels;
+    final bool isCountryWestern = _selectedStyle?.toLowerCase().contains('country western') ?? false;
+    final List<String> levelsToShow = isCountryWestern ? _countryWesternLevels : _levels;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -250,10 +243,7 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
           SizedBox(height: 20),
           DropdownButtonFormField<String>(
             value: _selectedStyle,
-            items: _styles
-                .map((style) =>
-                DropdownMenuItem(value: style, child: Text(style)))
-                .toList(),
+            items: _styles.map((style) => DropdownMenuItem(value: style, child: Text(style))).toList(),
             onChanged: (value) {
               setState(() {
                 _selectedStyle = value!;
@@ -261,34 +251,41 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
               });
             },
             decoration: InputDecoration(
-                labelText: "Style", border: OutlineInputBorder()),
+              labelText: "Style",
+              border: OutlineInputBorder(),
+            ),
           ),
           SizedBox(height: 20),
           DropdownButtonFormField<String>(
             value: _selectedDance,
-            items: _availableDances
-                .map((dance) =>
-                DropdownMenuItem(value: dance, child: Text(dance)))
-                .toList(),
+            items: _availableDances.map((dance) => DropdownMenuItem(value: dance, child: Text(dance))).toList(),
             onChanged: (value) => setState(() => _selectedDance = value),
             decoration: InputDecoration(
-                labelText: "Dance", border: OutlineInputBorder()),
+              labelText: "Dance",
+              border: OutlineInputBorder(),
+            ),
           ),
           SizedBox(height: 20),
           DropdownButtonFormField<String>(
             value: _selectedLevel,
-            items: levelsToShow
-                .map((level) =>
-                DropdownMenuItem(value: level, child: Text(level)))
-                .toList(),
+            items: levelsToShow.map((level) => DropdownMenuItem(value: level, child: Text(level))).toList(),
             onChanged: (value) => setState(() => _selectedLevel = value),
             decoration: InputDecoration(
-                labelText: "Level", border: OutlineInputBorder()),
+              labelText: "Level",
+              border: OutlineInputBorder(),
+            ),
           ),
-          Spacer(),
-          ElevatedButton(
-            onPressed: _saveChoreography,
-            child: Text("Save"),
+          SizedBox(height: 20), // Add spacing before the button
+          SizedBox(
+            width: double.infinity, // Full-width button
+            child: ElevatedButton(
+              onPressed: _saveChoreography,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16.0), // Larger button height
+                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // Text style
+              ),
+              child: Text("Save"),
+            ),
           ),
         ],
       ),

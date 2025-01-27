@@ -44,31 +44,34 @@ class _MoveScreenState extends State<MoveScreen> {
   }
 
   Future<void> _initializePlayer() async {
-    final RegExp regExp = RegExp(
-      r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([^&\n?#]+)',
-    );
-    final match = regExp.firstMatch(videoUrl);
-    videoId = match?.group(1);
+    try {
+      videoId = videoUrl.trim();
+      if (videoId!.isEmpty) {
+        print("Error: Video ID is empty");
+        setState(() => _videoError = true);
+        return;
+      }
 
-    print(videoId);
+      // Create the YoutubePlayerController instance
+      _controller = YoutubePlayerController(
+        params: YoutubePlayerParams(
+          showControls: true,
+          showFullscreenButton: true,
+          enableCaption: false,
+        ),
+      );
 
-    if (videoId == null) {
-      print("Error: Unable to extract video ID from URL: $videoUrl");
+      // Load the video by ID and start at the specified time
+      _controller!.loadVideoById(
+        videoId: videoId!,
+        startSeconds: start,
+      );
+
+      _startLoopCheck(); // Set up the loop check for video playback
+    } catch (e) {
+      print("Error initializing player: $e");
       setState(() => _videoError = true);
-      return;
     }
-
-    _controller = YoutubePlayerController.fromVideoId(
-      videoId: videoId!,
-      params: YoutubePlayerParams(
-        showControls: true,
-        showFullscreenButton: true,
-        enableCaption: false,
-      ),
-      startSeconds: start,
-    );
-
-    _startLoopCheck();
   }
 
   void _startLoopCheck() {

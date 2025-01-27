@@ -1,13 +1,12 @@
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:just_audio/just_audio.dart';
-import 'dart:html' as html;
-import 'dart:typed_data';
-import 'package:idb_shim/idb_browser.dart';
 
 class MusicScreen extends StatefulWidget {
   final AudioPlayer audioPlayer;
@@ -26,6 +25,7 @@ class _MusicScreenState extends State<MusicScreen> {
   String? _selectedGenre;
   List<String> _currentGenreSongs = [];
   List<String> _customSongs = [];
+  Map<String, Uint8List> _webCustomSongs = {};
 
   @override
   void initState() {
@@ -51,204 +51,95 @@ class _MusicScreenState extends State<MusicScreen> {
     });
   }
 
-  Future<Directory> _getAppDocDir() async {
-    return Directory.systemTemp;  // Store music in temp directory
-  }
-
   Future<Directory> _getGenreSpecificCustomSongsDirectory(String genre) async {
-    final directory = await _getAppDocDir();
+    final directory = await getApplicationDocumentsDirectory();
     final customSongsDir = Directory('${directory.path}/CustomSongs/$genre');
-
     if (!await customSongsDir.exists()) {
       await customSongsDir.create(recursive: true);
-      if (kDebugMode) {
-        print('Directory created at: ${customSongsDir.path}');
-      }
     }
     return customSongsDir;
   }
 
   Future<void> _loadCustomSongsForGenre(String genre) async {
     if (kIsWeb) {
-      final dbFactory = idbFactoryBrowser;
-      final db = await dbFactory.open('music_app', version: 1);
-
-      final transaction = db.transaction('songs', 'readonly');
-      final store = transaction.objectStore('songs');
-      final records = await store.getAll();
-
-      setState(() {
-        _customSongs = records
-            .where((record) => (record as Map<String, dynamic>)['genre'] == genre) // Cast record
-            .map((record) => (record as Map<String, dynamic>)['songName'] as String) // Cast record
-            .toList();
-      });
-
-      print("Loaded songs for genre '$genre': $_customSongs");
-    } else {
-      final directory = await _getGenreSpecificCustomSongsDirectory(genre);
-      final files = directory.listSync().where((file) => file.path.endsWith('.mp3'));
-      setState(() {
-        _customSongs = files.map((file) => file.path).toList();
-      });
+      // Web-specific: Do nothing as files are stored in memory
+      return;
     }
+
+    final directory = await _getGenreSpecificCustomSongsDirectory(genre);
+    final files = directory.listSync().where((file) => file.path.endsWith('.mp3'));
+    setState(() {
+      _customSongs = files.map((file) => file.path).toList();
+    });
   }
 
   Future<void> _addCustomSongToGenre(String genre) async {
-    if (kIsWeb) {
-      // Web-specific implementation
-      final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-      uploadInput.accept = ".mp3"; // Accept only MP3 files
-      uploadInput.click();
-
-      uploadInput.onChange.listen((event) async {
-        final files = uploadInput.files;
-        if (files != null && files.isNotEmpty) {
-          final file = files.first;
-          final reader = html.FileReader();
-
-          reader.readAsArrayBuffer(file);
-          reader.onLoadEnd.listen((_) async {
-            final data = reader.result as Uint8List;
-
-            // Save song data to IndexedDB
-            await _saveSongToIndexedDB(genre, file.name, data);
-
-            // Update the UI with the new song
-            setState(() {
-              _customSongs.add(file.name); // Show the file name in the UI
-            });
-
-            print("File '${file.name}' added for genre '$genre'.");
+    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    if (result != null && result.files.isNotEmpty) {
+      if (kIsWeb) {
+        final fileBytes = result.files.first.bytes;
+        final fileName = result.files.first.name;
+        if (fileBytes != null) {
+          print("Web: Added $fileName with ${fileBytes.lengthInBytes} bytes");
+          setState(() {
+            _webCustomSongs[fileName] = fileBytes;
           });
+        } else {
+          print("Web: No file bytes found for $fileName");
         }
-      });
-    } else {
-      // Mobile/Desktop implementation
-      final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-      if (result != null && result.files.isNotEmpty) {
+      } else {
         final file = File(result.files.first.path!);
+        print("Mobile: Adding ${file.path}");
         final directory = await _getGenreSpecificCustomSongsDirectory(genre);
         final newFile = await file.copy('${directory.path}/${file.uri.pathSegments.last}');
         setState(() {
           _customSongs.add(newFile.path);
         });
       }
+    } else {
+      print("No file selected");
     }
   }
 
-  Future<void> _saveSongToIndexedDB(String genre, String songName, Uint8List data) async {
-    final dbFactory = idbFactoryBrowser;
-    final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (e) {
-      final db = e.database;
-      db.createObjectStore('songs', autoIncrement: true);
-    });
-
-    final transaction = db.transaction('songs', 'readwrite');
-    final store = transaction.objectStore('songs');
-    await store.put({'genre': genre, 'songName': songName, 'data': data});
-
-    await transaction.completed;
-    print("Song '$songName' saved in IndexedDB.");
-  }
-
-  Future<void> _removeCustomSong(String songName) async {
+  Future<void> _removeCustomSong(String songPath) async {
     if (kIsWeb) {
-      // Open the IndexedDB with proper arguments
-      final dbFactory = idbFactoryBrowser;
-      final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (event) {
-        final db = event.database;
-        if (!db.objectStoreNames.contains('songs')) {
-          db.createObjectStore('songs', autoIncrement: true);
-        }
-      });
-
-      // Perform deletion in the database
-      final transaction = db.transaction('songs', 'readwrite');
-      final store = transaction.objectStore('songs');
-      final keys = await store.getAllKeys();
-      final records = await store.getAll();
-
-      final keyToDelete = keys.firstWhere(
-            (key) {
-          final record = records[keys.indexOf(key)] as Map<String, dynamic>;
-          return record['songName'] == songName;
-        },
-        orElse: () => -1,
-      );
-
-      if (keyToDelete != -1) {
-        await store.delete(keyToDelete);
-        print("Deleted song: $songName");
-      } else {
-        print("Song not found: $songName");
-      }
-
-      await transaction.completed;
-
-      // Update the UI
+      // Web-specific: Remove from in-memory map
       setState(() {
-        _customSongs.remove(songName);
+        _webCustomSongs.remove(songPath);
       });
     } else {
-      // Mobile/Desktop implementation
-      final file = File(songName);
-      if (await file.exists()) {
-        await file.delete();
+      try {
+        final file = File(songPath);
+        if (await file.exists()) {
+          await file.delete();
+        }
+        setState(() {
+          _customSongs.remove(songPath);
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to remove song: $e")),
+        );
       }
-      setState(() {
-        _customSongs.remove(songName);
-      });
     }
   }
 
-  Future<void> _playSong(String songUrl) async {
-    try {
-      if (kIsWeb && _customSongs.contains(songUrl)) {
-        // Handle custom songs on the web
-        final dbFactory = idbFactoryBrowser;
-        final db = await dbFactory.open('music_app', version: 1, onUpgradeNeeded: (event) {
-          final db = event.database;
-          if (!db.objectStoreNames.contains('songs')) {
-            db.createObjectStore('songs', autoIncrement: true); // Initialize store if it doesn't exist
-          }
-        });
-
-        final transaction = db.transaction('songs', 'readonly');
-        final store = transaction.objectStore('songs');
-        final records = await store.getAll();
-        final record = (records.firstWhere((r) => (r as Map<String, dynamic>)['songName'] == songUrl) as Map<String, dynamic>);
-
-        final Uint8List songData = record['data'];
-
-        // Convert song data to a Blob URL
-        final blob = html.Blob([songData]);
-        final url = html.Url.createObjectUrlFromBlob(blob);
-
-        widget.audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(url), tag: songUrl));
-        await widget.audioPlayer.play();
-        print("Playing custom song '$songUrl'");
-      } else {
-        // Handle online URLs and asset files
-        if (songUrl.startsWith('http')) {
-          // Play online song (S3 or other hosted URL)
-          widget.audioPlayer.setAudioSource(
-            AudioSource.uri(Uri.parse(songUrl), tag: _cleanSongName(songUrl)),
-          );
-        } else {
-          // Play local asset file
-          widget.audioPlayer.setAudioSource(
-            AudioSource.uri(Uri.parse('asset:///$songUrl'), tag: _cleanSongName(songUrl)),
-          );
-        }
-        await widget.audioPlayer.play();
-        print("Playing song '$songUrl'");
-      }
-    } catch (e) {
-      print("Error playing song '$songUrl': $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to play song: $e")),
-      );
+  void _playSong(String songUrl) {
+    if (kIsWeb && _webCustomSongs.containsKey(songUrl)) {
+      print("Playing song from memory: $songUrl");
+      final songBytes = _webCustomSongs[songUrl]!;
+      widget.audioPlayer.setAudioSource(
+        AudioSource.uri(
+          Uri.dataFromBytes(songBytes, mimeType: 'audio/mpeg'),
+          tag: songUrl,
+        ),
+      ).then((_) => widget.audioPlayer.play());
+    } else {
+      print("Playing song from path: $songUrl");
+      final cleanName = _cleanSongName(songUrl);
+      widget.audioPlayer.setAudioSource(
+        AudioSource.uri(Uri.parse(songUrl), tag: cleanName),
+      ).then((_) => widget.audioPlayer.play());
     }
   }
 
@@ -269,20 +160,17 @@ class _MusicScreenState extends State<MusicScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 5,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.black26,
         title: Text(
           _selectedStyle == null
               ? "Song Player"
               : _selectedGenre == null
               ? "Select Dance"
               : _getFolderDisplayName(_selectedGenre!),
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         leading: _selectedStyle != null
             ? IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back),
           onPressed: () {
             setState(() {
               if (_selectedGenre != null) {
@@ -296,9 +184,8 @@ class _MusicScreenState extends State<MusicScreen> {
             : null,
         actions: _selectedGenre != null
             ? [
-          TextButton.icon(
-            icon: Icon(Icons.add, color: Colors.black87),
-            label: Text('Add Song'),
+          IconButton(
+            icon: Icon(Icons.add),
             onPressed: () => _addCustomSongToGenre(_selectedGenre!),
           )
         ]
@@ -310,14 +197,13 @@ class _MusicScreenState extends State<MusicScreen> {
         switchOutCurve: Curves.easeInOut,
         child: _buildContent(),
       ),
-      backgroundColor: Colors.grey.shade100,
     );
   }
 
   Widget _buildContent() {
     if (_musicData.isEmpty || _styles.isEmpty) {
       return Center(
-        child: CircularProgressIndicator(color: Colors.purple),
+        child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
       );
     }
 
@@ -370,33 +256,32 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Widget _buildSongList() {
-    final allSongs = [..._currentGenreSongs, ..._customSongs];
+    // Combine custom songs (both web and mobile) and standard genre songs
+    final allSongs = [
+      ..._webCustomSongs.keys, // Add web custom song names (keys of _webCustomSongs)
+      ..._customSongs, // Add custom song paths for mobile
+      ..._currentGenreSongs, // Add standard genre songs
+    ];
+
     return ListView.builder(
       key: ValueKey("songs"),
       itemCount: allSongs.length,
       itemBuilder: (context, index) {
         final songUrl = allSongs[index];
-        final isCustomSong = _customSongs.contains(songUrl);
+        final isCustomWebSong = _webCustomSongs.containsKey(songUrl);
+        final isCustomMobileSong = _customSongs.contains(songUrl);
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           child: Card(
-            elevation: 3,
-            shadowColor: Colors.black54,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
             child: ListTile(
               title: Text(
                 _cleanSongName(songUrl),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black87,
-                ),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              trailing: isCustomSong
+              trailing: isCustomWebSong || isCustomMobileSong
                   ? IconButton(
-                icon: Icon(Icons.delete, color: Colors.red.shade300),
+                icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                 onPressed: () => _removeCustomSong(songUrl),
               )
                   : null,
@@ -412,16 +297,9 @@ class _MusicScreenState extends State<MusicScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Card(
-        elevation: 3,
-        shadowColor: Colors.black54,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          highlightColor: Colors.purple.withValues(alpha: 0.2),
-          splashColor: Colors.purple.withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -429,11 +307,7 @@ class _MusicScreenState extends State<MusicScreen> {
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black87,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
               ],
