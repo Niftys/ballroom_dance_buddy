@@ -22,11 +22,26 @@ class AddFigureScreen extends StatefulWidget {
 
 class _AddFigureScreenState extends State<AddFigureScreen> {
   Map<String, List<Map<String, dynamic>>> _organizedFigures = {};
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     _loadAvailableFigures();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim().toLowerCase();
+    });
   }
 
   Future<void> _loadAvailableFigures() async {
@@ -37,7 +52,8 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
         level: widget.level,
       );
 
-      final customFigures = await DatabaseService.getCustomFiguresByStyleAndDance(
+      final customFigures = await DatabaseService
+          .getCustomFiguresByStyleAndDance(
         styleId: widget.styleId,
         danceId: widget.danceId,
       );
@@ -65,20 +81,34 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
     }
   }
 
-  Map<String, List<Map<String, dynamic>>> _groupFiguresByLevel(List<Map<String, dynamic>> figures) {
+  Map<String, List<Map<String, dynamic>>> _groupFiguresByLevel(
+      List<Map<String, dynamic>> figures) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
 
     for (final figure in figures) {
       final level = figure['level'] as String;
-      grouped[level] = (grouped[level] ?? [])..add(figure);
+      grouped[level] = (grouped[level] ?? [])
+        ..add(figure);
     }
 
     return grouped;
   }
 
+  List<Map<String, dynamic>> _filterFigures(
+      List<Map<String, dynamic>> figures) {
+    if (_searchQuery.isEmpty) return figures;
+    return figures
+        .where((figure) =>
+        figure['description']
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
+
   void _addFigure(int figureId) async {
     try {
-      final choreographyFigureId = await DatabaseService.addFigureToChoreography(
+      final choreographyFigureId = await DatabaseService
+          .addFigureToChoreography(
         choreographyId: widget.choreographyId,
         figureId: figureId,
       );
@@ -87,7 +117,8 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
         print("Figure added to choreography with ID: $choreographyFigureId");
       }
       _loadAvailableFigures(); // Refresh the list after adding
-      Navigator.pop(context, true); // Close and refresh the View Choreography screen
+      Navigator.pop(
+          context, true); // Close and refresh the View Choreography screen
     } catch (e) {
       if (kDebugMode) {
         print("Error adding figure: $e");
@@ -119,35 +150,39 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: TextButton(
-                onPressed: () => Navigator.pop(context, null),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Optional: Adjust padding
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context, null),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0,
+                          vertical: 8.0), // Optional: Adjust padding
+                    ),
+                    child: Text(
+                      "Cancel",
+                      style: Theme
+                          .of(context)
+                          .textTheme
+                          .titleSmall, // Apply text style here
+                    ),
+                  ),
                 ),
-                child: Text(
-                  "Cancel",
-                  style: Theme.of(context).textTheme.titleSmall, // Apply text style here
+                ElevatedButton(
+                  onPressed: () {
+                    final description = _descriptionController.text.trim();
+                    if (description.isNotEmpty) {
+                      Navigator.pop(context, {'description': description});
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Description cannot be empty.")),
+                      );
+                    }
+                  },
+                  child: Text("Save"),
                 ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final description = _descriptionController.text.trim();
-                if (description.isNotEmpty) {
-                  Navigator.pop(context, {'description': description});
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Description cannot be empty.")),
-                  );
-                }
-              },
-              child: Text("Save"),
+              ],
             ),
           ],
-        ),
-        ],
         );
       },
     );
@@ -189,49 +224,33 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add Figure", style: Theme.of(context).textTheme.titleLarge),
+        title: Text("Add Figure", style: Theme
+            .of(context).textTheme.titleLarge),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: _organizedFigures.isEmpty
-          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
-          : ListView(
-        children: _organizedFigures.entries.map((entry) {
-          final level = entry.key;
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: ExpansionTile(
-              title: Text(
-                level,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: level == 'Bronze'
-                      ? AppColors.bronze
-                      : level == 'Silver'
-                      ? AppColors.silver
-                      : level == 'Gold'
-                      ? AppColors.gold
-                      : Theme.of(context).colorScheme.secondary,
-                ),
+      body: Column(
+        children: [
+          // Search Box
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: "Search figures...",
+                prefixIcon: Icon(Icons.search),
+                filled: true,
               ),
-              children: entry.value.map((figure) {
-                return ListTile(
-                  title: Text(figure['description']),
-                  onTap: () => _addFigure(figure['id']),
-                  trailing: figure['custom'] == 1
-                      ? IconButton(
-                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                    onPressed: () => _deleteCustomFigure(figure['id']),
-                  )
-                      : null,
-                );
-              }).toList(),
             ),
-          );
-        }).toList(),
+          ),
+          Expanded(
+            child: _searchQuery.isNotEmpty
+                ? _buildSearchResults() // Show search results
+                : _buildDefaultFigureList(), // Show folder structure
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: "addCustomFigure",
@@ -241,5 +260,98 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     );
+  }
+
+// Build flat list of search results
+  Widget _buildSearchResults() {
+    final List<
+        Map<String, dynamic>> allFigures = _getAllFigures(); // Flattened list
+    final List<Map<String, dynamic>> searchResults =
+    _filterFigures(allFigures); // Filter by search query
+
+    if (searchResults.isEmpty) {
+      return Center(
+        child: Text(
+          "No figures found.",
+          style: Theme
+              .of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: searchResults.length,
+      itemBuilder: (context, index) {
+        final figure = searchResults[index];
+        return ListTile(
+          title: Text(figure['description'], style: Theme.of(context).textTheme.titleMedium),
+          subtitle: Text(figure['level'], style: Theme.of(context).textTheme.titleSmall),
+          onTap: () => _addFigure(figure['id']),
+          trailing: figure['custom'] == 1
+              ? IconButton(
+            icon: Icon(Icons.delete, color: Theme
+                .of(context).colorScheme.error),
+            onPressed: () => _deleteCustomFigure(figure['id']),
+          )
+              : null,
+        );
+      },
+    );
+  }
+
+// Build default folder structure
+  Widget _buildDefaultFigureList() {
+    if (_organizedFigures.isEmpty) {
+      return Center(
+        child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+      );
+    }
+
+    return ListView(
+      children: _organizedFigures.entries.map((entry) {
+        final level = entry.key;
+        final figures = entry.value;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+          child: ExpansionTile(
+            title: Text(
+              level,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: level == 'Bronze'
+                    ? AppColors.bronze
+                    : level == 'Silver'
+                    ? AppColors.silver
+                    : level == 'Gold'
+                    ? AppColors.gold
+                    : Theme
+                    .of(context).colorScheme.secondary,
+              ),
+            ),
+            children: figures.map((figure) {
+              return ListTile(
+                title: Text(figure['description']),
+                onTap: () => _addFigure(figure['id']),
+                trailing: figure['custom'] == 1
+                    ? IconButton(
+                  icon: Icon(Icons.delete, color: Theme
+                      .of(context).colorScheme.error),
+                  onPressed: () => _deleteCustomFigure(figure['id']),
+                )
+                    : null,
+              );
+            }).toList(),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+// Helper method to get all figures as a flat list
+  List<Map<String, dynamic>> _getAllFigures() {
+    return _organizedFigures.values.expand((figures) => figures).toList();
   }
 }
