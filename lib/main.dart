@@ -21,9 +21,13 @@ void main() async {
   if (!kIsWeb) {
     sqfliteFfiInit();
   }
+
+  final themeProvider = ThemeProvider();
+  await themeProvider.loadThemePreference(); // Load saved theme preference
+
   runApp(
     ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+      create: (_) => themeProvider,
       child: const FutureBuilderApp(),
     ),
   );
@@ -70,7 +74,7 @@ class ThemeProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
-    notifyListeners();
+    notifyListeners(); // Notify listeners about the loaded theme
   }
 
   Future<void> toggleTheme(bool isDarkMode) async {
@@ -97,7 +101,7 @@ class BallroomDanceBuddy extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       home: fileUri != null
           ? ImportHandlerScreen(fileUri: fileUri!)
-          : MainScreen(),
+          : const MainScreen(),
     );
   }
 }
@@ -139,7 +143,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       body: Stack(

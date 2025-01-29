@@ -307,15 +307,29 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
       );
     }
 
+    // Define desired order
+    const desiredOrder = [
+      'Bronze', 'Silver', 'Gold',
+      'Newcomer IV', 'Newcomer III', 'Newcomer II'
+    ];
+
+    // Sort entries based on predefined order
+    final sortedEntries = _organizedFigures.entries.toList()
+      ..sort((a, b) {
+        final indexA = desiredOrder.indexOf(a.key);
+        final indexB = desiredOrder.indexOf(b.key);
+        return (indexA == -1 ? double.infinity : indexA.toDouble())
+            .compareTo(indexB == -1 ? double.infinity : indexB.toDouble());
+      });
+
     return ListView(
-      children: _organizedFigures.entries.map((entry) {
+      children: sortedEntries.map((entry) {
         final level = entry.key;
         final figures = entry.value;
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ExpansionTile(
             title: Text(
               level,
@@ -327,8 +341,7 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
                     ? AppColors.silver
                     : level == 'Gold'
                     ? AppColors.gold
-                    : Theme
-                    .of(context).colorScheme.secondary,
+                    : Theme.of(context).colorScheme.secondary,
               ),
             ),
             children: figures.map((figure) {
@@ -337,8 +350,8 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
                 onTap: () => _addFigure(figure['id']),
                 trailing: figure['custom'] == 1
                     ? IconButton(
-                  icon: Icon(Icons.delete, color: Theme
-                      .of(context).colorScheme.error),
+                  icon: Icon(Icons.delete,
+                      color: Theme.of(context).colorScheme.error),
                   onPressed: () => _deleteCustomFigure(figure['id']),
                 )
                     : null,

@@ -26,6 +26,7 @@ class _MusicScreenState extends State<MusicScreen> {
   List<String> _currentGenreSongs = [];
   List<String> _customSongs = [];
   Map<String, Uint8List> _webCustomSongs = {};
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -34,21 +35,33 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Future<void> _loadMusicData() async {
-    final jsonString = await rootBundle.loadString('assets/music-files.json');
-    final parsedData = json.decode(jsonString);
-    final Map<String, List<String>> styles = {};
-    parsedData.forEach((genre, songs) {
-      final style = genreToStyleMapping[genre.toLowerCase()] ?? "Other";
-      if (!styles.containsKey(style)) {
-        styles[style] = [];
-      }
-      styles[style]!.add(genre);
+    setState(() {
+      _isLoading = true;
     });
 
-    setState(() {
-      _musicData = parsedData;
-      _styles = styles;
-    });
+    try {
+      final jsonString = await rootBundle.loadString('assets/music-files.json');
+      final parsedData = json.decode(jsonString);
+      final Map<String, List<String>> styles = {};
+
+      parsedData.forEach((genre, songs) {
+        final style = genreToStyleMapping[genre.toLowerCase()] ?? "Other";
+        styles.putIfAbsent(style, () => []).add(genre);
+      });
+
+      setState(() {
+        _musicData = parsedData;
+        _styles = styles;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load music data: $e")),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<Directory> _getGenreSpecificCustomSongsDirectory(String genre) async {
@@ -61,54 +74,56 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Future<void> _loadCustomSongsForGenre(String genre) async {
-    if (kIsWeb) {
-      // Web-specific: Do nothing as files are stored in memory
-      return;
-    }
+    if (kIsWeb) return;
 
-    final directory = await _getGenreSpecificCustomSongsDirectory(genre);
-    final files = directory.listSync().where((file) => file.path.endsWith('.mp3'));
-    setState(() {
-      _customSongs = files.map((file) => file.path).toList();
-    });
+    try {
+      final directory = await _getGenreSpecificCustomSongsDirectory(genre);
+      final files = directory.listSync().where((file) => file.path.endsWith('.mp3'));
+      setState(() {
+        _customSongs = files.map((file) => file.path).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load custom songs: $e")),
+      );
+    }
   }
 
   Future<void> _addCustomSongToGenre(String genre) async {
     final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    if (result != null && result.files.isNotEmpty) {
+    if (result == null || result.files.isEmpty) return;
+
+    try {
       if (kIsWeb) {
         final fileBytes = result.files.first.bytes;
         final fileName = result.files.first.name;
         if (fileBytes != null) {
-          print("Web: Added $fileName with ${fileBytes.lengthInBytes} bytes");
           setState(() {
             _webCustomSongs[fileName] = fileBytes;
           });
-        } else {
-          print("Web: No file bytes found for $fileName");
         }
       } else {
         final file = File(result.files.first.path!);
-        print("Mobile: Adding ${file.path}");
         final directory = await _getGenreSpecificCustomSongsDirectory(genre);
         final newFile = await file.copy('${directory.path}/${file.uri.pathSegments.last}');
         setState(() {
           _customSongs.add(newFile.path);
         });
       }
-    } else {
-      print("No file selected");
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to add custom song: $e")),
+      );
     }
   }
 
   Future<void> _removeCustomSong(String songPath) async {
-    if (kIsWeb) {
-      // Web-specific: Remove from in-memory map
-      setState(() {
-        _webCustomSongs.remove(songPath);
-      });
-    } else {
-      try {
+    try {
+      if (kIsWeb) {
+        setState(() {
+          _webCustomSongs.remove(songPath);
+        });
+      } else {
         final file = File(songPath);
         if (await file.exists()) {
           await file.delete();
@@ -116,30 +131,35 @@ class _MusicScreenState extends State<MusicScreen> {
         setState(() {
           _customSongs.remove(songPath);
         });
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to remove song: $e")),
-        );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to remove song: $e")),
+      );
     }
   }
 
-  void _playSong(String songUrl) {
-    if (kIsWeb && _webCustomSongs.containsKey(songUrl)) {
-      print("Playing song from memory: $songUrl");
-      final songBytes = _webCustomSongs[songUrl]!;
-      widget.audioPlayer.setAudioSource(
-        AudioSource.uri(
-          Uri.dataFromBytes(songBytes, mimeType: 'audio/mpeg'),
-          tag: songUrl,
-        ),
-      ).then((_) => widget.audioPlayer.play());
-    } else {
-      print("Playing song from path: $songUrl");
-      final cleanName = _cleanSongName(songUrl);
-      widget.audioPlayer.setAudioSource(
-        AudioSource.uri(Uri.parse(songUrl), tag: cleanName),
-      ).then((_) => widget.audioPlayer.play());
+  void _playSong(String songUrl) async {
+    try {
+      if (kIsWeb && _webCustomSongs.containsKey(songUrl)) {
+        final songBytes = _webCustomSongs[songUrl]!;
+        await widget.audioPlayer.setAudioSource(
+          AudioSource.uri(
+            Uri.dataFromBytes(songBytes, mimeType: 'audio/mpeg'),
+            tag: songUrl,
+          ),
+        );
+      } else {
+        final cleanName = _cleanSongName(songUrl);
+        await widget.audioPlayer.setAudioSource(
+          AudioSource.uri(Uri.parse(songUrl), tag: cleanName),
+        );
+      }
+      await widget.audioPlayer.play();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to play song: $e")),
+      );
     }
   }
 
@@ -191,7 +211,9 @@ class _MusicScreenState extends State<MusicScreen> {
         ]
             : [],
       ),
-      body: AnimatedSwitcher(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
+          : AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
         switchInCurve: Curves.easeInOut,
         switchOutCurve: Curves.easeInOut,
@@ -256,11 +278,10 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Widget _buildSongList() {
-    // Combine custom songs (both web and mobile) and standard genre songs
     final allSongs = [
-      ..._webCustomSongs.keys, // Add web custom song names (keys of _webCustomSongs)
-      ..._customSongs, // Add custom song paths for mobile
-      ..._currentGenreSongs, // Add standard genre songs
+      ..._webCustomSongs.keys,
+      ..._customSongs,
+      ..._currentGenreSongs,
     ];
 
     return ListView.builder(

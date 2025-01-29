@@ -1,134 +1,132 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import '../themes/colors.dart';
+import 'package:flutter/cupertino.dart';
 
 class FloatingMusicPlayer extends StatefulWidget {
   final AudioPlayer audioPlayer;
   final ValueChanged<bool> onExpandToggle;
 
-  FloatingMusicPlayer({required this.audioPlayer, required this.onExpandToggle});
+  const FloatingMusicPlayer({
+    super.key,
+    required this.audioPlayer,
+    required this.onExpandToggle,
+  });
 
   @override
-  _FloatingMusicPlayerState createState() => _FloatingMusicPlayerState();
+  State<FloatingMusicPlayer> createState() => _FloatingMusicPlayerState();
 }
 
 class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
+  static const _minTempo = 0.75;
+  static const _maxTempo = 1.25;
+  static const _tempoDivisions = 50;
+  static const _maxTapSamples = 12;
+
+  // Stream subscriptions
+  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<Duration?>? _durationSubscription;
+  StreamSubscription<SequenceState?>? _sequenceSubscription;
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+
   bool _isExpanded = false;
   String? _currentSongName;
   Duration _currentPosition = Duration.zero;
   Duration _songDuration = Duration.zero;
   double _currentTempo = 1.0;
   bool _isPlaying = false;
-
-  // Tempo estimation variables
-  final _tapTimes = [];
-  int _baseBPM = 0; // Original tapped BPM
-  int _adjustedBPM = 0; // BPM adjusted by tempo multiplier
+  final List<DateTime> _tapTimes = [];
+  int _baseBPM = 0;
+  int _adjustedBPM = 0;
 
   @override
   void initState() {
     super.initState();
-
-    widget.audioPlayer.positionStream.listen((position) {
-      setState(() {
-        _currentPosition = position;
-      });
-    });
-
-    widget.audioPlayer.durationStream.listen((duration) {
-      setState(() {
-        _songDuration = duration ?? Duration.zero;
-      });
-    });
-
-    widget.audioPlayer.sequenceStateStream.listen((sequenceState) {
-      if (sequenceState?.currentSource != null) {
-        final songName = sequenceState?.currentSource?.tag as String?;
-        setState(() {
-          _currentSongName = songName ?? "No Song Playing";
-        });
-      }
-    });
-
-    widget.audioPlayer.playerStateStream.listen((state) {
-      setState(() {
-        _isPlaying = state.playing;
-      });
-    });
+    _initializeAudioListeners();
   }
 
-  void _togglePlayPause() {
-    if (_isPlaying) {
-      widget.audioPlayer.pause();
-    } else {
-      widget.audioPlayer.play();
-    }
+  void _initializeAudioListeners() {
+    _positionSubscription = widget.audioPlayer.positionStream.listen(_handlePositionUpdate);
+    _durationSubscription = widget.audioPlayer.durationStream.listen(_handleDurationUpdate);
+    _sequenceSubscription = widget.audioPlayer.sequenceStateStream.listen(_handleSequenceUpdate);
+    _playerStateSubscription = widget.audioPlayer.playerStateStream.listen(_handlePlayerStateUpdate);
   }
+
+  void _handlePositionUpdate(Duration position) {
+    if (!mounted) return;
+    setState(() => _currentPosition = position);
+  }
+
+  void _handleDurationUpdate(Duration? duration) {
+    if (!mounted) return;
+    setState(() => _songDuration = duration ?? Duration.zero);
+  }
+
+  void _handleSequenceUpdate(SequenceState? state) {
+    if (!mounted) return;
+    final songName = state?.currentSource?.tag as String?;
+    setState(() => _currentSongName = songName ?? "No Song Playing");
+  }
+
+  void _handlePlayerStateUpdate(PlayerState state) {
+    if (!mounted) return;
+    setState(() => _isPlaying = state.playing);
+  }
+
+  @override
+  void dispose() {
+    _positionSubscription?.cancel(); // Add null check
+    _durationSubscription?.cancel();
+    _sequenceSubscription?.cancel();
+    _playerStateSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _togglePlayPause() => _isPlaying ? widget.audioPlayer.pause() : widget.audioPlayer.play();
 
   void _adjustTempo(double tempo) {
     widget.audioPlayer.setSpeed(tempo);
+    if (!mounted) return;
     setState(() {
       _currentTempo = tempo;
-      if (_baseBPM > 0) {
-        _adjustedBPM = (_baseBPM * tempo).round();
-      }
+      _adjustedBPM = _baseBPM > 0 ? (_baseBPM * tempo).round() : 0;
     });
   }
 
   void _recordTap() {
-    final now = DateTime.now();
+    if (!mounted) return;
     setState(() {
-      _tapTimes.add(now);
-
-      // Keep the last 6 taps for more stable BPM calculations
-      if (_tapTimes.length > 12) {
-        _tapTimes.removeAt(0);
-      }
-
-      _calculateBPM();
+      _tapTimes.add(DateTime.now());
+      if (_tapTimes.length > _maxTapSamples) _tapTimes.removeAt(0);
+      if (_tapTimes.length > 1) _calculateBPM();
     });
   }
 
   void _calculateBPM() {
-    if (_tapTimes.length < 2) return; // Not enough taps for BPM calculation
+    final intervals = List<double>.generate(
+      _tapTimes.length - 1,
+          (i) => _tapTimes[i + 1].difference(_tapTimes[i]).inMilliseconds / 1000,
+    );
 
-    // Calculate intervals between taps in seconds
-    List<double> intervals = [];
-    for (int i = 1; i < _tapTimes.length; i++) {
-      intervals.add(
-        _tapTimes[i]
-            .difference(_tapTimes[i - 1])
-            .inMilliseconds / 1000.0,
-      );
-    }
-
-    // Calculate average interval and BPM
-    final averageInterval = intervals.reduce((a, b) => a + b) /
-        intervals.length;
-    final newBPM = (60.0 / averageInterval).round();
-
-    // Update base BPM and adjust based on current tempo
+    final averageInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+    if (!mounted) return;
     setState(() {
-      _baseBPM = newBPM;
+      _baseBPM = (60 / averageInterval).round();
       _adjustedBPM = (_baseBPM * _currentTempo).round();
     });
   }
 
-  void _seekSong(Duration position) {
-    widget.audioPlayer.seek(position);
-    setState(() {
-      _currentPosition = position;
-    });
-  }
+  void _seekSong(Duration position) => widget.audioPlayer.seek(position);
 
   void _resetTapTempo() {
+    if (!mounted) return;
     setState(() {
       _tapTimes.clear();
-      _baseBPM = 0;
-      _adjustedBPM = 0;
+      _baseBPM = _adjustedBPM = 0;
       _currentTempo = 1.0;
-      _adjustTempo(1.0);
     });
+    widget.audioPlayer.setSpeed(1.0);
   }
 
   String _formatDuration(Duration duration) {
@@ -139,232 +137,427 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    final floatingPlayerColors = Theme.of(context).extension<FloatingMusicPlayerTheme>()!;
+    final colors = Theme.of(context).extension<FloatingMusicPlayerTheme>()!;
 
     return Align(
       alignment: Alignment.bottomCenter,
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _isExpanded = !_isExpanded;
-          });
+        onTap: () => setState(() {
+          _isExpanded = !_isExpanded;
           widget.onExpandToggle(_isExpanded);
-        },
+        }),
         child: FractionallySizedBox(
           widthFactor: 0.9,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             decoration: BoxDecoration(
-              color: floatingPlayerColors.background,
-              border: Border.all(color: floatingPlayerColors.border),
+              color: colors.background,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               boxShadow: [
                 BoxShadow(
-                  color: floatingPlayerColors.border.withOpacity(0.3),
+                  color: colors.border.withOpacity(0.3),
                   offset: const Offset(0, -2),
                   blurRadius: 4.0,
                 ),
               ],
             ),
-            height: _isExpanded ? 300 : 60,
-            child: _isExpanded ? _buildExpandedPlayer(floatingPlayerColors) : _buildMinimizedPlayer(floatingPlayerColors),
+            height: _isExpanded ? 320 : 60,
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? _ExpandedView(
+              colors: colors,
+              songName: _currentSongName,
+              currentPosition: _currentPosition,
+              songDuration: _songDuration,
+              currentTempo: _currentTempo,
+              adjustedBPM: _adjustedBPM,
+              isPlaying: _isPlaying,
+              onTempoChanged: _adjustTempo,
+              onSeek: _seekSong,
+              onTap: _recordTap,
+              onReset: _resetTapTempo,
+              onPlayPause: _togglePlayPause,
+              formatDuration: _formatDuration,
+            )
+                : _MinimizedView(
+              colors: colors,
+              songName: _currentSongName,
+              isPlaying: _isPlaying,
+              onPlayPause: _togglePlayPause,
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildMinimizedPlayer(FloatingMusicPlayerTheme colors) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0), // Add padding around the music note icon
-          child: Icon(Icons.music_note, color: colors.icon),
+class _MinimizedView extends StatelessWidget {
+  final FloatingMusicPlayerTheme colors;
+  final String? songName;
+  final bool isPlaying;
+  final VoidCallback onPlayPause;
+
+  const _MinimizedView({
+    required this.colors,
+    required this.songName,
+    required this.isPlaying,
+    required this.onPlayPause,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Icon(Icons.music_note, size: 24),
+          Expanded(
+            child: Text(
+              songName ?? "No Song Playing",
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+            color: colors.icon,
+            onPressed: onPlayPause,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpandedView extends StatelessWidget {
+  final FloatingMusicPlayerTheme colors;
+  final String? songName;
+  final Duration currentPosition;
+  final Duration songDuration;
+  final double currentTempo;
+  final int adjustedBPM;
+  final bool isPlaying;
+  final ValueChanged<double> onTempoChanged;
+  final ValueChanged<Duration> onSeek;
+  final VoidCallback onTap;
+  final VoidCallback onReset;
+  final VoidCallback onPlayPause;
+  final String Function(Duration) formatDuration;
+
+  const _ExpandedView({
+    required this.colors,
+    required this.songName,
+    required this.currentPosition,
+    required this.songDuration,
+    required this.currentTempo,
+    required this.adjustedBPM,
+    required this.isPlaying,
+    required this.onTempoChanged,
+    required this.onSeek,
+    required this.onTap,
+    required this.onReset,
+    required this.onPlayPause,
+    required this.formatDuration,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title with constrained height
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 60),
+              child: _SongTitle(songName: songName),
+            ),
+            const SizedBox(height: 6),
+
+            // Progress slider section
+            _ProgressSlider(
+              currentPosition: currentPosition,
+              songDuration: songDuration,
+              colors: colors,
+              onSeek: onSeek,
+              formatDuration: formatDuration,
+            ),
+
+            // Tempo controls
+            _TempoControl(
+              currentTempo: currentTempo,
+              colors: colors,
+              onTempoChanged: onTempoChanged,
+            ),
+            const SizedBox(height: 6),
+
+            // BPM display
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 40),
+              child: _BpmDisplay(adjustedBPM: adjustedBPM),
+            ),
+            const SizedBox(height: 10),
+
+            // Control buttons with flexible space
+            _ControlButtons(
+              colors: colors,
+              onTap: onTap,
+              onReset: onReset,
+              onPlayPause: onPlayPause,
+              isPlaying: isPlaying,
+            ),
+          ],
         ),
-        Expanded(
-          child: Text(
-            _currentSongName ?? "No Song Playing",
-            style: Theme.of(context).textTheme.titleMedium,
-            textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class _SongTitle extends StatelessWidget {
+  final String? songName;
+
+  const _SongTitle({required this.songName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      songName ?? "No Song Playing",
+      style: Theme.of(context).textTheme.titleLarge,
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+}
+
+class _ProgressSlider extends StatelessWidget {
+  final Duration currentPosition;
+  final Duration songDuration;
+  final FloatingMusicPlayerTheme colors;
+  final ValueChanged<Duration> onSeek;
+  final String Function(Duration) formatDuration;
+
+  const _ProgressSlider({
+    required this.currentPosition,
+    required this.songDuration,
+    required this.colors,
+    required this.onSeek,
+    required this.formatDuration,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SliderTheme(
+          data: SliderThemeData(
+            overlayShape: RoundSliderOverlayShape(overlayRadius: 16),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+          ),
+          child: Slider(
+            value: currentPosition.inMilliseconds.toDouble(),
+            min: 0,
+            max: songDuration.inMilliseconds.toDouble(),
+            onChanged: (v) => onSeek(Duration(milliseconds: v.round())),
+            activeColor: colors.sliderActiveTrack,
+            inactiveColor: colors.sliderInactiveTrack,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(8.0), // Add padding around the play/pause icon
-          child: IconButton(
-            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: colors.icon),
-            onPressed: _togglePlayPause,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(formatDuration(currentPosition), style: TextStyle(color: colors.text)),
+            Text(formatDuration(songDuration), style: TextStyle(color: colors.text)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _TempoControl extends StatelessWidget {
+  final double currentTempo;
+  final FloatingMusicPlayerTheme colors;
+  final ValueChanged<double> onTempoChanged;
+
+  const _TempoControl({
+    required this.currentTempo,
+    required this.colors,
+    required this.onTempoChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Tempo: ${currentTempo.toStringAsFixed(2)}x',
+          style: TextStyle(color: colors.text),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: Slider(
+            value: currentTempo,
+            min: _FloatingMusicPlayerState._minTempo,
+            max: _FloatingMusicPlayerState._maxTempo,
+            divisions: _FloatingMusicPlayerState._tempoDivisions,
+            onChanged: onTempoChanged,
+            activeColor: colors.sliderActiveTrack,
+            inactiveColor: colors.sliderInactiveTrack,
           ),
         ),
       ],
     );
   }
+}
 
+class _BpmDisplay extends StatelessWidget {
+  final int adjustedBPM;
 
-  Widget _buildExpandedPlayer(FloatingMusicPlayerTheme floatingPlayerColors) {
-    final floatingPlayerColors = Theme.of(context).extension<FloatingMusicPlayerTheme>()!;
+  const _BpmDisplay({required this.adjustedBPM});
 
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
         children: [
-          // Song Name with Padding
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0), // Add padding
-            child: Center(
-              child: Text(
-                _currentSongName ?? "No Song Playing",
-                style: Theme.of(context).textTheme.titleLarge,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-            ),
+          TextSpan(
+            text: 'BPM: ',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-          // Song Progress Slider
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                Text(
-                  _formatDuration(_currentPosition),
-                  style: TextStyle(color: floatingPlayerColors.text.withOpacity(0.6)),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: _currentPosition.inMilliseconds.clamp(0, _songDuration.inMilliseconds).toDouble(),
-                    min: 0.0,
-                    max: _songDuration.inMilliseconds.toDouble(),
-                    activeColor: floatingPlayerColors.sliderActiveTrack,
-                    inactiveColor: floatingPlayerColors.sliderInactiveTrack,
-                    thumbColor: floatingPlayerColors.sliderThumb,
-                    onChanged: (value) {
-                      final newPosition = Duration(milliseconds: value.toInt());
-                      _seekSong(newPosition);
-                    },
-                  ),
-                ),
-                Text(
-                  _formatDuration(_songDuration),
-                  style: TextStyle(color: floatingPlayerColors.text.withOpacity(0.6)),
-                ),
-              ],
+          TextSpan(
+            text: '$adjustedBPM',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.secondary,
             ),
-          ),
-          // Tempo Slider
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                Text(
-                  "Tempo:",
-                  style: TextStyle(color: floatingPlayerColors.text.withOpacity(0.6)),
-                ),
-                Expanded(
-                  child: SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      valueIndicatorTextStyle: TextStyle(
-                        color: floatingPlayerColors.playPauseButtonIcon, // Text color for label
-                        fontSize: 12,
-                      ),
-                      valueIndicatorColor: floatingPlayerColors.tapButtonBackground, // Background color for label
-                    ),
-                    child: Slider(
-                      value: _currentTempo,
-                      min: 0.75,
-                      max: 1.25,
-                      divisions: 50,
-                      activeColor: floatingPlayerColors.sliderActiveTrack,
-                      inactiveColor: floatingPlayerColors.sliderInactiveTrack,
-                      thumbColor: floatingPlayerColors.sliderThumb,
-                      label: "${_currentTempo.toStringAsFixed(2)}x",
-                      onChanged: _adjustTempo,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // BPM Display
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Text(
-              "BPM: $_adjustedBPM",
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          // Buttons: Tap, Play/Pause, Reset
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Tap Button
-              ElevatedButton(
-                onPressed: _recordTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: floatingPlayerColors.tapButtonBackground,
-                  foregroundColor: floatingPlayerColors.tapButtonText,
-                  side: BorderSide(color: floatingPlayerColors.tapButtonBorder, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  minimumSize: Size(
-                    MediaQuery.of(context).size.width * 0.3,
-                    MediaQuery.of(context).size.height * 0.08,
-                  ),
-                ),
-                child: Text(
-                  "Tap",
-                  style: TextStyle(
-                    fontSize: MediaQuery.of(context).size.height * 0.02,
-                    color: floatingPlayerColors.tapButtonText,
-                  ),
-                ),
-              ),
-              // Play/Pause Button
-              ElevatedButton(
-                onPressed: _togglePlayPause,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: floatingPlayerColors.playPauseButtonBackground,
-                  foregroundColor: floatingPlayerColors.playPauseButtonIcon,
-                  shape: const CircleBorder(),
-                  padding: EdgeInsets.all(MediaQuery.of(context).size.height * 0.02),
-                  minimumSize: Size(
-                    MediaQuery.of(context).size.height * 0.1,
-                    MediaQuery.of(context).size.height * 0.08,
-                  ),
-                ),
-                child: Icon(
-                  _isPlaying ? Icons.pause : Icons.play_arrow,
-                  color: floatingPlayerColors.playPauseButtonIcon,
-                  size: MediaQuery.of(context).size.height * 0.04,
-                ),
-              ),
-              // Reset Button
-              ElevatedButton(
-                onPressed: _resetTapTempo,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: floatingPlayerColors.resetButtonBackground,
-                  foregroundColor: floatingPlayerColors.resetButtonText,
-                  side: BorderSide(color: floatingPlayerColors.resetButtonBorder, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  minimumSize: Size(
-                    MediaQuery.of(context).size.width * 0.3,
-                    MediaQuery.of(context).size.height * 0.08,
-                  ),
-                ),
-                child: Text(
-                  "Reset",
-                  style: TextStyle(
-                    fontSize: MediaQuery.of(context).size.height * 0.02,
-                    color: floatingPlayerColors.resetButtonText,
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ControlButtons extends StatelessWidget {
+  final FloatingMusicPlayerTheme colors;
+  final VoidCallback onTap;
+  final VoidCallback onReset;
+  final VoidCallback onPlayPause;
+  final bool isPlaying;
+
+  const _ControlButtons({
+    required this.colors,
+    required this.onTap,
+    required this.onReset,
+    required this.onPlayPause,
+    required this.isPlaying,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _ControlButton(
+              label: 'Tap',
+              icon: CupertinoIcons.metronome,
+              onPressed: onTap,
+              backgroundColor: colors.tapButtonBackground,
+            ),
+            _PlayPauseButton(
+              isPlaying: isPlaying,
+              onPressed: onPlayPause,
+              colors: colors,
+            ),
+            _ControlButton(
+              label: 'Reset',
+              icon: Icons.replay,
+              onPressed: onReset,
+              backgroundColor: colors.resetButtonBackground,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ControlButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color backgroundColor;
+
+  const _ControlButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        IconButton(
+          icon: Icon(icon, size: 32),
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            backgroundColor: backgroundColor,
+            padding: const EdgeInsets.all(16),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
+      ],
+    );
+  }
+}
+
+class _PlayPauseButton extends StatelessWidget {
+  final bool isPlaying;
+  final VoidCallback onPressed;
+  final FloatingMusicPlayerTheme colors;
+
+  const _PlayPauseButton({
+    required this.isPlaying,
+    required this.onPressed,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: colors.playPauseButtonBackground,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: colors.border.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(
+          isPlaying ? Icons.pause : Icons.play_arrow,
+          size: 36,
+        ),
+        color: colors.playPauseButtonIcon,
+        onPressed: onPressed,
+        padding: const EdgeInsets.all(16),
       ),
     );
   }

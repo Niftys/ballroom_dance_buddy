@@ -7,21 +7,19 @@ import 'move_screen.dart';
 class LearnScreen extends StatefulWidget {
   final void Function(bool) onFullscreenChange;
 
-  LearnScreen({required this.onFullscreenChange});
+  const LearnScreen({required this.onFullscreenChange});
 
   @override
   _LearnScreenState createState() => _LearnScreenState();
 }
 
 class _LearnScreenState extends State<LearnScreen> {
+  final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _allMoves = [];
   List<Map<String, dynamic>> _filteredMoves = [];
-  final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
-
   int? _currentStyleId;
   int? _currentDanceId;
-
   List<Map<String, dynamic>> _styles = [];
   List<Map<String, dynamic>> _dances = [];
 
@@ -42,14 +40,11 @@ class _LearnScreenState extends State<LearnScreen> {
     try {
       final moves = await DatabaseService.getAllFigures();
       setState(() {
-        _allMoves.clear();  // Clear before inserting new data
-        _allMoves.addAll(moves);
+        _allMoves = moves;
         _filteredMoves = List.from(_allMoves);
       });
     } catch (e) {
-      if (kDebugMode) {
-        print("Error loading all moves: $e");
-      }
+      if (kDebugMode) print("Error loading all moves: $e");
     }
   }
 
@@ -80,14 +75,10 @@ class _LearnScreenState extends State<LearnScreen> {
         ),
         leading: _currentStyleId != null
             ? IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             setState(() {
-              if (_currentDanceId != null) {
-                _currentDanceId = null;
-              } else {
-                _currentStyleId = null;
-              }
+              _currentDanceId != null ? _currentDanceId = null : _currentStyleId = null;
             });
           },
         )
@@ -99,16 +90,16 @@ class _LearnScreenState extends State<LearnScreen> {
             padding: const EdgeInsets.all(12.0),
             child: TextField(
               controller: _searchController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: "Search figures...",
                 prefixIcon: Icon(Icons.search),
-                filled: true
+                filled: true,
               ),
             ),
           ),
           Expanded(
             child: AnimatedSwitcher(
-              duration: Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 300),
               child: _buildContent(),
             ),
           ),
@@ -122,10 +113,7 @@ class _LearnScreenState extends State<LearnScreen> {
 
     for (final figure in figures) {
       final level = figure['level'] as String;
-
       grouped.putIfAbsent(level, () => []);
-
-      // Ensure no duplicates in the list for the level
       if (!grouped[level]!.any((item) => item['description'] == figure['description'])) {
         grouped[level]!.add(figure);
       }
@@ -142,27 +130,17 @@ class _LearnScreenState extends State<LearnScreen> {
         return _buildListTile(
           title: move['description'],
           subtitle: "${move['style_name']} | ${move['dance_name']} | ${move['level']}",
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MoveScreen(move: move),
-              ),
-            );
-          },
+          onTap: () => _navigateToMoveScreen(move),
         );
       },
     );
   }
 
   Widget _buildContent() {
-    if (_isSearching) {
-      return _buildSearchResultList(_filteredMoves);
-    }
+    if (_isSearching) return _buildSearchResultList(_filteredMoves);
 
     if (_currentStyleId != null) {
       if (_currentDanceId != null) {
-        // Fetch figures for the selected style and dance
         return FutureBuilder<List<Map<String, dynamic>>>(
           future: DatabaseService.getFigures(
             styleId: _currentStyleId!,
@@ -173,7 +151,7 @@ class _LearnScreenState extends State<LearnScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
             } else if (snapshot.hasError) {
-              return Center(child: Text("Error loading figures."));
+              return Center(child: const Text("Error loading figures."));
             } else {
               final filteredFigures = (snapshot.data ?? []).where((figure) {
                 final description = figure['description'];
@@ -182,14 +160,15 @@ class _LearnScreenState extends State<LearnScreen> {
                     description.toLowerCase() != 'short wall';
               }).toList();
 
-              // Pass style and dance names into _buildFigureList
               final styleName = _styles.firstWhere(
-                      (style) => style['id'] == _currentStyleId,
-                  orElse: () => {'name': 'Unknown'})['name'];
+                    (style) => style['id'] == _currentStyleId,
+                orElse: () => {'name': 'Unknown'},
+              )['name'];
 
               final danceName = _dances.firstWhere(
-                      (dance) => dance['id'] == _currentDanceId,
-                  orElse: () => {'name': 'Unknown'})['name'];
+                    (dance) => dance['id'] == _currentDanceId,
+                orElse: () => {'name': 'Unknown'},
+              )['name'];
 
               return _buildFigureList(filteredFigures, styleName, danceName);
             }
@@ -197,14 +176,13 @@ class _LearnScreenState extends State<LearnScreen> {
         );
       }
 
-      // Fetch dances for the selected style
       return FutureBuilder<List<Map<String, dynamic>>>(
         future: DatabaseService.getDancesByStyleId(_currentStyleId!),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
           } else if (snapshot.hasError) {
-            return Center(child: Text("Error loading dances."));
+            return Center(child: const Text("Error loading dances."));
           } else {
             return _buildDanceList(snapshot.data ?? []);
           }
@@ -212,14 +190,13 @@ class _LearnScreenState extends State<LearnScreen> {
       );
     }
 
-    // Fetch and display styles
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: DatabaseService.getAllStyles(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
         } else if (snapshot.hasError) {
-          return Center(child: Text("Error loading styles."));
+          return Center(child: const Text("Error loading styles."));
         } else {
           return _buildStyleList(snapshot.data ?? []);
         }
@@ -229,19 +206,16 @@ class _LearnScreenState extends State<LearnScreen> {
 
   Widget _buildStyleList(List<Map<String, dynamic>> styles) {
     _styles = styles;
-
     return ListView.builder(
       itemCount: styles.length,
       itemBuilder: (context, index) {
         final style = styles[index];
         return _buildListTile(
           title: style['name'],
-          onTap: () {
-            setState(() {
-              _currentStyleId = style['id'];
-              _currentDanceId = null;
-            });
-          },
+          onTap: () => setState(() {
+            _currentStyleId = style['id'];
+            _currentDanceId = null;
+          }),
         );
       },
     );
@@ -249,18 +223,13 @@ class _LearnScreenState extends State<LearnScreen> {
 
   Widget _buildDanceList(List<Map<String, dynamic>> dances) {
     _dances = dances;
-
     return ListView.builder(
       itemCount: dances.length,
       itemBuilder: (context, index) {
         final dance = dances[index];
         return _buildListTile(
           title: dance['name'],
-          onTap: () {
-            setState(() {
-              _currentDanceId = dance['id'];
-            });
-          },
+          onTap: () => setState(() => _currentDanceId = dance['id']),
         );
       },
     );
@@ -269,8 +238,23 @@ class _LearnScreenState extends State<LearnScreen> {
   Widget _buildFigureList(List<Map<String, dynamic>> figures, String styleName, String danceName) {
     final groupedFigures = _groupFiguresDynamically(figures);
 
+    // Define the desired order for levels
+    const desiredOrder = [
+      'Bronze', 'Silver', 'Gold',
+      'Newcomer IV', 'Newcomer III', 'Newcomer II'
+    ];
+
+    // Sort grouped entries based on predefined order
+    final sortedEntries = groupedFigures.entries.toList()
+      ..sort((a, b) {
+        final indexA = desiredOrder.indexOf(a.key);
+        final indexB = desiredOrder.indexOf(b.key);
+        return (indexA == -1 ? double.infinity : indexA.toDouble())
+            .compareTo(indexB == -1 ? double.infinity : indexB.toDouble());
+      });
+
     return ListView(
-      children: groupedFigures.entries.map((entry) {
+      children: sortedEntries.map((entry) {
         final level = entry.key;
         final moves = entry.value;
 
@@ -303,17 +287,7 @@ class _LearnScreenState extends State<LearnScreen> {
               alignment: Alignment.centerLeft,
               child: _buildListTile(
                 title: figure['description'] ?? 'Unknown Description',
-                onTap: () {
-                  if (kDebugMode) {
-                    print("Navigating to MoveScreen with move: $move");
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MoveScreen(move: move),
-                    ),
-                  );
-                },
+                onTap: () => _navigateToMoveScreen(move),
               ),
             );
           }).toList(),
@@ -350,6 +324,16 @@ class _LearnScreenState extends State<LearnScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _navigateToMoveScreen(Map<String, dynamic> move) {
+    if (kDebugMode) print("Navigating to MoveScreen with move: $move");
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MoveScreen(move: move),
       ),
     );
   }
