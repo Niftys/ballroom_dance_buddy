@@ -7,18 +7,24 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:just_audio/just_audio.dart';
-
 class MusicScreen extends StatefulWidget {
   final AudioPlayer audioPlayer;
   final ValueChanged<List<String>> onSongsReady;
+  final GlobalKey<MusicScreenState> key;  // Explicit key type
+  final ValueChanged<String> onSongTitleChanged;
 
-  MusicScreen({required this.audioPlayer, required this.onSongsReady});
+  const MusicScreen({
+    required this.audioPlayer,
+    required this.onSongsReady,
+    required this.key,
+    required this.onSongTitleChanged,
+  }) : super(key: key);
 
   @override
-  _MusicScreenState createState() => _MusicScreenState();
+  MusicScreenState createState() => MusicScreenState();
 }
 
-class _MusicScreenState extends State<MusicScreen> {
+class MusicScreenState extends State<MusicScreen> {
   Map<String, dynamic> _musicData = {};
   Map<String, List<String>> _styles = {};
   String? _selectedStyle;
@@ -27,6 +33,8 @@ class _MusicScreenState extends State<MusicScreen> {
   List<String> _customSongs = [];
   Map<String, Uint8List> _webCustomSongs = {};
   bool _isLoading = false;
+  int currentSongIndex = -1;
+  List<String> allSongs = [];
 
   @override
   void initState() {
@@ -141,26 +149,88 @@ class _MusicScreenState extends State<MusicScreen> {
 
   void _playSong(String songUrl) async {
     try {
-      if (kIsWeb && _webCustomSongs.containsKey(songUrl)) {
-        final songBytes = _webCustomSongs[songUrl]!;
-        await widget.audioPlayer.setAudioSource(
-          AudioSource.uri(
-            Uri.dataFromBytes(songBytes, mimeType: 'audio/mpeg'),
-            tag: songUrl,
-          ),
-        );
-      } else {
-        final cleanName = _cleanSongName(songUrl);
-        await widget.audioPlayer.setAudioSource(
-          AudioSource.uri(Uri.parse(songUrl), tag: cleanName),
-        );
+      await widget.audioPlayer.stop();
+
+      allSongs = [
+        ..._webCustomSongs.keys,
+        ..._customSongs,
+        ..._currentGenreSongs,
+      ];
+
+      setState(() {
+        currentSongIndex = allSongs.indexOf(songUrl);
+      });
+
+      if (currentSongIndex == -1) {
+        throw Exception('Song not found in playlist');
       }
+
+      final songTitle = _cleanSongName(songUrl);
+      widget.onSongTitleChanged(songTitle);
+
+      final newSource = kIsWeb && _webCustomSongs.containsKey(songUrl)
+          ? AudioSource.uri(
+        Uri.dataFromBytes(
+          _webCustomSongs[songUrl]!,
+          mimeType: 'audio/mpeg',
+        ),
+        tag: songTitle,
+      )
+          : AudioSource.uri(
+        Uri.parse(songUrl),
+        tag: songTitle,
+      );
+
+      await widget.audioPlayer.setAudioSource(newSource);
       await widget.audioPlayer.play();
+
+      if (kDebugMode) {
+        print('Now playing: $songTitle');
+        print('Playlist index: $currentSongIndex/${allSongs.length}');
+      }
     } catch (e) {
+      print('Playback error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to play song: $e")),
+        SnackBar(content: Text("Error playing song: ${e.toString()}")),
       );
     }
+  }
+
+  bool _isPlayingNextSong = false;
+
+  void playNextSong() async {
+    if (_isPlayingNextSong) {
+      return;
+    }
+
+    _isPlayingNextSong = true;
+
+    if (allSongs.isEmpty) return;
+    try {
+      if (currentSongIndex >= allSongs.length - 1) {
+        _isPlayingNextSong = false;
+        return;
+      }
+
+      await widget.audioPlayer.stop();
+      currentSongIndex += 1;
+
+      final nextSongUrl = allSongs[currentSongIndex];
+      final songTitle = _cleanSongName(nextSongUrl);
+
+      widget.onSongTitleChanged(songTitle);
+
+      final newSource = AudioSource.uri(
+        Uri.parse(nextSongUrl),
+        tag: songTitle,
+      );
+
+      await widget.audioPlayer.setAudioSource(newSource);
+      await widget.audioPlayer.play();
+    } catch (e) {
+      widget.onSongTitleChanged("Playback Error");
+    }
+    _isPlayingNextSong = false;
   }
 
   String _cleanSongName(String url) {
@@ -239,103 +309,150 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Widget _buildStyleList() {
-    final stylesList = _styles.keys.toList();
-    return ListView.builder(
-      key: ValueKey("styles"),
-      itemCount: stylesList.length,
-      itemBuilder: (context, index) {
-        final style = stylesList[index];
-        return _buildListTile(
-          title: style,
-          onTap: () {
-            setState(() {
-              _selectedStyle = style;
-            });
-          },
-        );
-      },
+    return Column(
+      children: [
+        _buildStyleRow("International Standard", Theme.of(context).colorScheme.surface, Icons.directions_walk),
+        _buildStyleRow("International Latin", Theme.of(context).colorScheme.surface, Icons.whatshot),
+        _buildStyleRow("Country Western", Theme.of(context).colorScheme.surface, Icons.grass),
+        _buildStyleRow("Social Dances", Theme.of(context).colorScheme.surface, Icons.people),
+      ],
+    );
+  }
+
+  Widget _buildStyleRow(String style, Color color, IconData icon) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedStyle = style;
+          });
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0), // Slight margin for spacing
+          padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding for text alignment
+          decoration: BoxDecoration(
+            color: color.withAlpha(50),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Icon(icon, size: 40, color: Theme.of(context).colorScheme.secondary
+              ), // Left-aligned icon
+              const SizedBox(width: 16), // Space between icon and text
+              Expanded(
+                child: Text(
+                  style,
+                  textAlign: TextAlign.left,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildGenreList() {
     final genres = _styles[_selectedStyle]!;
-    return ListView.builder(
-      key: ValueKey("genres"),
-      itemCount: genres.length,
-      itemBuilder: (context, index) {
-        final genre = genres[index];
-        return _buildListTile(
-          title: _getFolderDisplayName(genre),
-          onTap: () {
-            setState(() {
-              _selectedGenre = genre;
-              _selectGenre(genre);
-            });
-          },
+
+    return Column(
+      children: genres.map((genre) {
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedGenre = genre;
+                _selectGenre(genre);
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withAlpha(50),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _getFolderDisplayName(genre).replaceAll(RegExp(r"\s*\(.*?\)"), ""), // Remove BPM from genre name
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
-      },
+      }).toList(),
     );
   }
 
   Widget _buildSongList() {
-    final allSongs = [
-      ..._webCustomSongs.keys,
-      ..._customSongs,
-      ..._currentGenreSongs,
-    ];
+    final allSongs = [..._webCustomSongs.keys, ..._customSongs, ..._currentGenreSongs];
 
-    return ListView.builder(
+    return ListView.separated(
       key: ValueKey("songs"),
       itemCount: allSongs.length,
+      separatorBuilder: (context, index) => Divider(height: 1, color: Theme.of(context).colorScheme.surface),
       itemBuilder: (context, index) {
         final songUrl = allSongs[index];
-        final isCustomWebSong = _webCustomSongs.containsKey(songUrl);
-        final isCustomMobileSong = _customSongs.contains(songUrl);
+        final isCustomSong = _webCustomSongs.containsKey(songUrl) || _customSongs.contains(songUrl);
+        final cleanedName = _cleanSongName(songUrl);
+        final hyphenIndex = cleanedName.indexOf(' - ');
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-          child: Card(
-            child: ListTile(
-              title: Text(
-                _cleanSongName(songUrl),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              trailing: isCustomWebSong || isCustomMobileSong
-                  ? IconButton(
-                icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                onPressed: () => _removeCustomSong(songUrl),
-              )
-                  : null,
-              onTap: () => _playSong(songUrl),
+        return InkWell(
+          onTap: () => _playSong(songUrl),
+          splashColor: Theme.of(context).primaryColor.withAlpha(25),
+          highlightColor: Theme.of(context).primaryColor.withAlpha(13),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Row(
+              children: [
+                Icon(Icons.music_note,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.secondary),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hyphenIndex != -1
+                            ? cleanedName.substring(hyphenIndex + 3)
+                            : cleanedName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (hyphenIndex != -1)
+                        Text(
+                          cleanedName.substring(0, hyphenIndex),
+                          style: Theme.of(context).textTheme.titleSmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                if (isCustomSong)
+                  IconButton(
+                    icon: Icon(Icons.delete,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.error),
+                    onPressed: () => _removeCustomSong(songUrl),
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
+                  ),
+              ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildListTile({required String title, required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-      child: Card(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

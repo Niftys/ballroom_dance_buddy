@@ -23,7 +23,8 @@ void main() async {
   }
 
   final themeProvider = ThemeProvider();
-  await themeProvider.loadThemePreference(); // Load saved theme preference
+  await themeProvider.loadThemePreference();
+  await themeProvider.loadAutoplayPreference();
 
   runApp(
     ChangeNotifierProvider(
@@ -83,6 +84,23 @@ class ThemeProvider with ChangeNotifier {
     await prefs.setBool('isDarkMode', isDarkMode);
     notifyListeners();
   }
+
+  bool _autoplayEnabled = false;
+
+  bool get autoplayEnabled => _autoplayEnabled;
+
+  Future<void> loadAutoplayPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    _autoplayEnabled = prefs.getBool('autoplayEnabled') ?? false;
+    notifyListeners();
+  }
+
+  Future<void> toggleAutoplay(bool enabled) async {
+    _autoplayEnabled = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('autoplayEnabled', enabled);
+    notifyListeners();
+  }
 }
 
 class BallroomDanceBuddy extends StatelessWidget {
@@ -114,7 +132,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final GlobalKey<MusicScreenState> _musicScreenKey = GlobalKey();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  String _currentSongTitle = "No Song Playing"; // Store the title
   bool _isPlayerExpanded = false;
   bool _isInFullscreen = false;
   int _selectedIndex = 0;
@@ -132,6 +152,12 @@ class _MainScreenState extends State<MainScreen> {
   void _onFullscreenChange(bool isFullscreen) {
     setState(() {
       _isInFullscreen = isFullscreen;
+    });
+  }
+
+  void _updateSongTitle(String newTitle) {
+    setState(() {
+      _currentSongTitle = newTitle; // Update state when title changes
     });
   }
 
@@ -158,6 +184,8 @@ class _MainScreenState extends State<MainScreen> {
                 MusicScreen(
                   audioPlayer: _audioPlayer,
                   onSongsReady: _onSongsReady,
+                  key: _musicScreenKey,
+                  onSongTitleChanged: _updateSongTitle,
                 ),
                 LearnScreen(
                   onFullscreenChange: _onFullscreenChange,
@@ -171,6 +199,8 @@ class _MainScreenState extends State<MainScreen> {
               child: FloatingMusicPlayer(
                 audioPlayer: _audioPlayer,
                 onExpandToggle: _togglePlayerExpanded,
+                musicScreenKey: _musicScreenKey,
+                onSongTitleChanged: _updateSongTitle,
               ),
             ),
         ],
@@ -213,6 +243,19 @@ class _MainScreenState extends State<MainScreen> {
                     onChanged: (bool value) {
                       Navigator.pop(context);
                       themeProvider.toggleTheme(value);
+                    },
+                  ),
+                ],
+              ),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Autoplay", style: Theme.of(context).textTheme.bodyLarge),
+                  Switch(
+                    value: themeProvider.autoplayEnabled,
+                    onChanged: (bool value) {
+                      themeProvider.toggleAutoplay(value);
                     },
                   ),
                 ],

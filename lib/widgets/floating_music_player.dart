@@ -1,17 +1,25 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import '../main.dart';
+import '../screens/music/music_screen.dart';
 import '../themes/colors.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 
 class FloatingMusicPlayer extends StatefulWidget {
   final AudioPlayer audioPlayer;
   final ValueChanged<bool> onExpandToggle;
+  final GlobalKey<MusicScreenState> musicScreenKey;
+  final ValueChanged<String> onSongTitleChanged;
 
   const FloatingMusicPlayer({
     super.key,
     required this.audioPlayer,
     required this.onExpandToggle,
+    required this.musicScreenKey,
+    required this.onSongTitleChanged,
   });
 
   @override
@@ -29,6 +37,7 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
   StreamSubscription<Duration?>? _durationSubscription;
   StreamSubscription<SequenceState?>? _sequenceSubscription;
   StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<PlayerState>? _playbackCompleteSubscription;
 
   bool _isExpanded = false;
   String? _currentSongName;
@@ -44,6 +53,7 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
   void initState() {
     super.initState();
     _initializeAudioListeners();
+    _setupPlaybackCompletion();
   }
 
   void _initializeAudioListeners() {
@@ -53,9 +63,39 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
     _playerStateSubscription = widget.audioPlayer.playerStateStream.listen(_handlePlayerStateUpdate);
   }
 
+  bool _isAutoplaying = false;
+
+  void _setupPlaybackCompletion() {
+    _playbackCompleteSubscription = widget.audioPlayer.playerStateStream.listen((state) async {
+      if (state.processingState == ProcessingState.completed) {
+        if (_isAutoplaying) {
+          return;
+        }
+
+        _isAutoplaying = true;
+
+        final musicScreenState = widget.musicScreenKey.currentState;
+        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+        if (musicScreenState != null && themeProvider.autoplayEnabled) {
+          await Future.delayed(Duration(milliseconds: 500));
+          musicScreenState.playNextSong();
+        }
+
+        _isAutoplaying = false;
+      }
+    });
+  }
+
   void _handlePositionUpdate(Duration position) {
     if (!mounted) return;
-    setState(() => _currentPosition = position);
+
+    setState(() {
+      _currentPosition = position;
+      if (_currentPosition > _songDuration) {
+        _currentPosition = _songDuration;
+      }
+    });
   }
 
   void _handleDurationUpdate(Duration? duration) {
@@ -63,10 +103,23 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
     setState(() => _songDuration = duration ?? Duration.zero);
   }
 
+  void updateSongTitle(String newTitle) {
+    if (!mounted) return;
+    setState(() {
+      _currentSongName = newTitle;
+    });
+  }
+
   void _handleSequenceUpdate(SequenceState? state) {
     if (!mounted) return;
-    final songName = state?.currentSource?.tag as String?;
-    setState(() => _currentSongName = songName ?? "No Song Playing");
+    final songTitle = state?.currentSource?.tag as String?;
+
+    if (songTitle != null) {
+      widget.onSongTitleChanged(songTitle);
+      setState(() => _currentSongName = songTitle);
+    } else {
+      setState(() => _currentSongName = "No Song Playing");
+    }
   }
 
   void _handlePlayerStateUpdate(PlayerState state) {
@@ -76,10 +129,11 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
 
   @override
   void dispose() {
-    _positionSubscription?.cancel(); // Add null check
+    _positionSubscription?.cancel();
     _durationSubscription?.cancel();
     _sequenceSubscription?.cancel();
     _playerStateSubscription?.cancel();
+    _playbackCompleteSubscription?.cancel();
     super.dispose();
   }
 
@@ -155,7 +209,7 @@ class _FloatingMusicPlayerState extends State<FloatingMusicPlayer> {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               boxShadow: [
                 BoxShadow(
-                  color: colors.border.withOpacity(0.3),
+                  color: colors.border.withAlpha(75),
                   offset: const Offset(0, -2),
                   blurRadius: 4.0,
                 ),
@@ -271,14 +325,12 @@ class _ExpandedView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Title with constrained height
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 60),
               child: _SongTitle(songName: songName),
             ),
             const SizedBox(height: 6),
 
-            // Progress slider section
             _ProgressSlider(
               currentPosition: currentPosition,
               songDuration: songDuration,
@@ -287,7 +339,6 @@ class _ExpandedView extends StatelessWidget {
               formatDuration: formatDuration,
             ),
 
-            // Tempo controls
             _TempoControl(
               currentTempo: currentTempo,
               colors: colors,
@@ -295,14 +346,12 @@ class _ExpandedView extends StatelessWidget {
             ),
             const SizedBox(height: 6),
 
-            // BPM display
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 40),
               child: _BpmDisplay(adjustedBPM: adjustedBPM),
             ),
             const SizedBox(height: 10),
 
-            // Control buttons with flexible space
             _ControlButtons(
               colors: colors,
               onTap: onTap,
@@ -544,7 +593,7 @@ class _PlayPauseButton extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: colors.border.withOpacity(0.2),
+            color: colors.border.withAlpha(50),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),

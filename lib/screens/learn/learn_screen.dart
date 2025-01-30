@@ -127,10 +127,39 @@ class _LearnScreenState extends State<LearnScreen> {
       itemCount: moves.length,
       itemBuilder: (context, index) {
         final move = moves[index];
-        return _buildListTile(
-          title: move['description'],
-          subtitle: "${move['style_name']} | ${move['dance_name']} | ${move['level']}",
+        final level = move['level'] as String? ?? "Unknown";
+        final levelColor = _levelColors[level] ?? Theme.of(context).colorScheme.surface;
+
+        return GestureDetector(
           onTap: () => _navigateToMoveScreen(move),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: levelColor.withAlpha(25),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Move Name
+                  Text(
+                    move['description'],
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  // Move Details (Style | Dance | Level)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      "${move['style_name']} | ${move['dance_name']} | $level",
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
@@ -206,126 +235,189 @@ class _LearnScreenState extends State<LearnScreen> {
 
   Widget _buildStyleList(List<Map<String, dynamic>> styles) {
     _styles = styles;
-    return ListView.builder(
-      itemCount: styles.length,
-      itemBuilder: (context, index) {
-        final style = styles[index];
-        return _buildListTile(
-          title: style['name'],
-          onTap: () => setState(() {
-            _currentStyleId = style['id'];
-            _currentDanceId = null;
-          }),
+
+    return Column(
+      children: styles.map((style) {
+        final styleName = style['name'];
+        final icon = _styleIcons[styleName] ?? Icons.style; // Default icon if not found
+
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentStyleId = style['id'];
+                _currentDanceId = null;
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withAlpha(50),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, size: 40, color: Theme.of(context).colorScheme.secondary), // Icon on the left
+                  const SizedBox(width: 16), // Space between icon and text
+                  Expanded(
+                    child: Text(
+                      styleName,
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
-      },
+      }).toList(),
     );
   }
 
   Widget _buildDanceList(List<Map<String, dynamic>> dances) {
     _dances = dances;
-    return ListView.builder(
-      itemCount: dances.length,
-      itemBuilder: (context, index) {
-        final dance = dances[index];
-        return _buildListTile(
-          title: dance['name'],
-          onTap: () => setState(() => _currentDanceId = dance['id']),
+
+    return Column(
+      children: dances.map((dance) {
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentDanceId = dance['id'];
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withAlpha(50),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      dance['name'],
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
-      },
+      }).toList(),
     );
   }
 
   Widget _buildFigureList(List<Map<String, dynamic>> figures, String styleName, String danceName) {
     final groupedFigures = _groupFiguresDynamically(figures);
 
-    // Define the desired order for levels
-    const desiredOrder = [
-      'Bronze', 'Silver', 'Gold',
-      'Newcomer IV', 'Newcomer III', 'Newcomer II'
-    ];
-
-    // Sort grouped entries based on predefined order
-    final sortedEntries = groupedFigures.entries.toList()
+    // Sort levels in a specific order
+    const desiredOrder = ['Bronze', 'Silver', 'Gold', 'Newcomer IV', 'Newcomer III', 'Newcomer II'];
+    final sortedLevels = groupedFigures.keys.toList()
       ..sort((a, b) {
-        final indexA = desiredOrder.indexOf(a.key);
-        final indexB = desiredOrder.indexOf(b.key);
+        final indexA = desiredOrder.indexOf(a);
+        final indexB = desiredOrder.indexOf(b);
         return (indexA == -1 ? double.infinity : indexA.toDouble())
             .compareTo(indexB == -1 ? double.infinity : indexB.toDouble());
       });
 
-    return ListView(
-      children: sortedEntries.map((entry) {
-        final level = entry.key;
-        final moves = entry.value;
+    String? _selectedLevel;
 
-        return ExpansionTile(
-          title: Text(
-            level,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: level == 'Bronze'
-                  ? AppColors.bronze
-                  : level == 'Silver'
-                  ? AppColors.silver
-                  : level == 'Gold'
-                  ? AppColors.gold
-                  : Theme.of(context).colorScheme.secondary,
-            ),
-          ),
-          children: moves.map((figure) {
-            final move = {
-              'style': styleName,
-              'dance': danceName,
-              'level': level,
-              'description': figure['description'] ?? 'Unknown Description',
-              'video_url': figure['video_url'] ?? '',
-              'start': figure['start'] ?? 0,
-              'end': figure['end'] ?? 0,
-            };
+    return StatefulBuilder(builder: (context, setState) {
+      return Row(
+        children: [
+          // Left: Level Selection
+          Expanded(
+            flex: 1, // Takes up 40% of the screen
+            child: Container(
+              color: Theme.of(context).colorScheme.surface.withAlpha(50),
+              child: ListView(
+                children: sortedLevels.map((level) {
+                  final levelColor = _levelColors[level] ?? Theme.of(context).colorScheme.onSurface;
 
-            return Align(
-              alignment: Alignment.centerLeft,
-              child: _buildListTile(
-                title: figure['description'] ?? 'Unknown Description',
-                onTap: () => _navigateToMoveScreen(move),
-              ),
-            );
-          }).toList(),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildListTile({required String title, String? subtitle, required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-      child: Card(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                if (subtitle != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.titleSmall,
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedLevel = level);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: _selectedLevel == level
+                            ? levelColor.withAlpha(75)
+                            : Colors.transparent,
+                        border: Border(
+                          left: BorderSide(
+                            color: _selectedLevel == level ? levelColor : Colors.transparent,
+                            width: 4.0,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        level,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: levelColor,
+                        ),
+                      ),
                     ),
-                  ),
-              ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
-        ),
-      ),
-    );
+
+          // Right: Figure List
+          Expanded(
+            flex: 2, // Takes up 60% of the screen
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              color: Theme.of(context).colorScheme.surface,
+              child: _selectedLevel == null
+                  ? Center(
+                child: Text(
+                  "Select a level",
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              )
+                  : ListView(
+                children: groupedFigures[_selectedLevel]!.map((figure) {
+                  final move = {
+                    'style': styleName,
+                    'dance': danceName,
+                    'level': _selectedLevel,
+                    'description': figure['description'] ?? 'Unknown Description',
+                    'video_url': figure['video_url'] ?? '',
+                    'start': figure['start'] ?? 0,
+                    'end': figure['end'] ?? 0,
+                  };
+
+                  return GestureDetector(
+                    onTap: () => _navigateToMoveScreen(move),
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface.withAlpha(50),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Text(
+                        figure['description'] ?? 'Unknown Description',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   void _navigateToMoveScreen(Map<String, dynamic> move) {
@@ -337,4 +429,20 @@ class _LearnScreenState extends State<LearnScreen> {
       ),
     );
   }
+
+  final Map<String, IconData> _styleIcons = {
+    "International Standard": Icons.directions_walk,
+    "International Latin": Icons.whatshot,
+    "Country Western": Icons.grass,
+    "Social Dances": Icons.people,
+  };
+
+  final Map<String, Color> _levelColors = {
+    "Bronze": AppColors.bronze,
+    "Silver": AppColors.silver,
+    "Gold": AppColors.gold,
+    "Newcomer IV": AppColors.primary,
+    "Newcomer III": AppColors.primary,
+    "Newcomer II": AppColors.primary,
+  };
 }
