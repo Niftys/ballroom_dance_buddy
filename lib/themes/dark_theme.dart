@@ -16,7 +16,7 @@ final darkTheme = ThemeData(
 
   appBarTheme: AppBarTheme(
     backgroundColor: DarkAppColors.primary,
-    elevation: 5,
+    elevation: 3,
     iconTheme: IconThemeData(color: DarkAppColors.textPrimary),
     titleTextStyle: TextStyle(
       fontSize: 20,

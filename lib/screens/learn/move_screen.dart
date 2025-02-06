@@ -113,9 +113,6 @@ class _MoveScreenState extends State<MoveScreen> {
   Widget build(BuildContext context) {
     if (_videoError) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.move['description'] ?? 'Move Details'),
-        ),
         body: const Center(
           child: Text(
             'Error loading video. Please check the URL and try again.',
@@ -126,16 +123,11 @@ class _MoveScreenState extends State<MoveScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.move['description'] ?? 'Move Details'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+      body: Center(
+        child: YoutubePlayer(
+          controller: _controller!,
+          aspectRatio: 16 / 9,
         ),
-      ),
-      body: YoutubePlayer(
-        controller: _controller!,
-        aspectRatio: 16 / 9,
       ),
     );
   }

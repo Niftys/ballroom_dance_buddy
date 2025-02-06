@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:just_audio/just_audio.dart';
 class MusicScreen extends StatefulWidget {
@@ -256,7 +257,10 @@ class MusicScreenState extends State<MusicScreen> {
               : _selectedGenre == null
               ? "Select Dance"
               : _getFolderDisplayName(_selectedGenre!),
-          style: Theme.of(context).textTheme.titleLarge,
+          style: Theme
+              .of(context)
+              .textTheme
+              .titleLarge,
         ),
         leading: _selectedStyle != null
             ? IconButton(
@@ -282,13 +286,10 @@ class MusicScreenState extends State<MusicScreen> {
             : [],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
-          : AnimatedSwitcher(
-        duration: Duration(milliseconds: 300),
-        switchInCurve: Curves.easeInOut,
-        switchOutCurve: Curves.easeInOut,
-        child: _buildContent(),
-      ),
+          ? Center(child: CircularProgressIndicator(color: Theme
+          .of(context)
+          .primaryColor))
+          : _buildContent(),
     );
   }
 
@@ -311,15 +312,51 @@ class MusicScreenState extends State<MusicScreen> {
   Widget _buildStyleList() {
     return Column(
       children: [
-        _buildStyleRow("International Standard", Theme.of(context).colorScheme.surface, Icons.directions_walk),
-        _buildStyleRow("International Latin", Theme.of(context).colorScheme.surface, Icons.whatshot),
-        _buildStyleRow("Country Western", Theme.of(context).colorScheme.surface, Icons.grass),
-        _buildStyleRow("Social Dances", Theme.of(context).colorScheme.surface, Icons.people),
+        _buildStyleRow(
+          "International Standard",
+          Theme.of(context).colorScheme.surface,
+          SvgPicture.asset(
+            'assets/icons/txblogo.svg',
+            color: Theme.of(context).colorScheme.secondary,
+            width: 40,
+            height: 40,
+          ),
+        ),
+        _buildStyleRow(
+          "International Latin",
+          Theme.of(context).colorScheme.surface,
+          SvgPicture.asset(
+            'assets/icons/latin.svg',
+            color: Theme.of(context).colorScheme.secondary,
+            width: 40,
+            height: 40,
+          ),
+        ),
+        _buildStyleRow(
+          "Country Western",
+          Theme.of(context).colorScheme.surface,
+          SvgPicture.asset(
+            'assets/icons/country.svg',
+            color: Theme.of(context).colorScheme.secondary,
+            width: 40,
+            height: 40,
+          ),
+        ),
+        _buildStyleRow(
+          "Social Dances",
+          Theme.of(context).colorScheme.surface,
+          SvgPicture.asset(
+            'assets/icons/social.svg',
+            color: Theme.of(context).colorScheme.secondary,
+            width: 40,
+            height: 40,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildStyleRow(String style, Color color, IconData icon) {
+  Widget _buildStyleRow(String style, Color color, Widget icon) {
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -337,8 +374,7 @@ class MusicScreenState extends State<MusicScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Icon(icon, size: 40, color: Theme.of(context).colorScheme.secondary
-              ), // Left-aligned icon
+              icon, // Left-aligned icon
               const SizedBox(width: 16), // Space between icon and text
               Expanded(
                 child: Text(
@@ -441,9 +477,7 @@ class MusicScreenState extends State<MusicScreen> {
                 ),
                 if (isCustomSong)
                   IconButton(
-                    icon: Icon(Icons.delete,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.error),
+                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                     onPressed: () => _removeCustomSong(songUrl),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),

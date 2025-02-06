@@ -52,10 +52,6 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
     }
   }
 
-  Future<Directory> _getAppDocDir() async {
-    return Directory.systemTemp;  // Use temp directory directly
-  }
-
   Future<void> _exportChoreography() async {
     final exportData = {
       'choreography': {

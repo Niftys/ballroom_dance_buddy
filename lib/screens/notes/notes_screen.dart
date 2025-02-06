@@ -491,7 +491,7 @@ class _NotesScreenState extends State<NotesScreen> {
                               onPressed: () {
                                 Navigator.pop(context, false);
                               },
-                              child: Text("Cancel"),
+                              child: Text("Cancel", style: Theme.of(context).textTheme.titleSmall),
                             ),
                             TextButton(
                               onPressed: () {

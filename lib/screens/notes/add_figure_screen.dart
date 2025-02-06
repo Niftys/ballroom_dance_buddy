@@ -23,6 +23,7 @@ class AddFigureScreen extends StatefulWidget {
 class _AddFigureScreenState extends State<AddFigureScreen> {
   Map<String, List<Map<String, dynamic>>> _organizedFigures = {};
   String _searchQuery = '';
+  String? _selectedLevel;
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -209,7 +210,13 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
   void _deleteCustomFigure(int figureId) async {
     try {
       await DatabaseService.deleteCustomFigure(figureId);
-      _loadAvailableFigures(); // Refresh the list after deletion
+      _loadAvailableFigures();
+
+      setState(() {
+        if (_organizedFigures.containsKey('Custom') && _organizedFigures['Custom']!.isEmpty) {
+          _organizedFigures.remove('Custom');  // Remove the key if it's empty
+        }
+      });
     } catch (e) {
       if (kDebugMode) {
         print("Error deleting custom figure: $e");
@@ -307,60 +314,126 @@ class _AddFigureScreenState extends State<AddFigureScreen> {
       );
     }
 
-    // Define desired order
-    const desiredOrder = [
-      'Bronze', 'Silver', 'Gold',
-      'Newcomer IV', 'Newcomer III', 'Newcomer II'
-    ];
+    return StatefulBuilder(builder: (context, setState) {
+      // Define desired order
+      const desiredOrder = [
+        'Bronze', 'Silver', 'Gold',
+        'Newcomer IV', 'Newcomer III', 'Newcomer II', 'Custom'
+      ];
 
-    // Sort entries based on predefined order
-    final sortedEntries = _organizedFigures.entries.toList()
-      ..sort((a, b) {
-        final indexA = desiredOrder.indexOf(a.key);
-        final indexB = desiredOrder.indexOf(b.key);
-        return (indexA == -1 ? double.infinity : indexA.toDouble())
-            .compareTo(indexB == -1 ? double.infinity : indexB.toDouble());
-      });
+      // Sort levels
+      final sortedLevels = _organizedFigures.keys.toList()
+        ..sort((a, b) {
+          final indexA = desiredOrder.indexOf(a);
+          final indexB = desiredOrder.indexOf(b);
+          return (indexA == -1 ? double.infinity : indexA.toDouble())
+              .compareTo(indexB == -1 ? double.infinity : indexB.toDouble());
+        });
 
-    return ListView(
-      children: sortedEntries.map((entry) {
-        final level = entry.key;
-        final figures = entry.value;
+      // Select first level if none selected
+      if (_selectedLevel == null && sortedLevels.isNotEmpty) {
+        _selectedLevel = sortedLevels.first;
+      }
 
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          child: ExpansionTile(
-            title: Text(
-              level,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: level == 'Bronze'
-                    ? AppColors.bronze
-                    : level == 'Silver'
-                    ? AppColors.silver
-                    : level == 'Gold'
-                    ? AppColors.gold
-                    : Theme.of(context).colorScheme.secondary,
+      return Row(
+        children: [
+          // Left Panel - Level Selection
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: Theme.of(context).colorScheme.surface.withAlpha(50),
+              child: ListView(
+                children: sortedLevels.map((level) {
+                  final levelColor = _getLevelColor(level);
+
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedLevel = level),
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: _selectedLevel == level
+                            ? levelColor.withAlpha(75)
+                            : Colors.transparent,
+                        border: Border(
+                          left: BorderSide(
+                            color: _selectedLevel == level
+                                ? levelColor
+                                : Colors.transparent,
+                            width: 4.0,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        level,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: levelColor,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
-            children: figures.map((figure) {
-              return ListTile(
-                title: Text(figure['description']),
-                onTap: () => _addFigure(figure['id']),
-                trailing: figure['custom'] == 1
-                    ? IconButton(
-                  icon: Icon(Icons.delete,
-                      color: Theme.of(context).colorScheme.error),
-                  onPressed: () => _deleteCustomFigure(figure['id']),
-                )
-                    : null,
-              );
-            }).toList(),
           ),
-        );
-      }).toList(),
-    );
+          Container(
+            width: 2,
+            color: Colors.grey,
+          ),
+          // Right Panel - Figures List
+          Expanded(
+            flex: 2,
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              color: Theme.of(context).colorScheme.surface,
+              child: _selectedLevel == null
+                  ? Center(
+                child: Text(
+                  "Select a level",
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              )
+                  : ListView(
+                children: (_organizedFigures[_selectedLevel] ?? []).map((figure) {
+                  return ListTile(
+                    visualDensity: VisualDensity(vertical: 1),
+                    title: Text(
+                      figure['description'],
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    onTap: () => _addFigure(figure['id']),
+                    trailing: figure['custom'] == 1
+                        ? IconButton(
+                      icon: Icon(Icons.delete,
+                          color: Theme.of(context).colorScheme.error),
+                      onPressed: () => _deleteCustomFigure(figure['id']),
+                    )
+                        : null,
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Color _getLevelColor(String level) {
+    switch (level) {
+      case 'Bronze':
+        return AppColors.bronze;
+      case 'Silver':
+        return AppColors.silver;
+      case 'Gold':
+        return AppColors.gold;
+      case 'Newcomer IV':
+      case 'Newcomer III':
+      case 'Newcomer II':
+        return AppColors.primary;
+      default:
+        return AppColors.highlight;
+    }
   }
 
 // Helper method to get all figures as a flat list

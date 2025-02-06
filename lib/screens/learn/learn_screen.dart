@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../themes/colors.dart';
 import '/services/database_service.dart';
 import 'move_screen.dart';
@@ -239,7 +240,6 @@ class _LearnScreenState extends State<LearnScreen> {
     return Column(
       children: styles.map((style) {
         final styleName = style['name'];
-        final icon = _styleIcons[styleName] ?? Icons.style; // Default icon if not found
 
         return Expanded(
           child: GestureDetector(
@@ -258,7 +258,7 @@ class _LearnScreenState extends State<LearnScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(icon, size: 40, color: Theme.of(context).colorScheme.secondary), // Icon on the left
+                  _getStyleIcon(styleName, context),
                   const SizedBox(width: 16), // Space between icon and text
                   Expanded(
                     child: Text(
@@ -370,7 +370,10 @@ class _LearnScreenState extends State<LearnScreen> {
               ),
             ),
           ),
-
+          Container(
+            width: 2,
+            color: Colors.grey,
+          ),
           // Right: Figure List
           Expanded(
             flex: 2, // Takes up 60% of the screen
@@ -430,12 +433,23 @@ class _LearnScreenState extends State<LearnScreen> {
     );
   }
 
-  final Map<String, IconData> _styleIcons = {
-    "International Standard": Icons.directions_walk,
-    "International Latin": Icons.whatshot,
-    "Country Western": Icons.grass,
-    "Social Dances": Icons.people,
-  };
+  Widget _getStyleIcon(String styleName, BuildContext context) {
+    final Map<String, String> iconPaths = {
+      "International Standard": 'assets/icons/txblogo.svg',
+      "International Latin": 'assets/icons/latin.svg',
+      "Country Western": 'assets/icons/country.svg',
+      "Social Dances": 'assets/icons/social.svg',
+    };
+
+    if (!iconPaths.containsKey(styleName)) return Container();
+
+    return SvgPicture.asset(
+      iconPaths[styleName]!,
+      width: 40,
+      height: 40,
+      color: Theme.of(context).colorScheme.secondary, // Access `context` here
+    );
+  }
 
   final Map<String, Color> _levelColors = {
     "Bronze": AppColors.bronze,

@@ -16,7 +16,7 @@ final lightTheme = ThemeData(
 
   appBarTheme: AppBarTheme(
     backgroundColor: AppColors.primaryLightester, // Background for AppBar
-    elevation: 5, // Shadow height
+    elevation: 3, // Shadow height
     iconTheme: IconThemeData(color: AppColors.textPrimary), // Icon color
     titleTextStyle: TextStyle(
       fontSize: 20,
