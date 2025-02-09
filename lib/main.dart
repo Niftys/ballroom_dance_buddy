@@ -113,6 +113,7 @@ class BallroomDanceBuddy extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
+      title: "Ballroom Dance Buddy",
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,

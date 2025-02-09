@@ -25,14 +25,14 @@ class _MoveScreenState extends State<MoveScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFigureData(); // Load video and figure data
+    _loadFigureData();
   }
 
   Future<void> _loadFigureData() async {
     setState(() {
-      videoUrl = widget.move['video_url'] ?? '';
-      start = widget.move['start']?.toDouble() ?? 0;
-      end = widget.move['end']?.toDouble() ?? 0;
+      videoUrl = widget.move['video_url']?.toString() ?? '';
+      start = (widget.move['start'] ?? 0).toDouble();
+      end = (widget.move['end'] ?? 0).toDouble();
     });
 
     if (videoUrl.isEmpty || start >= end) {
@@ -46,13 +46,13 @@ class _MoveScreenState extends State<MoveScreen> {
   Future<void> _initializePlayer() async {
     try {
       videoId = videoUrl.trim();
-      if (videoId!.isEmpty) {
+
+      if (videoId == null || videoId!.isEmpty) {
         print("Error: Video ID is empty");
         setState(() => _videoError = true);
         return;
       }
 
-      // Create the YoutubePlayerController instance
       _controller = YoutubePlayerController(
         params: YoutubePlayerParams(
           showControls: true,
@@ -61,13 +61,12 @@ class _MoveScreenState extends State<MoveScreen> {
         ),
       );
 
-      // Load the video by ID and start at the specified time
       _controller!.loadVideoById(
-        videoId: videoId!,
+        videoId: videoId!.toString(),
         startSeconds: start,
       );
 
-      _startLoopCheck(); // Set up the loop check for video playback
+      _startLoopCheck();
     } catch (e) {
       print("Error initializing player: $e");
       setState(() => _videoError = true);
@@ -75,20 +74,16 @@ class _MoveScreenState extends State<MoveScreen> {
   }
 
   void _startLoopCheck() {
-    _loopTimer?.cancel(); // Cancel any existing timer
+    _loopTimer?.cancel();
     _loopTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) async {
       if (!mounted) {
         timer.cancel();
         return;
       }
 
-      // Get the current time
       final currentTime = await _controller!.currentTime;
-
-      // Check if the video needs to loop
       if (currentTime >= end) {
         try {
-          // Reload the video at the start time
           _controller!.loadVideoById(
             videoId: videoId!,
             startSeconds: start,
@@ -105,7 +100,7 @@ class _MoveScreenState extends State<MoveScreen> {
   @override
   void dispose() {
     _loopTimer?.cancel();
-    _controller!.close();
+    _controller?.close();
     super.dispose();
   }
 
@@ -113,6 +108,13 @@ class _MoveScreenState extends State<MoveScreen> {
   Widget build(BuildContext context) {
     if (_videoError) {
       return Scaffold(
+        appBar: AppBar(
+          title: const Text("Move Details"),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
         body: const Center(
           child: Text(
             'Error loading video. Please check the URL and try again.',
@@ -123,11 +125,16 @@ class _MoveScreenState extends State<MoveScreen> {
     }
 
     return Scaffold(
-      body: Center(
-        child: YoutubePlayer(
-          controller: _controller!,
-          aspectRatio: 16 / 9,
+      appBar: AppBar(
+        title: const Text("Move Details"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
+      ),
+      body: YoutubePlayer(
+        controller: _controller!,
+        aspectRatio: 16 / 9,
       ),
     );
   }
