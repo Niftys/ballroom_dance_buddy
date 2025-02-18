@@ -190,7 +190,7 @@ class _ViewChoreographyScreenState extends State<ViewChoreographyScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, _notesController.text),
-              child: Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text("Save", style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
             ),
           ],
         );

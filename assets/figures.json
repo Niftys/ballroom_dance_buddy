@@ -24,7 +24,7 @@
               "video_url": "L99_bDuPMNU",
               "start": 37,
               "end": 47},
-            { "description": "Whisk and Chassé from Promenade",
+            { "description": "Whisk and Chasse from Promenade",
               "video_url": "L99_bDuPMNU",
               "start": 48,
               "end": 62},
@@ -40,7 +40,7 @@
               "video_url": "L99_bDuPMNU",
               "start": 76,
               "end": 82},
-            { "description": "Reverse Corté",
+            { "description": "Reverse Corte",
               "video_url": "L99_bDuPMNU",
               "start": 82,
               "end": 88},
@@ -64,7 +64,7 @@
               "video_url": "L99_bDuPMNU",
               "start": 118,
               "end": 125},
-            { "description": "Progressive Chassé to Right",
+            { "description": "Progressive Chasse to Right",
               "video_url": "L99_bDuPMNU",
               "start": 125,
               "end": 132}
@@ -132,7 +132,7 @@
               "video_url": "74epnvnoG4c",
               "start": 82,
               "end": 90},
-            { "description": "Hover Corté",
+            { "description": "Hover Corte",
               "video_url": "74epnvnoG4c",
               "start": 90,
               "end": 107},
@@ -177,11 +177,11 @@
               "video_url":  "zMqbUSc6uok",
               "start": 47,
               "end": 61},
-            { "description": "Open Reverse Turn, Lady Outside",
+            { "description": "Open Reverse Turn, Follower Outside",
               "video_url":  "zMqbUSc6uok",
               "start": 61,
               "end": 72},
-            { "description": "Open Reverse Turn, Lady Outside, with an Open Finish",
+            { "description": "Open Reverse Turn, Follower Outside, with an Open Finish",
               "video_url":  "zMqbUSc6uok",
               "start": 72,
               "end": 83},
@@ -189,11 +189,11 @@
               "video_url":  "zMqbUSc6uok",
               "start": 83,
               "end": 94},
-            { "description": "Left Foot and Right Foot Rock in Line and Back Corté",
+            { "description": "Left Foot and Right Foot Rock in Line and Back Corte",
               "video_url":  "zMqbUSc6uok",
               "start": 94,
               "end": 110},
-            { "description": "Open Reverse Turn, Lady in Line",
+            { "description": "Open Reverse Turn, Follower in Line",
               "video_url":  "zMqbUSc6uok",
               "start": 110,
               "end": 118},
@@ -427,11 +427,11 @@
               "video_url": "gEuQlpkdSqI",
               "start": 55,
               "end": 66},
-            { "description": "Progressive Chassé",
+            { "description": "Progressive Chasse",
               "video_url": "gEuQlpkdSqI",
               "start": 66,
               "end": 73},
-            { "description": "Chassé Reverse Turn",
+            { "description": "Chasse Reverse Turn",
               "video_url": "gEuQlpkdSqI",
               "start": 73,
               "end": 80},
@@ -447,11 +447,11 @@
               "video_url": "gEuQlpkdSqI",
               "start": 97,
               "end": 114},
-            { "description": "Progressive Chassé to Right",
+            { "description": "Progressive Chasse to Right",
               "video_url": "gEuQlpkdSqI",
               "start": 114,
               "end": 122},
-            { "description": "Tipple Chassé",
+            { "description": "Tipple Chasse",
               "video_url": "gEuQlpkdSqI",
               "start": 122,
               "end": 142},
@@ -467,7 +467,7 @@
               "video_url": "gEuQlpkdSqI",
               "start": 160,
               "end": 172},
-            { "description": "Cross Chassé",
+            { "description": "Cross Chasse",
               "video_url": "gEuQlpkdSqI",
               "start": 172,
               "end": 180},
@@ -505,7 +505,7 @@
               "video_url": "wIetViBFjcQ",
               "start": 109,
               "end": 127},
-            { "description": "Silver Tipple Chassé",
+            { "description": "Silver Tipple Chasse",
               "video_url": "wIetViBFjcQ",
               "start": 127,
               "end": 138}
@@ -531,7 +531,7 @@
               "video_url": "_JvUW2bqjRY",
               "start": 47,
               "end": 55},
-            { "description": "Hover Corté",
+            { "description": "Hover Corte",
               "video_url": "_JvUW2bqjRY",
               "start": 55,
               "end": 63}
@@ -612,7 +612,7 @@
               "video_url": "u0ocmfIDleo",
               "start": 117,
               "end": 151},
-            { "description": "Running Chassé",
+            { "description": "Running Chasse",
               "video_url": "u0ocmfIDleo",
               "start": 151,
               "end": 163},
@@ -748,7 +748,7 @@
               "video_url": "OZv3ZFxYcSk",
               "start": 265,
               "end": 277},
-            { "description": "Cha Cha Chassé",
+            { "description": "Cha Cha Chasse",
               "video_url": "OZv3ZFxYcSk",
               "start": 277,
               "end": 357}
@@ -761,7 +761,7 @@
           "Bronze": [
             { "description": "Basic Movements",
               "video_url": "-f2SxuEa-qc",
-              "start": 6,
+              "start": 6, 
               "end": 60},
             { "description": "Cucarachas",
               "video_url": "-f2SxuEa-qc",
@@ -783,7 +783,7 @@
               "video_url": "-f2SxuEa-qc",
               "start": 110,
               "end": 124},
-            { "description": "Progressive Walks Forward & Backward",
+            { "description": "Progressive Walks Forward and Backward",
               "video_url": "-f2SxuEa-qc",
               "start": 124,
               "end": 153},
@@ -833,7 +833,7 @@
               "video_url": "3SVn4e-3qcI",
               "start": 51,
               "end": 61},
-            { "description": "Opening Out From Reverse Top",
+            { "description": "Opening Out from Reverse Top",
               "video_url": "3SVn4e-3qcI",
               "start": 61,
               "end": 76},
@@ -1079,7 +1079,7 @@
               "video_url": "GBDIsyWxmk8",
               "start": 9,
               "end": 19},
-            { "description": "Chassé to Right and Left",
+            { "description": "Chasse to Right and Left",
               "video_url": "GBDIsyWxmk8",
               "start": 19,
               "end": 39},
@@ -1107,7 +1107,7 @@
               "video_url": "GBDIsyWxmk8",
               "start": 123,
               "end": 142},
-            { "description": "Separation with Lady's Caping Walk",
+            { "description": "Separation with Follower's Caping Walk",
               "video_url": "GBDIsyWxmk8",
               "start": 142,
               "end": 159},
@@ -1179,7 +1179,7 @@
               "video_url": "2rUX9BxddXg",
               "start": 125,
               "end": 139},
-            { "description": "Chassé Cape",
+            { "description": "Chasse Cape",
               "video_url": "2rUX9BxddXg",
               "start": 139,
               "end": 173}
@@ -1320,6 +1320,3100 @@
     ]
   },
   {
+    "style": "American Smooth",
+    "dances": [
+      {
+        "name": "Waltz",
+        "levels": {
+          "Bronze": [
+            { "description": "Long Wall" },
+            { "description": "Short Wall" },
+            { "description": "Closed Box Turn",
+              "video_url": "F_AhYb6cMzk",
+              "start": 20,
+              "end": 70},
+            { "description": "Progressive Change Steps",
+              "video_url": "F_AhYb6cMzk",
+              "start": 71,
+              "end": 109},
+            {
+              "description": "Closed Finish",
+              "video_url": "F_AhYb6cMzk",
+              "start": 110,
+              "end": 124
+            },
+            {
+              "description": "Balance Steps and Hesitations",
+              "video_url": "F_AhYb6cMzk",
+              "start": 125,
+              "end": 144
+            },
+            {
+              "description": "5th Position Breaks",
+              "video_url": "F_AhYb6cMzk",
+              "start": 145,
+              "end": 170
+            },
+            {
+              "description": "Follower’s Underarm Turn to Right",
+              "video_url": "F_AhYb6cMzk",
+              "start": 171,
+              "end": 189
+            },
+            {
+              "description": "Simple Twinkle",
+              "video_url": "F_AhYb6cMzk",
+              "start": 190,
+              "end": 204
+            },
+            {
+              "description": "Progressive Twinkles",
+              "video_url": "F_AhYb6cMzk",
+              "start": 205,
+              "end": 242
+            },
+            {
+              "description": "Turning Twinkles to Promenade and Counter Promenade",
+              "video_url": "F_AhYb6cMzk",
+              "start": 243,
+              "end": 267
+            },
+            {
+              "description": "Flip Flops",
+              "video_url": "F_AhYb6cMzk",
+              "start": 268,
+              "end": 293
+            },
+            {
+              "description": "Back to Back/Hand to Hand Box",
+              "video_url": "F_AhYb6cMzk",
+              "start": 294,
+              "end": 308
+            },
+            {
+              "description": "Cross Body Lead with Forward Hesitation",
+              "video_url": "F_AhYb6cMzk",
+              "start": 309,
+              "end": 326
+            },
+            {
+              "description": "Cross Body Lead with Left Box Turn",
+              "video_url": "F_AhYb6cMzk",
+              "start": 327,
+              "end": 352
+            },
+            {
+              "description": "Forward Twist to the Left from Promenade",
+              "video_url": "F_AhYb6cMzk",
+              "start": 353,
+              "end": 370
+            },
+            {
+              "description": "Natural Spin Turn with Reverse Turn Ending",
+              "video_url": "F_AhYb6cMzk",
+              "start": 371,
+              "end": 392
+            },
+            {
+              "description": "Closed Impetus with Reverse Turn Ending",
+              "video_url": "F_AhYb6cMzk",
+              "start": 393,
+              "end": 409
+            },
+            {
+              "description": "Promenade Pivot/Single Pivot from Promenade Position",
+              "video_url": "F_AhYb6cMzk",
+              "start": 410,
+              "end": 429
+            },
+            {
+              "description": "Progressive Chasse to Right",
+              "video_url": "F_AhYb6cMzk",
+              "start": 430,
+              "end": 446
+            },
+            {
+              "description": "Promenade Chasse",
+              "video_url": "F_AhYb6cMzk",
+              "start": 447,
+              "end": 462
+            },
+            {
+              "description": "Simple Grapevine or Zig Zag",
+              "video_url": "F_AhYb6cMzk",
+              "start": 463,
+              "end": 478
+            },
+            {
+              "description": "Waterfalls",
+              "video_url": "F_AhYb6cMzk",
+              "start": 479,
+              "end": 499
+            },
+            {
+              "description": "Back Spot Turn",
+              "video_url": "F_AhYb6cMzk",
+              "start": 500,
+              "end": 513
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Open Box Turn",
+              "video_url": "46CBGnr4uZs",
+              "start": 9,
+              "end": 40
+            },
+            {
+              "description": "Progressive Twinkles",
+              "video_url": "46CBGnr4uZs",
+              "start": 41,
+              "end": 48
+            },
+            {
+              "description": "Forward and Back Lock Steps",
+              "video_url": "46CBGnr4uZs",
+              "start": 49,
+              "end": 66
+            },
+            {
+              "description": "Syncopated Underarm Turn",
+              "video_url": "46CBGnr4uZs",
+              "start": 67,
+              "end": 84
+            },
+            {
+              "description": "Progressive Passing Twinkles",
+              "video_url": "46CBGnr4uZs",
+              "start": 85,
+              "end": 105
+            },
+            {
+              "description": "Running Steps",
+              "video_url": "46CBGnr4uZs",
+              "start": 106,
+              "end": 120
+            },
+            {
+              "description": "Traveling Crosses",
+              "video_url": "46CBGnr4uZs",
+              "start": 121,
+              "end": 134
+            },
+            {
+              "description": "Grapevines to Right or Left",
+              "video_url": "46CBGnr4uZs",
+              "start": 135,
+              "end": 150
+            },
+            {
+              "description": "Fallaway Reverse Turn and Slip Pivot",
+              "video_url": "46CBGnr4uZs",
+              "start": 151,
+              "end": 165
+            },
+            {
+              "description": "Bounce Fallaway (with Outside Change)",
+              "video_url": "46CBGnr4uZs",
+              "start": 166,
+              "end": 183
+            },
+            {
+              "description": "Chair and Slip Pivot",
+              "video_url": "46CBGnr4uZs",
+              "start": 184,
+              "end": 214
+            },
+            {
+              "description": "Wing",
+              "video_url": "46CBGnr4uZs",
+              "start": 215,
+              "end": 222
+            },
+            {
+              "description": "Quick Open Reverse",
+              "video_url": "46CBGnr4uZs",
+              "start": 223,
+              "end": 236
+            },
+            {
+              "description": "Basic Hairpin from Closed Position and Promenade Position",
+              "video_url": "46CBGnr4uZs",
+              "start": 237,
+              "end": 258
+            },
+            {
+              "description": "Picture Line: Contra Check",
+              "video_url": "46CBGnr4uZs",
+              "start": 259,
+              "end": 272
+            },
+            {
+              "description": "Picture Line: Hover",
+              "video_url": "46CBGnr4uZs",
+              "start": 273,
+              "end": 286
+            },
+            {
+              "description": "Picture Line: Oversway",
+              "video_url": "46CBGnr4uZs",
+              "start": 287,
+              "end": 301
+            },
+            {
+              "description": "Picture Line: Left Lunge",
+              "video_url": "46CBGnr4uZs",
+              "start": 302,
+              "end": 316
+            },
+            {
+              "description": "Picture Line: Right Lunge",
+              "video_url": "46CBGnr4uZs",
+              "start": 317,
+              "end": 332
+            },
+            {
+              "description": "Picture Line: Same Foot Lunge",
+              "video_url": "46CBGnr4uZs",
+              "start": 333,
+              "end": 346
+            },
+            {
+              "description": "Picture Line: Develope",
+              "video_url": "46CBGnr4uZs",
+              "start": 347,
+              "end": 362
+            },
+            {
+              "description": "Picture Line: Explosion",
+              "video_url": "46CBGnr4uZs",
+              "start": 363,
+              "end": 374
+            },
+            {
+              "description": "Example of Rondes",
+              "video_url": "46CBGnr4uZs",
+              "start": 375,
+              "end": 390
+            },
+            {
+              "description": "Basic Runaround",
+              "video_url": "46CBGnr4uZs",
+              "start": 391,
+              "end": 409
+            },
+            {
+              "description": "Continuous Partnership Pivots",
+              "video_url": "46CBGnr4uZs",
+              "start": 410,
+              "end": 424
+            },
+            {
+              "description": "Swivels and Canter Lilt to Promenade Position",
+              "video_url": "46CBGnr4uZs",
+              "start": 425,
+              "end": 449
+            },
+            {
+              "description": "Change to Same Foot Promenade Position to Shadow Position",
+              "video_url": "46CBGnr4uZs",
+              "start": 450,
+              "end": 470
+            },
+            {
+              "description": "Shadow Position Open Turns",
+              "video_url": "46CBGnr4uZs",
+              "start": 471,
+              "end": 502
+            },
+            {
+              "description": "Chasse In Right Shadow Position",
+              "video_url": "46CBGnr4uZs",
+              "start": 503,
+              "end": 518
+            },
+            {
+              "description": "Turning Lock to Left In Shadow Position",
+              "video_url": "46CBGnr4uZs",
+              "start": 519,
+              "end": 534
+            },
+            {
+              "description": "Right Shadow to Left Shadow Switches",
+              "video_url": "46CBGnr4uZs",
+              "start": 535,
+              "end": 556
+            },
+            {
+              "description": "Open Impetus",
+              "video_url": "46CBGnr4uZs",
+              "start": 557,
+              "end": 572
+            },
+            {
+              "description": "Turning Lock to Left",
+              "video_url": "46CBGnr4uZs",
+              "start": 573,
+              "end": 587
+            },
+            {
+              "description": "Closed Telemark",
+              "video_url": "46CBGnr4uZs",
+              "start": 588,
+              "end": 599
+            },
+            {
+              "description": "Open Telemark",
+              "video_url": "46CBGnr4uZs",
+              "start": 600,
+              "end": 612
+            },
+            {
+              "description": "Double Reverse Spin",
+              "video_url": "46CBGnr4uZs",
+              "start": 613,
+              "end": 627
+            },
+            {
+              "description": "Whisk",
+              "video_url": "46CBGnr4uZs",
+              "start": 628,
+              "end": 642
+            },
+            {
+              "description": "Back Whisk",
+              "video_url": "46CBGnr4uZs",
+              "start": 643,
+              "end": 655
+            },
+            {
+              "description": "Outside Change",
+              "video_url": "46CBGnr4uZs",
+              "start": 656,
+              "end": 670
+            },
+            {
+              "description": "Outside Spin",
+              "video_url": "46CBGnr4uZs",
+              "start": 671,
+              "end": 685
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Right Shadow Position to Left Shadow Position Switches with Turn",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 11,
+              "end": 26
+            },
+            {
+              "description": "Continuous Heel Pull Hairpin",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 27,
+              "end": 51
+            },
+            {
+              "description": "Shadow Position Syncopated and Turning Figures Examples",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 52,
+              "end": 56
+            },
+            {
+              "description": "Right Shadow Position Fallaway and Weave",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 57,
+              "end": 68
+            },
+            {
+              "description": "Right Shadow Position Tumble Turn",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 69,
+              "end": 80
+            },
+            {
+              "description": "Right Shadow Position Single Heel Pull Hairpin",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 81,
+              "end": 93
+            },
+            {
+              "description": "Example of Syncopated Locks with 2 Syncopations",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 94,
+              "end": 110
+            },
+            {
+              "description": "Example of Syncopated Lock Incorporating a Free Spin and Foot Change",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 111,
+              "end": 128
+            },
+            {
+              "description": "Example of Syncopated Run",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 129,
+              "end": 142
+            },
+            {
+              "description": "Right Side Position Grapevine",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 143,
+              "end": 154
+            },
+            {
+              "description": "Right Side Position and Left Side Position Grapevine Passing",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 155,
+              "end": 168
+            },
+            {
+              "description": "Double Reverse Overspin",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 169,
+              "end": 182
+            },
+            {
+              "description": "Double Natural Overspin",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 183,
+              "end": 196
+            },
+            {
+              "description": "Four Bars of Picture Lines",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 197,
+              "end": 204
+            },
+            {
+              "description": "Hinge",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 205,
+              "end": 216
+            },
+            {
+              "description": "Throwaway Oversway",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 217,
+              "end": 232
+            },
+            {
+              "description": "Examples of Right Side Position and Left Side Position Picture Lines",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 233,
+              "end": 237
+            },
+            {
+              "description": "Right Side Position Contra Check",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 238,
+              "end": 250
+            },
+            {
+              "description": "Left Side Position Hover on Same Foot",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 251,
+              "end": 266
+            },
+            {
+              "description": "Right Side Position Arabesque",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 267,
+              "end": 279
+            },
+            {
+              "description": "Extended Pivots",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 280,
+              "end": 299
+            },
+            {
+              "description": "Example of Solo Right and Left Figures with or without Turn",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 300,
+              "end": 328
+            },
+            {
+              "description": "Standing Spin with Partner on One Foot",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 329,
+              "end": 350
+            },
+            {
+              "description": "Turning Lock to Right",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 351,
+              "end": 365
+            },
+            {
+              "description": "Fallaway Whisk",
+              "video_url": "-Qi1tO0uM0w",
+              "start": 366,
+              "end": 380
+            }
+          ]
+        }
+      },
+      {
+        "name": "Tango",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Walks",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 14,
+              "end": 22
+            },
+            {
+              "description": "Tango Close",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 23,
+              "end": 36
+            },
+            {
+              "description": "Forward Basic",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 37,
+              "end": 53
+            },
+            {
+              "description": "Progressive Link",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 54,
+              "end": 66
+            },
+            {
+              "description": "Progressive Side Step",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 67,
+              "end": 81
+            },
+            {
+              "description": "Running Steps",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 82,
+              "end": 97
+            },
+            {
+              "description": "Corte",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 98,
+              "end": 107
+            },
+            {
+              "description": "Rocks",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 108,
+              "end": 124
+            },
+            {
+              "description": "Rocks in Promenade",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 125,
+              "end": 140
+            },
+            {
+              "description": "Open Reverse Turn with Closed Finish",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 141,
+              "end": 162
+            },
+            {
+              "description": "Closed Natural Turn",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 163,
+              "end": 176
+            },
+            {
+              "description": "Promenade Turning",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 177,
+              "end": 195
+            },
+            {
+              "description": "Open Fan",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 196,
+              "end": 209
+            },
+            {
+              "description": "Outside Swivel",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 210,
+              "end": 223
+            },
+            {
+              "description": "Outside Swivel from Closed Position",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 224,
+              "end": 243
+            },
+            {
+              "description": "Follow Underarm Turn from Open Fan",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 244,
+              "end": 259
+            },
+            {
+              "description": "Change of Place from Open Fan",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 260,
+              "end": 272
+            },
+            {
+              "description": "Twist Turn",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 273,
+              "end": 297
+            },
+            {
+              "description": "Single Pivot",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 298,
+              "end": 337
+            },
+            {
+              "description": "Shadow Rocks",
+              "video_url": "SNZrz3jsjJ8",
+              "start": 338,
+              "end": 355
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Open Left Turn with Open Finish",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 11,
+              "end": 26
+            },
+            {
+              "description": "Open Right Turn",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 27,
+              "end": 41
+            },
+            {
+              "description": "Syncopated Locks or Chasses",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 42,
+              "end": 56
+            },
+            {
+              "description": "Progressive Patterns",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 57,
+              "end": 70
+            },
+            {
+              "description": "Syncopated Underarm Turn",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 71,
+              "end": 87
+            },
+            {
+              "description": "Grapevines",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 88,
+              "end": 101
+            },
+            {
+              "description": "Fallaway Reverse Turn and Slip Pivot",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 102,
+              "end": 116
+            },
+            {
+              "description": "Chair and Slip Pivot",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 117,
+              "end": 129
+            },
+            {
+              "description": "Picture Line: Contra Check and Oversway",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 130,
+              "end": 139
+            },
+            {
+              "description": "Picture Line: Right Lunge",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 140,
+              "end": 154
+            },
+            {
+              "description": "Picture Line: Left Lunge and Same Foot Lunge",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 155,
+              "end": 165
+            },
+            {
+              "description": "Picture Line: Spanish Drag",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 166,
+              "end": 179
+            },
+            {
+              "description": "Picture Line: Explosion",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 180,
+              "end": 188
+            },
+            {
+              "description": "Swivels",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 189,
+              "end": 204
+            },
+            {
+              "description": "Leg Flicks/Ganchos",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 205,
+              "end": 222
+            },
+            {
+              "description": "Continuous Partnership Pivots",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 223,
+              "end": 238
+            },
+            {
+              "description": "Viennese Crosses",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 239,
+              "end": 257
+            },
+            {
+              "description": "Shadow Open Right Turn",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 258,
+              "end": 269
+            },
+            {
+              "description": "Shadow Quick Open Reverse",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 270,
+              "end": 286
+            },
+            {
+              "description": "Foot Changes from Closed to Right Shadow and from Right Shadow to Left Side Position",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 287,
+              "end": 310
+            },
+            {
+              "description": "Right Shadow Chasses or Locks",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 311,
+              "end": 323
+            },
+            {
+              "description": "Four Step",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 324,
+              "end": 336
+            },
+            {
+              "description": "Five Step",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 337,
+              "end": 347
+            },
+            {
+              "description": "Reverse Outside Swivel",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 348,
+              "end": 363
+            },
+            {
+              "description": "Fallaway Four Step",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 364,
+              "end": 377
+            },
+            {
+              "description": "Four Step Change",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 378,
+              "end": 390
+            },
+            {
+              "description": "Chasse to Whisk",
+              "video_url": "NQkJgWfK4Ng",
+              "start": 391,
+              "end": 403
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Right Shadow Position to Left Shadow Position Switches with Turn",
+              "video_url": "_AYBvsvCLWc",
+              "start": 9,
+              "end": 27
+            },
+            {
+              "description": "Syncopated Lock",
+              "video_url": "_AYBvsvCLWc",
+              "start": 28,
+              "end": 44
+            },
+            {
+              "description": "Syncopated Free Turn Incorporating a Syncopated Chasse to Right Side Position",
+              "video_url": "_AYBvsvCLWc",
+              "start": 45,
+              "end": 64
+            },
+            {
+              "description": "Viennese Crosses in Shadow Position",
+              "video_url": "_AYBvsvCLWc",
+              "start": 65,
+              "end": 81
+            },
+            {
+              "description": "Chase in Shadow Position",
+              "video_url": "_AYBvsvCLWc",
+              "start": 82,
+              "end": 94
+            },
+            {
+              "description": "Right Side Position Contra Check",
+              "video_url": "_AYBvsvCLWc",
+              "start": 95,
+              "end": 107
+            },
+            {
+              "description": "Right Side Position Hover",
+              "video_url": "_AYBvsvCLWc",
+              "start": 108,
+              "end": 121
+            },
+            {
+              "description": "Right Side Position Oblique Line",
+              "video_url": "_AYBvsvCLWc",
+              "start": 122,
+              "end": 132
+            },
+            {
+              "description": "Picture Line: Hinge/Throwaway Oversway",
+              "video_url": "_AYBvsvCLWc",
+              "start": 133,
+              "end": 150
+            },
+            {
+              "description": "Extended Pivots",
+              "video_url": "_AYBvsvCLWc",
+              "start": 151,
+              "end": 170
+            },
+            {
+              "description": "Hammerlock Envelope",
+              "video_url": "_AYBvsvCLWc",
+              "start": 171,
+              "end": 186
+            },
+            {
+              "description": "Chase",
+              "video_url": "_AYBvsvCLWc",
+              "start": 187,
+              "end": 202
+            },
+            {
+              "description": "Solo Right and Left Pattern",
+              "video_url": "_AYBvsvCLWc",
+              "start": 203,
+              "end": 220
+            },
+            {
+              "description": "Same Foot Shadow Envelope",
+              "video_url": "_AYBvsvCLWc",
+              "start": 221,
+              "end": 234
+            }
+          ]
+        }
+      },
+      {
+        "name": "Foxtrot",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Forward and Back Basic",
+              "video_url": "CrEL_NmsBq4",
+              "start": 7,
+              "end": 25
+            },
+            {
+              "description": "Left and Right Box Turn",
+              "video_url": "CrEL_NmsBq4",
+              "start": 26,
+              "end": 67
+            },
+            {
+              "description": "Left and Right Rock Turn",
+              "video_url": "CrEL_NmsBq4",
+              "start": 68,
+              "end": 99
+            },
+            {
+              "description": "Box with Underarm Turn",
+              "video_url": "CrEL_NmsBq4",
+              "start": 100,
+              "end": 118
+            },
+            {
+              "description": "Sway Step with or without Underarm Turn",
+              "video_url": "CrEL_NmsBq4",
+              "start": 119,
+              "end": 137
+            },
+            {
+              "description": "Promenade with or without Underarm Turn",
+              "video_url": "CrEL_NmsBq4",
+              "start": 138,
+              "end": 158
+            },
+            {
+              "description": "Simple Twinkle",
+              "video_url": "CrEL_NmsBq4",
+              "start": 159,
+              "end": 172
+            },
+            {
+              "description": "Progressive Twinkles Forward",
+              "video_url": "CrEL_NmsBq4",
+              "start": 173,
+              "end": 193
+            },
+            {
+              "description": "Progressive Twinkle Back and Turning",
+              "video_url": "CrEL_NmsBq4",
+              "start": 194,
+              "end": 226
+            },
+            {
+              "description": "Back to Back/Hand to Hand Box",
+              "video_url": "CrEL_NmsBq4",
+              "start": 227,
+              "end": 241
+            },
+            {
+              "description": "Cross Body Lead from Left Rock Turn",
+              "video_url": "CrEL_NmsBq4",
+              "start": 242,
+              "end": 256
+            },
+            {
+              "description": "Cross Body Lead to Left Underarm Turn Commenced with 1-3 of Left Box Turn",
+              "video_url": "CrEL_NmsBq4",
+              "start": 257,
+              "end": 284
+            },
+            {
+              "description": "Promenade Chasse and Closed Finish",
+              "video_url": "CrEL_NmsBq4",
+              "start": 285,
+              "end": 302
+            },
+            {
+              "description": "Promenade Pivot/Single Pivot from Promenade Position",
+              "video_url": "CrEL_NmsBq4",
+              "start": 303,
+              "end": 320
+            },
+            {
+              "description": "Forward Twist to the Left from Promenade",
+              "video_url": "CrEL_NmsBq4",
+              "start": 321,
+              "end": 337
+            },
+            {
+              "description": "Simple Grapevine",
+              "video_url": "CrEL_NmsBq4",
+              "start": 338,
+              "end": 357
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Open Left and Right Box Turn",
+              "video_url": "j-zui2b2ohA",
+              "start": 10,
+              "end": 41
+            },
+            {
+              "description": "Open Right Turn from Promenade Position (with Open Impetus Ending)",
+              "video_url": "j-zui2b2ohA",
+              "start": 42,
+              "end": 61
+            },
+            {
+              "description": "Running Steps Forward (Three Step and Feather Step)",
+              "video_url": "j-zui2b2ohA",
+              "start": 62,
+              "end": 78
+            },
+            {
+              "description": "Running Steps Back (Reverse Wave and Back Feather)",
+              "video_url": "j-zui2b2ohA",
+              "start": 79,
+              "end": 98
+            },
+            {
+              "description": "Progressive Twinkles",
+              "video_url": "j-zui2b2ohA",
+              "start": 99,
+              "end": 106
+            },
+            {
+              "description": "Syncopated Underarm Turn",
+              "video_url": "j-zui2b2ohA",
+              "start": 129,
+              "end": 142
+            },
+            {
+              "description": "Forward and Back Locks",
+              "video_url": "j-zui2b2ohA",
+              "start": 143,
+              "end": 160
+            },
+            {
+              "description": "Fallaway Grapevine with Syncopation",
+              "video_url": "j-zui2b2ohA",
+              "start": 161,
+              "end": 174
+            },
+            {
+              "description": "Chair and Slip Pivot",
+              "video_url": "j-zui2b2ohA",
+              "start": 175,
+              "end": 186
+            },
+            {
+              "description": "Wing",
+              "video_url": "j-zui2b2ohA",
+              "start": 187,
+              "end": 199
+            },
+            {
+              "description": "Fallaway Reverse Turn and Slip Pivot",
+              "video_url": "j-zui2b2ohA",
+              "start": 200,
+              "end": 213
+            },
+            {
+              "description": "Bounce Fallaway",
+              "video_url": "j-zui2b2ohA",
+              "start": 214,
+              "end": 229
+            },
+            {
+              "description": "Natural Weave",
+              "video_url": "j-zui2b2ohA",
+              "start": 230,
+              "end": 247
+            },
+            {
+              "description": "Reverse Weave",
+              "video_url": "j-zui2b2ohA",
+              "start": 248,
+              "end": 261
+            },
+            {
+              "description": "Picture Line: Contra Check",
+              "video_url": "j-zui2b2ohA",
+              "start": 262,
+              "end": 275
+            },
+            {
+              "description": "Picture Line: Oversway",
+              "video_url": "j-zui2b2ohA",
+              "start": 276,
+              "end": 287
+            },
+            {
+              "description": "Picture Line: Right and Left Lunge",
+              "video_url": "j-zui2b2ohA",
+              "start": 288,
+              "end": 312
+            },
+            {
+              "description": "Picture Line: Hover",
+              "video_url": "j-zui2b2ohA",
+              "start": 313,
+              "end": 326
+            },
+            {
+              "description": "Picture Line: Same Foot Lunge",
+              "video_url": "j-zui2b2ohA",
+              "start": 327,
+              "end": 340
+            },
+            {
+              "description": "Picture Line: Develope",
+              "video_url": "j-zui2b2ohA",
+              "start": 341,
+              "end": 352
+            },
+            {
+              "description": "Picture Line: Explosion",
+              "video_url": "j-zui2b2ohA",
+              "start": 353,
+              "end": 361
+            },
+            {
+              "description": "Rondes",
+              "video_url": "j-zui2b2ohA",
+              "start": 362,
+              "end": 377
+            },
+            {
+              "description": "Outside Swivels",
+              "video_url": "j-zui2b2ohA",
+              "start": 378,
+              "end": 392
+            },
+            {
+              "description": "Basic Roundabout",
+              "video_url": "j-zui2b2ohA",
+              "start": 393,
+              "end": 409
+            },
+            {
+              "description": "Continuous Partnership Pivots",
+              "video_url": "j-zui2b2ohA",
+              "start": 410,
+              "end": 427
+            },
+            {
+              "description": "Basic Hairpin",
+              "video_url": "j-zui2b2ohA",
+              "start": 428,
+              "end": 448
+            },
+            {
+              "description": "Foot Changes from Promenade to Shadow and from Shadow to Promenade",
+              "video_url": "j-zui2b2ohA",
+              "start": 449,
+              "end": 468
+            },
+            {
+              "description": "Shadow Open Right Turn",
+              "video_url": "j-zui2b2ohA",
+              "start": 469,
+              "end": 485
+            },
+            {
+              "description": "Open Left Turn in Shadow",
+              "video_url": "j-zui2b2ohA",
+              "start": 486,
+              "end": 501
+            },
+            {
+              "description": "Example of Right Shadow Chasses",
+              "video_url": "j-zui2b2ohA",
+              "start": 502,
+              "end": 515
+            },
+            {
+              "description": "Same Foot Grapevine in Left Side Position",
+              "video_url": "j-zui2b2ohA",
+              "start": 516,
+              "end": 530
+            },
+            {
+              "description": "Quick Open Reverse",
+              "video_url": "j-zui2b2ohA",
+              "start": 531,
+              "end": 544
+            },
+            {
+              "description": "Closed Telemark",
+              "video_url": "j-zui2b2ohA",
+              "start": 545,
+              "end": 558
+            },
+            {
+              "description": "Open Telemark",
+              "video_url": "j-zui2b2ohA",
+              "start": 559,
+              "end": 573
+            },
+            {
+              "description": "Natural Twist Turn",
+              "video_url": "j-zui2b2ohA",
+              "start": 574,
+              "end": 588
+            },
+            {
+              "description": "Outside Spin",
+              "video_url": "j-zui2b2ohA",
+              "start": 589,
+              "end": 602
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Right Shadow to Left Shadow Switches with Turn",
+              "video_url": "xI28dusJZD0",
+              "start": 9,
+              "end": 23
+            },
+            {
+              "description": "Continuous Hell Pull Hairpin",
+              "video_url": "xI28dusJZD0",
+              "start": 24,
+              "end": 40
+            },
+            {
+              "description": "Right Shadow Fallaway and Weave",
+              "video_url": "xI28dusJZD0",
+              "start": 41,
+              "end": 61
+            },
+            {
+              "description": "Right Shadow Quick Open Reverse",
+              "video_url": "xI28dusJZD0",
+              "start": 62,
+              "end": 78
+            },
+            {
+              "description": "Right Shadow Heel Pull Hairpin",
+              "video_url": "xI28dusJZD0",
+              "start": 79,
+              "end": 92
+            },
+            {
+              "description": "Syncopated Free Turn with Foot Change to Left Side Position",
+              "video_url": "xI28dusJZD0",
+              "start": 93,
+              "end": 107
+            },
+            {
+              "description": "Syncopated Chasse and Lock",
+              "video_url": "xI28dusJZD0",
+              "start": 108,
+              "end": 122
+            },
+            {
+              "description": "Running Steps",
+              "video_url": "xI28dusJZD0",
+              "start": 123,
+              "end": 132
+            },
+            {
+              "description": "Right Side Position Grapevine",
+              "video_url": "xI28dusJZD0",
+              "start": 132,
+              "end": 149
+            },
+            {
+              "description": "Picture Line: Hinge"
+            },
+            {
+              "description": "Picture Line: Throwaway"
+            },
+            {
+              "description": "Picture Line: Contra Check in Left Side Position",
+              "video_url": "xI28dusJZD0",
+              "start": 170,
+              "end": 179
+            },
+            {
+              "description": "Picture Line: Hover in Left Side Position",
+              "video_url": "xI28dusJZD0",
+              "start": 180,
+              "end": 191
+            },
+            {
+              "description": "Picture Line: Oblique Line",
+              "video_url": "xI28dusJZD0",
+              "start": 192,
+              "end": 204
+            },
+            {
+              "description": "Solo Figures",
+              "video_url": "xI28dusJZD0",
+              "start": 220,
+              "end": 232
+            },
+            {
+              "description": "Advanced Runaround"
+            },
+            {
+              "description": "Standing Spin"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Viennese Waltz",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Introduction Curtsy without Hold",
+              "video_url": "PppsjmR5-RA",
+              "start": 7,
+              "end": 23
+            },
+            {
+              "description": "Curtsy with Hold",
+              "video_url": "PppsjmR5-RA",
+              "start": 24,
+              "end": 44
+            },
+            {
+              "description": "Reverse Turn",
+              "video_url": "PppsjmR5-RA",
+              "start": 45,
+              "end": 59
+            },
+            {
+              "description": "Natural Turn",
+              "video_url": "PppsjmR5-RA",
+              "start": 60,
+              "end": 76
+            },
+            {
+              "description": "Progressive Change Steps Forward and Back",
+              "video_url": "PppsjmR5-RA",
+              "start": 77,
+              "end": 109
+            },
+            {
+              "description": "Hesitations Forward, Back, Side (Balance Steps)",
+              "video_url": "PppsjmR5-RA",
+              "start": 110,
+              "end": 125
+            },
+            {
+              "description": "5th Position Breaks with and without Underarm Turn",
+              "video_url": "PppsjmR5-RA",
+              "start": 126,
+              "end": 148
+            },
+            {
+              "description": "Simple Twinkle with Closed Finish",
+              "video_url": "PppsjmR5-RA",
+              "start": 149,
+              "end": 165
+            },
+            {
+              "description": "Progressive Twinkles Forward and Back",
+              "video_url": "PppsjmR5-RA",
+              "start": 166,
+              "end": 195
+            },
+            {
+              "description": "Turning Twinkles (Back to Back Box)",
+              "video_url": "PppsjmR5-RA",
+              "start": 196,
+              "end": 210
+            },
+            {
+              "description": "Cross Body Lead with Underarm Turn Ending with Open Break or Hesitation",
+              "video_url": "PppsjmR5-RA",
+              "start": 211,
+              "end": 232
+            },
+            {
+              "description": "Cross Body Lead with Underarm Turn Ending with Left Side Position with Hesitation",
+              "video_url": "PppsjmR5-RA",
+              "start": 233,
+              "end": 253
+            },
+            {
+              "description": "Change of Place from Left Side Position and Right Side Position",
+              "video_url": "PppsjmR5-RA",
+              "start": 254,
+              "end": 270
+            },
+            {
+              "description": "Canter Pivot Right or Left",
+              "video_url": "PppsjmR5-RA",
+              "start": 271,
+              "end": 287
+            },
+            {
+              "description": "Open Break and Back Spot Turn",
+              "video_url": "PppsjmR5-RA",
+              "start": 288,
+              "end": 301
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Open Left and Right Turn",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 9,
+              "end": 36
+            },
+            {
+              "description": "Open Left Turn with Underarm Turn",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 37,
+              "end": 52
+            },
+            {
+              "description": "Closed Left Turn with Underarm Turn",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 53,
+              "end": 67
+            },
+            {
+              "description": "Open Right Turn with Underarm Turn",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 68,
+              "end": 83
+            },
+            {
+              "description": "Progressive 5th Position Breaks",
+              "video_url": "8UcJVh0R5Vo",
+              "start":84,
+              "end": 97
+            },
+            {
+              "description": "Progressive Twinkles"
+            },
+            {
+              "description": "Progressive Patterns and Running Steps",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 106,
+              "end": 125
+            },
+            {
+              "description": "Spot Turn Combination",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 126,
+              "end": 145
+            },
+            {
+              "description": "Canter Spins",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 146,
+              "end": 157
+            },
+            {
+              "description": "Canter Lilt",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 158,
+              "end": 169
+            },
+            {
+              "description": "Chair and Slip Pivot",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 170,
+              "end": 181
+            },
+            {
+              "description": "Canter Pivots",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 182,
+              "end": 194
+            },
+            {
+              "description": "Picture Lines"
+            },
+            {
+              "description": "Swivels",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 205,
+              "end": 216
+            },
+            {
+              "description": "Basic Runaround",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 217,
+              "end": 229
+            },
+            {
+              "description": "Foot Change from Promenade to Shadow and from Shadow to Promenade",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 230,
+              "end": 247
+            },
+            {
+              "description": "Shadow Position Right Turn and Shadow Position Left Turn",
+              "video_url": "8UcJVh0R5Vo",
+              "start": 248,
+              "end": 268
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Right Shadow Position to Left Shadow Position Switches with Turn",
+              "video_url": "IswJboLbw-o",
+              "start": 9,
+              "end": 24
+            },
+            {
+              "description": "Heel Pull and Continuous Heel Pull Canter Hairpin",
+              "video_url": "IswJboLbw-o",
+              "start": 25,
+              "end": 42
+            },
+            {
+              "description": "Extended Canter Pivots",
+              "video_url": "IswJboLbw-o",
+              "start": 43,
+              "end": 58
+            },
+            {
+              "description": "Right Side Position and Left Side Position Same Foot Canter Grapevine and Passes",
+              "video_url": "IswJboLbw-o",
+              "start": 59,
+              "end": 79
+            },
+            {
+              "description": "Picture Lines"
+            },
+            {
+              "description": "Same Foot Barrel Turns",
+              "video_url": "IswJboLbw-o",
+              "start": 94,
+              "end": 113
+            },
+            {
+              "description": "Solo Right and Left Figures with or without Turn",
+              "video_url": "IswJboLbw-o",
+              "start": 114,
+              "end": 133
+            },
+            {
+              "description": "Runaround and Standing Spin"
+            },
+            {
+              "description": "Same Foot Ronde and Grapevine",
+              "video_url": "IswJboLbw-o",
+              "start": 144,
+              "end": 158
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "style": "American Rhythm",
+    "dances": [
+      {
+        "name": "Cha Cha",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Basic Movements",
+              "video_url": "XptzS4HqQGM",
+              "start": 120, "end": 149
+            },
+            {
+              "description": "Crossover Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 150, "end": 167
+            },
+            {
+              "description": "Fifth Position Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 168, "end": 187
+            },
+            {
+              "description": "Open Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 188, "end": 202
+            },
+            {
+              "description": "Outside Breaks/Offset Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 203, "end": 218
+            },
+            {
+              "description": "Switch or Solo Spot Turns Left or Right",
+              "video_url": "XptzS4HqQGM",
+              "start": 219, "end": 246
+            },
+            {
+              "description": "Underarm Turns Left or Right",
+              "video_url": "XptzS4HqQGM",
+              "start": 247, "end": 262
+            },
+            {
+              "description": "Syncopated Underarm Turn to Left",
+              "video_url": "XptzS4HqQGM",
+              "start": 263, "end": 275
+            },
+            {
+              "description": "Chase Turns (0.5 or Full)",
+              "video_url": "XptzS4HqQGM",
+              "start": 276, "end": 299
+            },
+            {
+              "description": "Three Cha Cha's – Forward or Back",
+              "video_url": "XptzS4HqQGM",
+              "start": 300, "end": 333
+            },
+            {
+              "description": "Three Cha Cha's – Forward in Right and Left Side Position",
+              "video_url": "XptzS4HqQGM",
+              "start": 334, "end": 358
+            },
+            {
+              "description": "Crossbody Leads",
+              "video_url": "XptzS4HqQGM",
+              "start": 359, "end": 401
+            },
+            {
+              "description": "Back Spot Turn/Natural Top",
+              "video_url": "XptzS4HqQGM",
+              "start": 402, "end": 426
+            },
+            {
+              "description": "Sweethearts",
+              "video_url": "XptzS4HqQGM",
+              "start": 427, "end": 460
+            },
+            {
+              "description": "Cuddle",
+              "video_url": "XptzS4HqQGM",
+              "start": 461, "end": 480
+            },
+            {
+              "description": "Crossover Breaks and Swivels",
+              "video_url": "XptzS4HqQGM",
+              "start": 481, "end": 499
+            },
+            {
+              "description": "Right and Left Side Pass",
+              "video_url": "XptzS4HqQGM",
+              "start": 500, "end": 527
+            },
+            {
+              "description": "Chasses",
+              "video_url": "XptzS4HqQGM",
+              "start": 528, "end": 540
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Open Box",
+              "video_url": "34M0w82OKZA",
+              "start": 96, "end": 128
+            },
+            {
+              "description": "Paseo/Aida",
+              "video_url": "34M0w82OKZA",
+              "start": 129, "end": 151
+            },
+            {
+              "description": "Paseo/Aida Alternative Rhythm",
+              "video_url": "34M0w82OKZA",
+              "start": 152, "end": 167
+            },
+            {
+              "description": "Grapevine/Travelling Cross: Forward and Backward",
+              "video_url": "34M0w82OKZA",
+              "start": 168, "end": 188
+            },
+            {
+              "description": "Grapevine/Travelling Cross: Fallaway",
+              "video_url": "34M0w82OKZA",
+              "start": 189, "end": 211
+            },
+            {
+              "description": "Half Moon with or without Follower's Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 212, "end": 250
+            },
+            {
+              "description": "Follower's Swivels: Hip Twist Swivel",
+              "video_url": "34M0w82OKZA",
+              "start": 251, "end": 283
+            },
+            {
+              "description": "Follower's Swivels: Sugar Foot Swivel",
+              "video_url": "34M0w82OKZA",
+              "start": 284, "end": 311
+            },
+            {
+              "description": "Toe Heel Swivels with or without Lock Steps",
+              "video_url": "34M0w82OKZA",
+              "start": 312, "end": 333
+            },
+            {
+              "description": "Crossover Breaks: Single Counts or Guapacha Timing",
+              "video_url": "34M0w82OKZA",
+              "start": 334, "end": 365
+            },
+            {
+              "description": "Cuban Breaks",
+              "video_url": "34M0w82OKZA",
+              "start": 366, "end": 393
+            },
+            {
+              "description": "Fifth Position Breaks: Single Counts or Guapacha Timing, Syncopated Timing",
+              "video_url": "34M0w82OKZA",
+              "start": 394, "end": 426
+            },
+            {
+              "description": "Spiral Actions",
+              "video_url": "34M0w82OKZA",
+              "start": 427, "end": 442
+            },
+            {
+              "description": "Rope Spins",
+              "video_url": "34M0w82OKZA",
+              "start": 443, "end": 459
+            },
+            {
+              "description": "Solo Spin Exit",
+              "video_url": "34M0w82OKZA",
+              "start": 460, "end": 473
+            },
+            {
+              "description": "Solo Spin Exit: Option 2",
+              "video_url": "34M0w82OKZA",
+              "start": 474, "end": 488
+            },
+            {
+              "description": "Twinkles",
+              "video_url": "34M0w82OKZA",
+              "start": 489, "end": 506
+            },
+            {
+              "description": "Twinkles, from Right of Shadow Position",
+              "video_url": "34M0w82OKZA",
+              "start": 507, "end": 531
+            },
+            {
+              "description": "Forward Spot Turn with or without Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 532, "end": 548
+            },
+            {
+              "description": "Forward Spot Turn with Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 549, "end": 568
+            },
+            {
+              "description": "Push Away Action",
+              "video_url": "34M0w82OKZA",
+              "start": 569, "end": 585
+            },
+            {
+              "description": "Foot Flicks/Low Rondes/Knee Lifts",
+              "video_url": "34M0w82OKZA",
+              "start": 586, "end": 605
+            },
+            {
+              "description": "Leader's Foot Change",
+              "video_url": "34M0w82OKZA",
+              "start": 606, "end": 638
+            },
+            {
+              "description": "Hip Twist: Closed",
+              "video_url": "34M0w82OKZA",
+              "start": 639, "end": 654
+            },
+            {
+              "description": "Hip Twist: Advanced",
+              "video_url": "34M0w82OKZA",
+              "start": 655, "end": 666
+            },
+            {
+              "description": "Hip Twist: Advanced Alternative",
+              "video_url": "34M0w82OKZA",
+              "start": 667, "end": 681
+            },
+            {
+              "description": "Open Hip Twist",
+              "video_url": "34M0w82OKZA",
+              "start": 682, "end": 697
+            },
+            {
+              "description": "Scallop Ending",
+              "video_url": "34M0w82OKZA",
+              "start": 698, "end": 707
+            },
+            {
+              "description": "Turkish Towel: Right to Right Hand Hold",
+              "video_url": "34M0w82OKZA",
+              "start": 708, "end": 740
+            },
+            {
+              "description": "Three Step Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 741, "end": 754
+            },
+            {
+              "description": "Chasses",
+              "video_url": "34M0w82OKZA",
+              "start": 755, "end": 781
+            },
+            {
+              "description": "Freezes/Holds",
+              "video_url": "34M0w82OKZA",
+              "start": 782, "end": 817
+            },
+            {
+              "description": "Body Rhythms: Hip Roll, Hip Pump, Ribcage, Snake Forward, Ripple",
+              "video_url": "34M0w82OKZA",
+              "start": 818, "end": 838
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Three Cha Cha's Turning to Tandem Position on 2nd Lock",
+              "video_url": "tdDTtEvZoqM",
+              "start": 92, "end": 115
+            },
+            {
+              "description": "Continuous Locks",
+              "video_url": "tdDTtEvZoqM",
+              "start": 116, "end": 131
+            },
+            {
+              "description": "Turnaway to Tandem Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 132, "end": 141
+            },
+            {
+              "description": "Turnaway/Swivel from Tandem to Open Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 142, "end": 161
+            },
+            {
+              "description": "Telemark Separation",
+              "video_url": "tdDTtEvZoqM",
+              "start": 162, "end": 177
+            },
+            {
+              "description": "Sailor Shuffles",
+              "video_url": "tdDTtEvZoqM",
+              "start": 178, "end": 204
+            },
+            {
+              "description": "Syncopated Grapevine",
+              "video_url": "tdDTtEvZoqM",
+              "start": 205, "end": 239
+            },
+            {
+              "description": "Syncopated Forward or Backward Spot Turn",
+              "video_url": "tdDTtEvZoqM",
+              "start": 240, "end": 269
+            },
+            {
+              "description": "Syncopated Points",
+              "video_url": "tdDTtEvZoqM",
+              "start": 270, "end": 286
+            },
+            {
+              "description": "Hustle Wheel with or without Underarm Turn",
+              "video_url": "tdDTtEvZoqM",
+              "start": 287, "end": 302
+            },
+            {
+              "description": "Lunge Swivel",
+              "video_url": "tdDTtEvZoqM",
+              "start": 303, "end": 326
+            },
+            {
+              "description": "Continuous Turns",
+              "video_url": "tdDTtEvZoqM",
+              "start": 327, "end": 346
+            },
+            {
+              "description": "Surprise Break",
+              "video_url": "tdDTtEvZoqM",
+              "start": 347, "end": 370
+            },
+            {
+              "description": "Rolling In and Out with or without Change of Facing",
+              "video_url": "tdDTtEvZoqM",
+              "start": 371, "end": 386
+            },
+            {
+              "description": "Crossover or Cuban Break with Arm Check",
+              "video_url": "tdDTtEvZoqM",
+              "start": 387, "end": 403
+            },
+            {
+              "description": "Follower's Spins: Single Foot Spin Underarm",
+              "video_url": "tdDTtEvZoqM",
+              "start": 404, "end": 424
+            },
+            {
+              "description": "Single Foot Spin from Connection Release (from a Runaway Hip Twist)",
+              "video_url": "tdDTtEvZoqM",
+              "start": 425, "end": 442
+            },
+            {
+              "description": "Oversway",
+              "video_url": "tdDTtEvZoqM",
+              "start": 443, "end": 454
+            },
+            {
+              "description": "Throwaway Oversway",
+              "video_url": "tdDTtEvZoqM",
+              "start": 455, "end": 465
+            },
+            {
+              "description": "Right Side Lean with Passe",
+              "video_url": "tdDTtEvZoqM",
+              "start": 466, "end": 476
+            },
+            {
+              "description": "Right Side Lean with Leg Hook",
+              "video_url": "tdDTtEvZoqM",
+              "start": 477, "end": 489
+            },
+            {
+              "description": "Knee Lift or Leg Extension/Oblique Lines",
+              "video_url": "tdDTtEvZoqM",
+              "start": 490, "end": 498
+            },
+            {
+              "description": "Bolero Roll/Dip",
+              "video_url": "tdDTtEvZoqM",
+              "start": 499, "end": 514
+            },
+            {
+              "description": "Extended Same Foot Lunge on Right or Left Side",
+              "video_url": "tdDTtEvZoqM",
+              "start": 515, "end": 525
+            }
+          ]
+        }
+      },
+      {
+        "name": "Rumba",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Box",
+              "video_url": "XptzS4HqQGM",
+              "start": 575, "end": 592
+            },
+            {
+              "description": "Crossover Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 593, "end": 614
+            },
+            {
+              "description": "Fifth Position Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 615, "end": 641
+            },
+            {
+              "description": "Open Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 642, "end": 657
+            },
+            {
+              "description": "Outside Breaks/Offset Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 658, "end": 682
+            },
+            {
+              "description": "Side Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 683, "end": 698
+            },
+            {
+              "description": "Opening Outs Right and Left",
+              "video_url": "XptzS4HqQGM",
+              "start": 699, "end": 728
+            },
+            {
+              "description": "Switch or Solo Spot Turns Left or Right",
+              "video_url": "XptzS4HqQGM",
+              "start": 729, "end": 758
+            },
+            {
+              "description": "Underarm Turns Left or Right",
+              "video_url": "XptzS4HqQGM",
+              "start": 759, "end": 781
+            },
+            {
+              "description": "Rocks (Forward, Back, Side)",
+              "video_url": "XptzS4HqQGM",
+              "start": 782, "end": 821
+            },
+            {
+              "description": "Cuban Walks: Forward and Back",
+              "video_url": "XptzS4HqQGM",
+              "start": 822, "end": 850
+            },
+            {
+              "description": "Cuban Walks: Forward in Right or Left Side Position",
+              "video_url": "XptzS4HqQGM",
+              "start": 851, "end": 915
+            },
+            {
+              "description": "Cuban Walks: Wrap Around",
+              "video_url": "XptzS4HqQGM",
+              "start": 916, "end": 950
+            },
+            {
+              "description": "Crossbody Leads",
+              "video_url": "XptzS4HqQGM",
+              "start": 951, "end": 994
+            },
+            {
+              "description": "Crossbody Lead to Cuban Walks",
+              "video_url": "XptzS4HqQGM",
+              "start": 995, "end": 1026
+            },
+            {
+              "description": "Back Spot Turn/Natural Top",
+              "video_url": "XptzS4HqQGM",
+              "start": 1027, "end": 1059
+            },
+            {
+              "description": "Sweethearts",
+              "video_url": "XptzS4HqQGM",
+              "start": 1060, "end": 1095
+            },
+            {
+              "description": "Cuddle",
+              "video_url": "XptzS4HqQGM",
+              "start": 1096, "end": 1116
+            },
+            {
+              "description": "Peek-A-Boo/Stop and Go",
+              "video_url": "XptzS4HqQGM",
+              "start": 1117, "end": 1144
+            },
+            {
+              "description": "Side Passes",
+              "video_url": "XptzS4HqQGM",
+              "start": 1145, "end": 1175
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Open Box",
+              "video_url": "34M0w82OKZA",
+              "start": 846, "end": 857
+            },
+            {
+              "description": "Snap and Quick Underarm Turns",
+              "video_url": "34M0w82OKZA",
+              "start": 857, "end": 880
+            },
+            {
+              "description": "Double Syncopated Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 880, "end": 894
+            },
+            {
+              "description": "Double Syncopated Underarm Turn to Right",
+              "video_url": "34M0w82OKZA",
+              "start": 894, "end": 903
+            },
+            {
+              "description": "Grapevine/Traveling Cross: Forward and Backward",
+              "video_url": "34M0w82OKZA",
+              "start": 903, "end": 922
+            },
+            {
+              "description": "Grapevine/Traveling Cross: Syncopated",
+              "video_url": "34M0w82OKZA",
+              "start": 922, "end": 939
+            },
+            {
+              "description": "Grapevine/Traveling Cross: Fallaway",
+              "video_url": "34M0w82OKZA",
+              "start": 939, "end": 952
+            },
+            {
+              "description": "Grapevine/Traveling Cross: Fallaway (Syncopated)",
+              "video_url": "34M0w82OKZA",
+              "start": 952, "end": 964
+            },
+            {
+              "description": "Fencing Line",
+              "video_url": "34M0w82OKZA",
+              "start": 964, "end": 981
+            },
+            {
+              "description": "Forward Spot Turn without Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 981, "end": 996
+            },
+            {
+              "description": "Forward Spot Turn with Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 996, "end": 1014
+            },
+            {
+              "description": "Paseo/Aida",
+              "video_url": "34M0w82OKZA",
+              "start": 1014, "end": 1029
+            },
+            {
+              "description": "Walks in All Direction (same foot or opposite)",
+              "video_url": "34M0w82OKZA",
+              "start": 1014, "end": 1066
+            },
+            {
+              "description": "Walks in All Direction, Shadow Position (same foot)",
+              "video_url": "34M0w82OKZA",
+              "start": 1066, "end": 1083
+            },
+            {
+              "description": "Shadow Position Walks (opposite feet)",
+              "video_url": "34M0w82OKZA",
+              "start": 1083, "end": 1105
+            },
+            {
+              "description": "Syncopated Walks in PP",
+              "video_url": "34M0w82OKZA",
+              "start": 1105, "end": 1117
+            },
+            {
+              "description": "Spiral Actions: Spiral, Rope Spin, Curls",
+              "video_url": "34M0w82OKZA",
+              "start": 1117, "end": 1152
+            },
+            {
+              "description": "Shadow Position Simple Exit (same foot)",
+              "video_url": "34M0w82OKZA",
+              "start": 1152, "end": 1165
+            },
+            {
+              "description": "Shadow Position Three Step/Pivot Exit (same foot)",
+              "video_url": "34M0w82OKZA",
+              "start": 1165, "end": 1181
+            },
+            {
+              "description": "Shadow Position Simple Spiral Exit (opposite feet)",
+              "video_url": "34M0w82OKZA",
+              "start": 1181, "end": 1197
+            },
+            {
+              "description": "Shadow Position Spiral/Pivot Exit (opposite feet)",
+              "video_url": "34M0w82OKZA",
+              "start": 1197, "end": 1214
+            },
+            {
+              "description": "Hip Twist Swivels",
+              "video_url": "34M0w82OKZA",
+              "start": 1214, "end": 1234
+            },
+            {
+              "description": "Sugar Foot Swivels",
+              "video_url": "34M0w82OKZA",
+              "start": 1234, "end": 1253
+            },
+            {
+              "description": "Leader's Foot Changes",
+              "video_url": "34M0w82OKZA",
+              "start": 1253, "end": 1296
+            },
+            {
+              "description": "Foot Flicks/Low Rondes",
+              "video_url": "34M0w82OKZA",
+              "start": 1296, "end": 1312
+            },
+            {
+              "description": "Sliding Doors with or without Spiral",
+              "video_url": "34M0w82OKZA",
+              "start": 1312, "end": 1337
+            },
+            {
+              "description": "Closed Hip Twists",
+              "video_url": "34M0w82OKZA",
+              "start": 1337, "end": 1348
+            },
+            {
+              "description": "Advanced Hip Twist",
+              "video_url": "34M0w82OKZA",
+              "start": 1348, "end": 1358
+            },
+            {
+              "description": "Scallop Ending",
+              "video_url": "34M0w82OKZA",
+              "start": 1358, "end": 1368
+            },
+            {
+              "description": "Turkish Towel",
+              "video_url": "34M0w82OKZA",
+              "start": 1368, "end": 1387
+            },
+            {
+              "description": "Freezes",
+              "video_url": "34M0w82OKZA",
+              "start": 1410, "end": 1434
+            },
+            {
+              "description": "Body Rhythms",
+              "video_url": "34M0w82OKZA",
+              "start": 1434, "end": 1454
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Sliding Doors without Hold",
+              "video_url": "tdDTtEvZoqM",
+              "start": 537, "end": 552
+            },
+            {
+              "description": "Turnaway to Tandem Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 553, "end": 559
+            },
+            {
+              "description": "Turnaway/Swivel from Tandem to Open Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 560, "end": 572
+            },
+            {
+              "description": "Rocks in Tandem Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 573, "end": 585
+            },
+            {
+              "description": "Walks in Tandem Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 586, "end": 592
+            },
+            {
+              "description": "Telemark Separation",
+              "video_url": "tdDTtEvZoqM",
+              "start": 593, "end": 614
+            },
+            {
+              "description": "Ronde/Develope",
+              "video_url": "tdDTtEvZoqM",
+              "start": 615, "end": 634
+            },
+            {
+              "description": "Pivots",
+              "video_url": "tdDTtEvZoqM",
+              "start": 635, "end": 651
+            },
+            {
+              "description": "Hustle Wheel with or without Turn",
+              "video_url": "tdDTtEvZoqM",
+              "start": 652, "end": 665
+            },
+            {
+              "description": "Level Changes on Rocks",
+              "video_url": "tdDTtEvZoqM",
+              "start": 666, "end": 694
+            },
+            {
+              "description": "Lunge Swivel",
+              "video_url": "tdDTtEvZoqM",
+              "start": 695, "end": 715
+            },
+            {
+              "description": "Continuous Turns",
+              "video_url": "tdDTtEvZoqM",
+              "start": 716, "end": 736
+            },
+            {
+              "description": "Follower's Spin: Single Foot Spin Underarm Turn",
+              "video_url": "tdDTtEvZoqM",
+              "start": 737, "end": 750
+            },
+            {
+              "description": "Single Foot Spin from Connection Release",
+              "video_url": "tdDTtEvZoqM",
+              "start": 751, "end": 761
+            },
+            {
+              "description": "Rolling In and Out with or without Change of Facing",
+              "video_url": "tdDTtEvZoqM",
+              "start": 762, "end": 779
+            }
+          ]
+        }
+      },
+      {
+        "name": "Swing",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Basic with or without Turn to Left or Right",
+              "video_url": "XptzS4HqQGM",
+              "start": 1178, "end": 1210
+            },
+            {
+              "description": "Fallaway Throw Away",
+              "video_url": "XptzS4HqQGM",
+              "start": 1211, "end": 1224
+            },
+            {
+              "description": "Underarm Turn Right or Left",
+              "video_url": "XptzS4HqQGM",
+              "start": 1225, "end": 1270
+            },
+            {
+              "description": "Back Pass/Hand Change Behind Back for Lead",
+              "video_url": "XptzS4HqQGM",
+              "start": 1271, "end": 1289
+            },
+            {
+              "description": "American Spin/Tuck In",
+              "video_url": "XptzS4HqQGM",
+              "start": 1290, "end": 1320
+            },
+            {
+              "description": "Continuous Tuck/Shoulder Taps",
+              "video_url": "XptzS4HqQGM",
+              "start": 1321, "end": 1338
+            },
+            {
+              "description": "Peek-A-Boo/Stop and Go",
+              "video_url": "XptzS4HqQGM",
+              "start": 1339, "end": 1355
+            },
+            {
+              "description": "Cuddle",
+              "video_url": "XptzS4HqQGM",
+              "start": 1356, "end": 1374
+            },
+            {
+              "description": "Hammerlock",
+              "video_url": "XptzS4HqQGM",
+              "start": 1375, "end": 1396
+            },
+            {
+              "description": "Fifth Position Breaks",
+              "video_url": "XptzS4HqQGM",
+              "start": 1397, "end": 1420
+            },
+            {
+              "description": "Lindy Whip/Whip Throwaway",
+              "video_url": "XptzS4HqQGM",
+              "start": 1421, "end": 1443
+            },
+            {
+              "description": "Lindy Whip with Underarm Turn Left, Right or Follower’s Hand Change",
+              "video_url": "XptzS4HqQGM",
+              "start": 1444, "end": 1478
+            },
+            {
+              "description": "Back Walks and Points/Low Kick",
+              "video_url": "XptzS4HqQGM",
+              "start": 1479, "end": 1500
+            },
+            {
+              "description": "Promenade Walks/Chasses",
+              "video_url": "XptzS4HqQGM",
+              "start": 1501, "end": 1526
+            },
+            {
+              "description": "Chicken Walks/Sugar Foot Swivels",
+              "video_url": "XptzS4HqQGM",
+              "start": 1527, "end": 1544
+            },
+            {
+              "description": "Hitch Kick/Kick Ball Change",
+              "video_url": "XptzS4HqQGM",
+              "start": 1545, "end": 1561
+            },
+            {
+              "description": "Passing Basic without Turns",
+              "video_url": "XptzS4HqQGM",
+              "start": 1562, "end": 1585
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Swivel Actions: Hip Twist/Toe Heel Swivels",
+              "video_url": "34M0w82OKZA",
+              "start": 1458, "end": 1480
+            },
+            {
+              "description": "Boogie Walks/Sugar Foot Swivels in Shadow Position",
+              "video_url": "34M0w82OKZA",
+              "start": 1481, "end": 1506
+            },
+            {
+              "description": "Sailor Shuffles",
+              "video_url": "34M0w82OKZA",
+              "start": 1507, "end": 1528
+            },
+            {
+              "description": "Sailor Shuffles in Open Facing Position",
+              "video_url": "34M0w82OKZA",
+              "start": 1529, "end": 1537
+            },
+            {
+              "description": "Lindy Wraps/Rolling off the Arm",
+              "video_url": "34M0w82OKZA",
+              "start": 1538, "end": 1573
+            },
+            {
+              "description": "Pushaway Actions",
+              "video_url": "34M0w82OKZA",
+              "start": 1574, "end": 1583
+            },
+            {
+              "description": "Continuous Chasses",
+              "video_url": "34M0w82OKZA",
+              "start": 1584, "end": 1597
+            },
+            {
+              "description": "Progressive Chasse/Pattycake/Right to Right Hand Hold",
+              "video_url": "34M0w82OKZA",
+              "start": 1598, "end": 1621
+            },
+            {
+              "description": "Simple Spins: Lead or Follow",
+              "video_url": "34M0w82OKZA",
+              "start": 1622, "end": 1637
+            },
+            {
+              "description": "Three Step Turn Follow Only",
+              "video_url": "34M0w82OKZA",
+              "start": 1638, "end": 1650
+            },
+            {
+              "description": "Solo Spin Follow Only",
+              "video_url": "34M0w82OKZA",
+              "start": 1651, "end": 1663
+            },
+            {
+              "description": "Miami Special",
+              "video_url": "34M0w82OKZA",
+              "start": 1664, "end": 1678
+            },
+            {
+              "description": "Pivots with or without Chasse",
+              "video_url": "34M0w82OKZA",
+              "start": 1679, "end": 1695
+            },
+            {
+              "description": "Passing Basics with Turns",
+              "video_url": "34M0w82OKZA",
+              "start": 1696, "end": 1714
+            },
+            {
+              "description": "Catapult",
+              "video_url": "34M0w82OKZA",
+              "start": 1715, "end": 1734
+            },
+            {
+              "description": "Continuous Tuck with Follower's Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 1735, "end": 1748
+            },
+            {
+              "description": "Points and Flicks",
+              "video_url": "34M0w82OKZA",
+              "start": 1749, "end": 1765
+            },
+            {
+              "description": "Leader's Foot Change",
+              "video_url": "34M0w82OKZA",
+              "start": 1766, "end": 1787
+            },
+            {
+              "description": "Shadow/Side by Side Elements",
+              "video_url": "34M0w82OKZA",
+              "start": 1788, "end": 1853
+            },
+            {
+              "description": "Freezes",
+              "video_url": "34M0w82OKZA",
+              "start": 1854, "end": 1879
+            },
+            {
+              "description": "Holds: Lunges, Freezes, Extension Upward to Downward",
+              "video_url": "34M0w82OKZA",
+              "start": 1880, "end": 1900
+            },
+            {
+              "description": "Body Rhythms",
+              "video_url": "34M0w82OKZA",
+              "start": 1901, "end": 1920
+            },
+            {
+              "description": "Waves",
+              "video_url": "34M0w82OKZA",
+              "start": 1921, "end": 1923
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Progressive Chasse Turning to Tandem Position for 2nd Chasse",
+              "video_url": "tdDTtEvZoqM",
+              "start": 821, "end": 838
+            },
+            {
+              "description": "Sugar Push",
+              "video_url": "tdDTtEvZoqM",
+              "start": 839, "end": 849
+            },
+            {
+              "description": "West Coast Swing Whip",
+              "video_url": "tdDTtEvZoqM",
+              "start": 850, "end": 864
+            },
+            {
+              "description": "Continuous Simple Spins",
+              "video_url": "tdDTtEvZoqM",
+              "start": 865, "end": 881
+            },
+            {
+              "description": "Skipping/Hopping Styling",
+              "video_url": "tdDTtEvZoqM",
+              "start": 882, "end": 903
+            },
+            {
+              "description": "Kick Patterns",
+              "video_url": "tdDTtEvZoqM",
+              "start": 904, "end": 925
+            },
+            {
+              "description": "Lunge Swivel",
+              "video_url": "tdDTtEvZoqM",
+              "start": 926, "end": 949
+            },
+            {
+              "description": "Continuous Turns",
+              "video_url": "tdDTtEvZoqM",
+              "start": 950, "end": 964
+            },
+            {
+              "description": "Tunnel",
+              "video_url": "tdDTtEvZoqM",
+              "start": 965, "end": 982
+            },
+            {
+              "description": "Telemark Separation",
+              "video_url": "tdDTtEvZoqM",
+              "start": 983, "end": 1013
+            },
+            {
+              "description": "Follower's Spin: Single Foot Spin Underarm Turn",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1014, "end": 1028
+            },
+            {
+              "description": "Follower's Spin: from Connection Release",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1029, "end": 1039
+            }
+          ]
+        }
+      },
+      {
+        "name": "Bolero",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Alternative Basic",
+              "video_url": "XptzS4HqQGM",
+              "start": 1590, "end": 1616
+            },
+            {
+              "description": "Break Patterns (Crossover, Fifth Position, Open, Outside/Offset)",
+              "video_url": "XptzS4HqQGM",
+              "start": 1617, "end": 1670
+            },
+            {
+              "description": "Turns to Left or Right/Switch or Solo Spot Turns Left or Right Underarm Turns Left or Right",
+              "video_url": "XptzS4HqQGM",
+              "start": 1671, "end": 1712
+            },
+            {
+              "description": "The Rocks",
+              "video_url": "XptzS4HqQGM",
+              "start": 1713, "end": 1751
+            },
+            {
+              "description": "Crossbody Leads",
+              "video_url": "XptzS4HqQGM",
+              "start": 1752, "end": 1797
+            },
+            {
+              "description": "The Cuban Walks: Forward or Backwards",
+              "video_url": "XptzS4HqQGM",
+              "start": 1798, "end": 1823
+            },
+            {
+              "description": "Cuban Walks: Forward in Right or Left Side Position",
+              "video_url": "XptzS4HqQGM",
+              "start": 1824, "end": 1868
+            },
+            {
+              "description": "Cuban Walks: Forward in Promenade Position",
+              "video_url": "XptzS4HqQGM",
+              "start": 1869, "end": 1882
+            },
+            {
+              "description": "Side Passes: Left Side Pass/Right Side Pass",
+              "video_url": "XptzS4HqQGM",
+              "start": 1883, "end": 1908
+            },
+            {
+              "description": "Crossbody Lead to Cuban Walks",
+              "video_url": "XptzS4HqQGM",
+              "start": 1909, "end": 1940
+            },
+            {
+              "description": "Back Spot Turn/Natural Top",
+              "video_url": "XptzS4HqQGM",
+              "start": 1941, "end": 1956
+            },
+            {
+              "description": "Sweethearts",
+              "video_url": "XptzS4HqQGM",
+              "start": 1957, "end": 1994
+            },
+            {
+              "description": "Passing Basics",
+              "video_url": "XptzS4HqQGM",
+              "start": 1995, "end": 2018
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Double Underarm Turn to Left or Right for Follower",
+              "video_url": "34M0w82OKZA",
+              "start": 1871, "end": 1963
+            },
+            {
+              "description": "Grapevine/Travelling Cross: Forward and Backward",
+              "video_url": "34M0w82OKZA",
+              "start": 1964, "end": 1987
+            },
+            {
+              "description": "Grapevine/Travelling Cross: Fallaway",
+              "video_url": "34M0w82OKZA",
+              "start": 1988, "end": 2002
+            },
+            {
+              "description": "Syncopated Grapevine/Travelling Cross: Forward/Backward/Fallaway",
+              "video_url": "34M0w82OKZA",
+              "start": 2003, "end": 2026
+            },
+            {
+              "description": "Fencing Line",
+              "video_url": "34M0w82OKZA",
+              "start": 2027, "end": 2045
+            },
+            {
+              "description": "Forward Spot Turn with Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 2046, "end": 2063
+            },
+            {
+              "description": "Back Spot Turn with Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 2064, "end": 2079
+            },
+            {
+              "description": "Back Spot Turn with Reverse Underarm Turn",
+              "video_url": "34M0w82OKZA",
+              "start": 2080, "end": 2096
+            },
+            {
+              "description": "Paseo/Aida",
+              "video_url": "34M0w82OKZA",
+              "start": 2097, "end": 2108
+            },
+            {
+              "description": "Syncopated Paseo/Aida",
+              "video_url": "34M0w82OKZA",
+              "start": 2109, "end": 2115
+            },
+            {
+              "description": "Walks (Same Foot or Opposite)",
+              "video_url": "34M0w82OKZA",
+              "start": 2116, "end": 2165
+            },
+            {
+              "description": "Alternate Basic",
+              "video_url": "34M0w82OKZA",
+              "start": 2166, "end": 2187
+            },
+            {
+              "description": "Swivel (Hip Twist Swivel or Sugar Foot)",
+              "video_url": "34M0w82OKZA",
+              "start": 2188, "end": 2210
+            },
+            {
+              "description": "Spiral Actions/Rope Spin/Curls",
+              "video_url": "34M0w82OKZA",
+              "start": 2211, "end": 2251
+            },
+            {
+              "description": "Solo Spins: Three Step Turn Lead or Follow",
+              "video_url": "34M0w82OKZA",
+              "start": 2252, "end": 2271
+            },
+            {
+              "description": "Solo Spin (Step, Step) Follow Only",
+              "video_url": "34M0w82OKZA",
+              "start": 2272, "end": 2284
+            },
+            {
+              "description": "Leader's Foot Change",
+              "video_url": "34M0w82OKZA",
+              "start": 2285, "end": 2301
+            },
+            {
+              "description": "Low Rondes/Develope/Knee Crawl (No Higher Than Waist Height)",
+              "video_url": "34M0w82OKZA",
+              "start": 2302, "end": 2331
+            },
+            {
+              "description": "Sliding Doors with or without Spiral",
+              "video_url": "34M0w82OKZA",
+              "start": 2332, "end": 2368
+            },
+            {
+              "description": "Three Underarm Turns: Natural, Spiral Turn Left, Right",
+              "video_url": "34M0w82OKZA",
+              "start": 2369, "end": 2397
+            },
+            {
+              "description": "Pivots (Max 2 Pivots with 1 Syncopation)",
+              "video_url": "34M0w82OKZA",
+              "start": 2398, "end": 2412
+            },
+            {
+              "description": "Hip Twists: Closed or Advanced Hip Twist",
+              "video_url": "34M0w82OKZA",
+              "start": 2413, "end": 2455
+            },
+            {
+              "description": "Scallop Ending",
+              "video_url": "34M0w82OKZA",
+              "start": 2456, "end": 2469
+            },
+            {
+              "description": "Turning Basic in Shadow",
+              "video_url": "34M0w82OKZA",
+              "start": 2470, "end": 2482
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Drag Hesitation/Change of Direction",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1072, "end": 1089
+            },
+            {
+              "description": "Fallaway Slip Pivot",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1089, "end": 1108
+            },
+            {
+              "description": "Bounce Fallaway",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1108, "end": 1125
+            },
+            {
+              "description": "Telemark Separation",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1125, "end": 1146
+            },
+            {
+              "description": "Turnaway to Tandem Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1146, "end": 1164
+            },
+            {
+              "description": "Turnaway/Swivel from Tandem to Open Position",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1164, "end": 1185
+            },
+            {
+              "description": "Walks in Tandem",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1185, "end": 1196
+            },
+            {
+              "description": "Follower's Single Foot Spin Underarm",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1196, "end": 1212
+            },
+            {
+              "description": "Three Alemanas with Delayed or Syncopated Timing",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1212, "end": 1241
+            },
+            {
+              "description": "Pivots",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1241, "end": 1277
+            },
+            {
+              "description": "Ronde/Develope Higher Than Waist Level",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1277, "end": 1296
+            },
+            {
+              "description": "Lunge Swivel",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1296, "end": 1324
+            },
+            {
+              "description": "Picture Lines (Oversway, Throwaway, X-Line, Left Whisk)",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1324, "end": 1361
+            }
+          ]
+        }
+      },
+      {
+        "name": "Mambo",
+        "levels": {
+          "Bronze": [
+            {
+              "description": "Basic Movements",
+              "video_url": "XptzS4HqQGM",
+              "start": 2023, "end": 2049
+            },
+            {
+              "description": "Breaks (Crossover, Fifth Position, Open, Outside/Offset, Side)",
+              "video_url": "XptzS4HqQGM",
+              "start": 2050, "end": 2113
+            },
+            {
+              "description": "Switch or Solo Spot Turns Left or Right, Underarm Turns Left or Right, Chase Turns (0.5 or Full)",
+              "video_url": "XptzS4HqQGM",
+              "start": 2114, "end": 2176
+            },
+            {
+              "description": "Walks: Progressive Walks Forward and Backwards",
+              "video_url": "XptzS4HqQGM",
+              "start": 2177, "end": 2211
+            },
+            {
+              "description": "Walks: Forward in Left or Right Side Position",
+              "video_url": "XptzS4HqQGM",
+              "start": 2212, "end": 2250
+            },
+            {
+              "description": "Promenade Walks",
+              "video_url": "XptzS4HqQGM",
+              "start": 2251, "end": 2266
+            },
+            {
+              "description": "Crossbody Leads",
+              "video_url": "XptzS4HqQGM",
+              "start": 2267, "end": 2305
+            },
+            {
+              "description": "Back Spot Turn/Natural Top",
+              "video_url": "XptzS4HqQGM",
+              "start": 2306, "end": 2324
+            },
+            {
+              "description": "Sweethearts",
+              "video_url": "XptzS4HqQGM",
+              "start": 2325, "end": 2352
+            },
+            {
+              "description": "Cuddle",
+              "video_url": "XptzS4HqQGM",
+              "start": 2353, "end": 2370
+            },
+            {
+              "description": "Hammerlock",
+              "video_url": "XptzS4HqQGM",
+              "start": 2371, "end": 2391
+            },
+            {
+              "description": "Peek-A-Boo/Stop and Go",
+              "video_url": "XptzS4HqQGM",
+              "start": 2392, "end": 2410
+            },
+            {
+              "description": "Crossover Breaks and Swivels",
+              "video_url": "XptzS4HqQGM",
+              "start": 2411, "end": 2426
+            },
+            {
+              "description": "Chasses",
+              "video_url": "XptzS4HqQGM",
+              "start": 2427, "end": 2470
+            }
+          ],
+          "Silver": [
+            {
+              "description": "Open Box (Closed Position, Shadow Position or Side by Side)",
+              "video_url": "34M0w82OKZA",
+              "start": 2623, "end": 2648
+            },
+            {
+              "description": "Riff Turn (Open Position to End in Open Position)",
+              "video_url": "34M0w82OKZA",
+              "start": 2649, "end": 2665
+            },
+            {
+              "description": "Double UAT Left or Right for Lady",
+              "video_url": "34M0w82OKZA",
+              "start": 2666, "end": 2691
+            },
+            {
+              "description": "Grapevine/Travelling Cross: Forward & Backward",
+              "video_url": "34M0w82OKZA",
+              "start": 2692, "end": 2706
+            },
+            {
+              "description": "Grapevine/Travelling Cross: Fallaway",
+              "video_url": "34M0w82OKZA",
+              "start": 2707, "end": 2730
+            },
+            {
+              "description": "Untwist Ending to Grapevine or 5th Position",
+              "video_url": "34M0w82OKZA",
+              "start": 2731, "end": 2750
+            },
+            {
+              "description": "Forward Spot Turn 2 With or Without UAT",
+              "video_url": "34M0w82OKZA",
+              "start": 2751, "end": 2770
+            },
+            {
+              "description": "Back Spot Turn With or Without UAT",
+              "video_url": "34M0w82OKZA",
+              "start": 2771, "end": 2788
+            },
+            {
+              "description": "Twinkles",
+              "video_url": "34M0w82OKZA",
+              "start": 2789, "end": 2808
+            },
+            {
+              "description": "Paseo/Aida",
+              "video_url": "34M0w82OKZA",
+              "start": 2809, "end": 2837
+            },
+            {
+              "description": "Half Moon With or Without Lady’s UAT",
+              "video_url": "34M0w82OKZA",
+              "start": 2838, "end": 2868
+            },
+            {
+              "description": "Walks (Same or Opposite Foot)",
+              "video_url": "34M0w82OKZA",
+              "start": 2869, "end": 2894
+            },
+            {
+              "description": "Forward Walks in Promenade Position",
+              "video_url": "34M0w82OKZA",
+              "start": 2895, "end": 2906
+            },
+            {
+              "description": "Swivels: Hip Twist Swivel/Toe Heel Swivels/Sugar Foot",
+              "video_url": "34M0w82OKZA",
+              "start": 2907, "end": 2933
+            },
+            {
+              "description": "Spiral Actions/Rope Spin/Curl",
+              "video_url": "34M0w82OKZA",
+              "start": 2934, "end": 2962
+            },
+            {
+              "description": "Solo Spins, Three Step Turn Man/Lady",
+              "video_url": "34M0w82OKZA",
+              "start": 2963, "end": 3004
+            },
+            {
+              "description": "Foot Flicks/Knee Lifts/Low Rondes",
+              "video_url": "34M0w82OKZA",
+              "start": 3005, "end": 3032
+            },
+            {
+              "description": "Sliding Doors With or Without Spiral",
+              "video_url": "34M0w82OKZA",
+              "start": 3033, "end": 3061
+            },
+            {
+              "description": "Surprise Break",
+              "video_url": "34M0w82OKZA",
+              "start": 3062, "end": 3073
+            },
+            {
+              "description": "Hip Twists: Closed, Advanced Hip Twist, Open Hip Twist",
+              "video_url": "34M0w82OKZA",
+              "start": 3074, "end": 3102
+            },
+            {
+              "description": "Scallop Ending",
+              "video_url": "34M0w82OKZA",
+              "start": 3103, "end": 3116
+            },
+            {
+              "description": "Turkish Towel",
+              "video_url": "34M0w82OKZA",
+              "start": 3117, "end": 3141
+            },
+            {
+              "description": "Man’s Foot Change",
+              "video_url": "34M0w82OKZA",
+              "start": 3142, "end": 3161
+            },
+            {
+              "description": "Shadow/Side by Side Elements - Basic, Open Box, Swivels, Breaks, Solo Spot Turns",
+              "video_url": "34M0w82OKZA",
+              "start": 3162, "end": 3214
+            },
+            {
+              "description": "Freezes/Holds",
+              "video_url": "34M0w82OKZA",
+              "start": 3215, "end": 3229
+            },
+            {
+              "description": "Body Rhythms",
+              "video_url": "34M0w82OKZA",
+              "start": 3230, "end": 3261
+            },
+            {
+              "description": "Ripples",
+              "video_url": "34M0w82OKZA",
+              "start": 3262, "end": 3269
+            }
+          ],
+          "Gold": [
+            {
+              "description": "Telemark Separation",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1463, "end": 1480
+            },
+            {
+              "description": "Opening Outs/Flip Flops/Promenade Runs",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1480, "end": 1500
+            },
+            {
+              "description": "Rolling In and Out with or without Change of Facing",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1500, "end": 1519
+            },
+            {
+              "description": "Double Head Loop with Duck Curl Exit",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1519, "end": 1535
+            },
+            {
+              "description": "Lunge Swivel",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1535, "end": 1560
+            },
+            {
+              "description": "Suzie Q's",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1560, "end": 1585
+            },
+            {
+              "description": "Points and Taps",
+              "video_url": "tdDTtEvZoqM",
+              "start": 1585, "end": 1600
+            },
+            {
+              "description": "Picture Lines (Oversway, Throwaway)"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
     "style": "Country Western",
     "dances":  [
       {
@@ -1378,7 +4472,7 @@
               "video_url": "BcSoG3KHRjo",
               "start": 167,
               "end": 187},
-            { "description": "Balancés with Side-by-Side Feather",
+            { "description": "Balances with Side-by-Side Feather",
               "video_url": "BcSoG3KHRjo",
               "start": 187,
               "end": 272},
@@ -1396,7 +4490,7 @@
               "video_url": "qWTrXQ8X3_M",
               "start": 48,
               "end": 109},
-            { "description": "Promenade to Dual Balancés",
+            { "description": "Promenade to Dual Balances",
               "video_url": "qWTrXQ8X3_M",
               "start": 109,
               "end": 137},
@@ -1416,7 +4510,7 @@
               "video_url": "qWTrXQ8X3_M",
               "start": 264,
               "end": 346},
-            { "description": "Shadow with Balancé and French Cross",
+            { "description": "Shadow with Balance and French Cross",
               "video_url": "qWTrXQ8X3_M",
               "start": 346,
               "end": 375}
@@ -1481,7 +4575,7 @@
               "video_url": "8pqMieYD3SQ",
               "start": 219,
               "end": 242},
-            { "description": "Marché",
+            { "description": "Marche",
               "video_url": "8pqMieYD3SQ",
               "start": 242,
               "end": 318},
@@ -1495,11 +4589,11 @@
               "end": 359}
           ],
           "Newcomer II": [
-            { "description": "Marché with Leader’s Point and Hold Footwork",
+            { "description": "Marche with Leader’s Point and Hold Footwork",
               "video_url": "mYjZo2oxNXc",
               "start": 4,
               "end": 44},
-            { "description": "Pivot to Follower’s Floor Sweep and Marché",
+            { "description": "Pivot to Follower’s Floor Sweep and Marche",
               "video_url": "mYjZo2oxNXc",
               "start": 44,
               "end": 82},
@@ -1564,7 +4658,7 @@
               "video_url": "I3sE7WhEEdo",
               "start": 93,
               "end": 126},
-            { "description": "Quarter Turns on Diagonal - Right then Left",
+            { "description": "Quarter Turns on Diagonal: Right then Left",
               "video_url": "I3sE7WhEEdo",
               "start": 126,
               "end": 150},
@@ -1580,7 +4674,7 @@
               "video_url": "I3sE7WhEEdo",
               "start": 188,
               "end": 202},
-            { "description": "Turning Twinkle - Left and Right",
+            { "description": "Turning Twinkle: Left and Right",
               "video_url": "I3sE7WhEEdo",
               "start": 202,
               "end": 227},
@@ -1598,7 +4692,7 @@
               "video_url": "s_Aq5io4pSY",
               "start": 18,
               "end": 76},
-            { "description": "Open Twinkle to Promenade Chassé",
+            { "description": "Open Twinkle to Promenade Chasse",
               "video_url": "s_Aq5io4pSY",
               "start": 76,
               "end": 96},
@@ -1644,7 +4738,7 @@
               "video_url": "3cnKJDBUoNM",
               "start": 55,
               "end": 70},
-            { "description": "Open Right to Chassé and Follower’s Turn",
+            { "description": "Open Right to Chasse and Follower’s Turn",
               "video_url": "3cnKJDBUoNM",
               "start": 70,
               "end": 140},
@@ -1656,7 +4750,7 @@
               "video_url": "3cnKJDBUoNM",
               "start": 155,
               "end": 180},
-            { "description": "Spirals with Developé Ending",
+            { "description": "Spirals with Develope Ending",
               "video_url": "3cnKJDBUoNM",
               "start": 180,
               "end": 205},
@@ -1709,7 +4803,7 @@
               "video_url": "YYAwYWb05UM",
               "start": 50,
               "end": 65},
-            { "description": "Chassés",
+            { "description": "Chasses",
               "video_url": "YYAwYWb05UM",
               "start": 65,
               "end": 145},
@@ -1789,7 +4883,7 @@
               "video_url": "BkcTOGC5Y84",
               "start": 205,
               "end": 229},
-            { "description": "Hand-to-Hand Chassés",
+            { "description": "Hand-to-Hand Chasses",
               "video_url": "BkcTOGC5Y84",
               "start": 229,
               "end": 254},
@@ -1884,7 +4978,7 @@
               "end": 264}
           ],
           "Newcomer II": [
-            { "description": "Three Cha Cha’s Forward and Back",
+            { "description": "Three Cha Cha's Forward and Back",
               "video_url": "gBL0hqC7Xp0",
               "start": 4,
               "end": 36},
@@ -1892,7 +4986,7 @@
               "video_url": "gBL0hqC7Xp0",
               "start": 36,
               "end": 80},
-            { "description": "Crossover Variation: Three Cha Cha’s",
+            { "description": "Crossover Variation: Three Cha Cha's",
               "video_url": "gBL0hqC7Xp0",
               "start": 80,
               "end": 112},
@@ -2074,19 +5168,19 @@
               "video_url": "QdHH8seczfU",
               "start": 159,
               "end": 243},
-            { "description": "Chassés from Counter Open Promenade to Open Promenade",
+            { "description": "Chasses from Counter Open Promenade to Open Promenade",
               "video_url": "QdHH8seczfU",
               "start": 243,
               "end": 272},
-            { "description": "Chassé and Grapevine in Counter Open Promenade",
+            { "description": "Chasse and Grapevine in Counter Open Promenade",
               "video_url": "QdHH8seczfU",
               "start": 272,
               "end": 292},
-            { "description": "Chassé and Grapevine in Open Promenade",
+            { "description": "Chasse and Grapevine in Open Promenade",
               "video_url": "QdHH8seczfU",
               "start": 292,
               "end": 313},
-            { "description": "Chassé to Open Promenade with Follower’s Left 1.5 Turn",
+            { "description": "Chasse to Open Promenade with Follower’s Left 1.5 Turn",
               "video_url": "QdHH8seczfU",
               "start": 313,
               "end": 365},
@@ -2102,7 +5196,7 @@
               "video_url": "QdHH8seczfU",
               "start": 447,
               "end": 477},
-            { "description": "Chassé to Counter Open Promenade with Follower’s Right 1.5 Turn to Open Promenade",
+            { "description": "Chasse to Counter Open Promenade with Follower’s Right 1.5 Turn to Open Promenade",
               "video_url": "QdHH8seczfU",
               "start": 477,
               "end": 502}

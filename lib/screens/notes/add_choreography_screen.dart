@@ -1,19 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '/services/database_service.dart';
-import 'view_choreography_screen.dart';
+import '../../services/firestore_service.dart';
+import '/services/database_service.dart'; // Keep only for styles JSON if you want
+import 'view_choreography_screen_firestore.dart'; // <-- A new Firestore-based view screen?
 
 class AddChoreographyScreen extends StatefulWidget {
-  final void Function(int choreographyId, int styleId, int danceId, String level) onSave;
-  final int? choreographyId;
+  // Instead of int choreographyId, we store the Firestore doc ID
+  final String? docId;
   final String? initialName;
   final int? initialStyleId;
   final int? initialDanceId;
   final String? initialLevel;
 
+  // If you want a callback, change the signature to handle docId
+  final void Function(String docId, int styleId, int danceId, String level)? onSave;
+
   AddChoreographyScreen({
-    required this.onSave,
-    this.choreographyId,
+    this.docId,
+    this.onSave,
     this.initialName,
     this.initialStyleId,
     this.initialDanceId,
@@ -26,21 +30,25 @@ class AddChoreographyScreen extends StatefulWidget {
 
 class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   final TextEditingController _nameController = TextEditingController();
+
   String? _selectedStyle;
   String? _selectedDance;
   String? _selectedLevel;
-
   List<String> _styles = [];
   List<String> _availableDances = [];
   final List<String> _levels = ['Bronze', 'Silver', 'Gold'];
+  final List<String> _countryWesternLevels = [
+    'Newcomer IV',
+    'Newcomer III',
+    'Newcomer II'
+  ];
 
   @override
   void initState() {
     super.initState();
-    if (widget.choreographyId != null) {
-      DatabaseService.getStylesAndDancesFromJson().then((stylesAndDances) {
-        _initializeForEditing(stylesAndDances);
-      });
+    // If there's a docId, it means we might be editing
+    if (widget.docId != null) {
+      _loadStylesForEditing();
     } else {
       _loadStyles();
     }
@@ -48,16 +56,13 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
 
   Future<void> _loadStyles() async {
     try {
-      final stylesAndDances = await DatabaseService
-          .getStylesAndDancesFromJson();
-
+      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
       setState(() {
         _styles = stylesAndDances.keys.toList();
         _selectedStyle = _styles.isNotEmpty ? _styles.first : null;
         _availableDances =
         _selectedStyle != null ? stylesAndDances[_selectedStyle!] ?? [] : [];
-        _selectedDance =
-        _availableDances.isNotEmpty ? _availableDances.first : null;
+        _selectedDance = _availableDances.isNotEmpty ? _availableDances.first : null;
         _selectedLevel = _levels.first;
       });
     } catch (e) {
@@ -70,34 +75,31 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
     }
   }
 
-  Future<void> _initializeForEditing(
-      Map<String, List<String>> stylesAndDances) async {
+  Future<void> _loadStylesForEditing() async {
     try {
+      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
       setState(() {
-        _nameController.text = widget.initialName ?? '';
-        _selectedLevel = widget.initialLevel ?? _levels.first;
         _styles = stylesAndDances.keys.toList();
       });
 
+      // If you want to pre-fill from widget.initialName, etc.:
+      _nameController.text = widget.initialName ?? '';
+      _selectedLevel = widget.initialLevel ?? _levels.first;
+
+      // Resolve the style name from ID
       if (widget.initialStyleId != null) {
-        final styleName = await DatabaseService.getStyleNameById(
-            widget.initialStyleId!);
-        setState(() {
-          _selectedStyle = styleName;
-          _availableDances = stylesAndDances[styleName] ?? [];
-        });
+        final styleName = await DatabaseService.getStyleNameById(widget.initialStyleId!);
+        _selectedStyle = styleName;
+        _availableDances = stylesAndDances[styleName] ?? [];
 
         if (widget.initialDanceId != null) {
-          final danceName = await DatabaseService.getDanceNameById(
-              widget.initialDanceId!);
-          setState(() {
-            _selectedDance = danceName;
-          });
+          final danceName = await DatabaseService.getDanceNameById(widget.initialDanceId!);
+          _selectedDance = danceName;
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print("Error initializing editor for editing: $e");
+        print("Error initializing for editing: $e");
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to initialize editor")),
@@ -105,23 +107,13 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
     }
   }
 
-  final List<String> _countryWesternLevels = [
-    'Newcomer IV',
-    'Newcomer III',
-    'Newcomer II'
-  ];
-
   Future<void> _loadDancesForStyle(String styleName) async {
     try {
-      final stylesAndDances = await DatabaseService
-          .getStylesAndDancesFromJson();
-
+      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
       setState(() {
         _availableDances = stylesAndDances[styleName] ?? [];
-        _selectedDance =
-        _availableDances.isNotEmpty ? _availableDances.first : null;
+        _selectedDance = _availableDances.isNotEmpty ? _availableDances.first : null;
 
-        // Check if the selected style is Country Western and adjust levels
         if (styleName.toLowerCase().contains('country western')) {
           _selectedLevel = _countryWesternLevels.first;
         } else {
@@ -133,14 +125,16 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
         print("Error loading dances for style '$styleName': $e");
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load dances for the selected style")),
+        SnackBar(content: Text("Failed to load dances.")),
       );
     }
   }
 
   void _saveChoreography() async {
-    if (_nameController.text.isEmpty || _selectedStyle == null ||
-        _selectedDance == null || _selectedLevel == null) {
+    if (_nameController.text.isEmpty ||
+        _selectedStyle == null ||
+        _selectedDance == null ||
+        _selectedLevel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Please fill all fields")),
       );
@@ -150,144 +144,124 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
     try {
       final styleId = await DatabaseService.getStyleIdByName(_selectedStyle!);
       final danceId = await DatabaseService.getDanceIdByNameAndStyle(
-          _selectedDance!, styleId);
+        _selectedDance!,
+        styleId,
+      );
 
-      int choreographyId;
-
-      if (widget.choreographyId != null) {
-        // Update existing choreography
-        await DatabaseService.updateChoreography(
-          id: widget.choreographyId!,
+      String docId;
+      if (widget.docId != null) {
+        await FirestoreService.updateChoreography(
+          choreoDocId: widget.docId!,
           name: _nameController.text,
           styleId: styleId,
           danceId: danceId,
           level: _selectedLevel!,
         );
-        choreographyId = widget.choreographyId!;
-        widget.onSave(choreographyId, styleId, danceId, _selectedLevel!);
+        docId = widget.docId!;
       } else {
-        // Create new choreography
-        choreographyId = await DatabaseService.addChoreography(
+        docId = await FirestoreService.addChoreography(
           name: _nameController.text,
           styleId: styleId,
           danceId: danceId,
           level: _selectedLevel!,
         );
-        widget.onSave(choreographyId, styleId, danceId, _selectedLevel!);
       }
 
-      // Replace stack to ensure clean navigation
-      Navigator.pushAndRemoveUntil(
+      print("Navigating to View Choreography for $docId");
+
+      // Open the choreography immediately
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              ViewChoreographyScreen(
-                choreographyId: choreographyId,
-                styleId: styleId,
-                danceId: danceId,
-                level: _selectedLevel!,
-              ),
+          builder: (_) => ViewChoreographyScreenFirestore(
+            choreoDocId: docId,
+            styleId: styleId,
+            danceId: danceId,
+            level: _selectedLevel!,
+          ),
         ),
-            (route) => route.isFirst, // Keep only the first screen in the stack
       );
     } catch (e) {
-      if (kDebugMode) {
-        print("Error saving choreography: $e");
-      }
+      print("Error saving choreography: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to save choreography: ${e.toString()}")),
+        SnackBar(content: Text("Error saving choreography: $e")),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.choreographyId != null
-              ? "Edit Choreography"
-              : "Add Choreography",
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: _styles.isEmpty
-          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
-          : AnimatedSwitcher(
-        duration: Duration(milliseconds: 300),
-        child: _buildForm(),
-      ),
-    );
-  }
-
-  Widget _buildForm() {
     final bool isCountryWestern = _selectedStyle?.toLowerCase().contains('country western') ?? false;
     final List<String> levelsToShow = isCountryWestern ? _countryWesternLevels : _levels;
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: "Choreography Name",
-              border: OutlineInputBorder(),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.docId != null ? "Edit Choreography" : "Add Choreography"),
+      ),
+      body: _styles.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Name field
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: "Choreography Name"),
             ),
-          ),
-          SizedBox(height: 20),
-          DropdownButtonFormField<String>(
-            value: _selectedStyle,
-            items: _styles.map((style) => DropdownMenuItem(value: style, child: Text(style))).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedStyle = value!;
-                _loadDancesForStyle(value);
-              });
-            },
-            decoration: InputDecoration(
-              labelText: "Style",
-              border: OutlineInputBorder(),
+            SizedBox(height: 20),
+            // Style dropdown
+            DropdownButtonFormField<String>(
+              value: _selectedStyle,
+              items: _styles.map((style) {
+                return DropdownMenuItem(value: style, child: Text(style));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedStyle = value;
+                  if (value != null) {
+                    _loadDancesForStyle(value);
+                  }
+                });
+              },
+              decoration: InputDecoration(labelText: "Style"),
             ),
-          ),
-          SizedBox(height: 20),
-          DropdownButtonFormField<String>(
-            value: _selectedDance,
-            items: _availableDances.map((dance) => DropdownMenuItem(value: dance, child: Text(dance))).toList(),
-            onChanged: (value) => setState(() => _selectedDance = value),
-            decoration: InputDecoration(
-              labelText: "Dance",
-              border: OutlineInputBorder(),
+            SizedBox(height: 20),
+            // Dance dropdown
+            DropdownButtonFormField<String>(
+              value: _selectedDance,
+              items: _availableDances.map((dance) {
+                return DropdownMenuItem(value: dance, child: Text(dance));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedDance = value;
+                });
+              },
+              decoration: InputDecoration(labelText: "Dance"),
             ),
-          ),
-          SizedBox(height: 20),
-          DropdownButtonFormField<String>(
-            value: _selectedLevel,
-            items: levelsToShow.map((level) => DropdownMenuItem(value: level, child: Text(level))).toList(),
-            onChanged: (value) => setState(() => _selectedLevel = value),
-            decoration: InputDecoration(
-              labelText: "Level",
-              border: OutlineInputBorder(),
+            SizedBox(height: 20),
+            // Level dropdown
+            DropdownButtonFormField<String>(
+              value: _selectedLevel,
+              items: levelsToShow.map((level) {
+                return DropdownMenuItem(value: level, child: Text(level));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedLevel = value;
+                });
+              },
+              decoration: InputDecoration(labelText: "Level"),
             ),
-          ),
-          SizedBox(height: 20), // Add spacing before the button
-          SizedBox(
-            width: double.infinity, // Full-width button
-            child: ElevatedButton(
+            SizedBox(height: 20),
+            // Save button
+            ElevatedButton(
               onPressed: _saveChoreography,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16.0), // Larger button height
-                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // Text style
-              ),
               child: Text("Save"),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

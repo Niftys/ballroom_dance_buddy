@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "981703217495",
+    "project_id": "ballroom-dance-buddy",
+    "storage_bucket": "ballroom-dance-buddy.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981703217495:android:af11cad6acc8e00fe5ae12",
+        "android_client_info": {
+          "package_name": "com.sethlowery.ballroom_dance_buddy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG3IGC96X3_F6cHUTUGdhGz-GiVr7mjwc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

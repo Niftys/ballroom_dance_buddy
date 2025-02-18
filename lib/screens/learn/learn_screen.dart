@@ -439,6 +439,8 @@ class _LearnScreenState extends State<LearnScreen> {
       "International Latin": 'assets/icons/latin.svg',
       "Country Western": 'assets/icons/country.svg',
       "Social Dances": 'assets/icons/social.svg',
+      "American Smooth": 'assets/icons/smooth.svg',
+      "American Rhythm": 'assets/icons/rhythm.svg',
     };
 
     if (!iconPaths.containsKey(styleName)) return Container();

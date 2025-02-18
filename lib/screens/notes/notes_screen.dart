@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import '/services/database_service.dart';
@@ -399,14 +401,41 @@ class _NotesScreenState extends State<NotesScreen> {
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    throw UnimplementedError();
+  }
+/*
   void _addChoreography() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddChoreographyScreen(
           onSave: (choreographyId, styleId, danceId, level) {
-            _loadChoreographies();
-            _navigateToViewChoreography(choreographyId, styleId, danceId, level);
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('choreographies')
+                  .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                final docs = snapshot.data!.docs;
+                if (docs.isEmpty) {
+                  return Center(child: Text("No choreographies yet."));
+                }
+
+                // Convert docs to local list of maps
+                final choreos = docs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  data['id'] = doc.id; // store Firestore doc ID
+                  return data;
+                }).toList();
+              },
+            );
           },
         ),
       ),
@@ -438,9 +467,9 @@ class _NotesScreenState extends State<NotesScreen> {
         builder: (context) => AddChoreographyScreen(
           onSave: (choreographyId, styleId, danceId, level) {
             _loadChoreographies();
-            _navigateToViewChoreography(choreographyId, styleId, danceId, level);
+            // _navigateToViewChoreography(choreographyId, styleId, danceId, level);
           },
-          choreographyId: id,
+          // choreographyId: id,
           initialName: name,
           initialStyleId: styleId,
           initialDanceId: danceId,
@@ -634,3 +663,4 @@ class _NotesScreenState extends State<NotesScreen> {
     );
   }
 }
+*/}

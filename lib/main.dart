@@ -1,30 +1,45 @@
+import 'package:ballroom_dance_buddy/screens/notes/notes_screen_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'screens/music/music_screen.dart';
-import 'screens/notes/notes_screen.dart';
-import 'screens/learn/learn_screen.dart';
-import 'screens/notes/view_choreography_screen.dart';
-import 'widgets/floating_music_player.dart';
-import 'services/database_service.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_options.dart';
+import 'login.dart';
+import 'services/firestore_service.dart';
+import 'screens/music/music_screen.dart';
+import 'screens/learn/learn_screen.dart';
+import 'widgets/floating_music_player.dart';
 import 'themes/light_theme.dart';
 import 'themes/dark_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) {
-    sqfliteFfiInit();
+    sqfliteFfiInit(); // Only if you still want sqflite for anything else
   }
 
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemePreference();
   await themeProvider.loadAutoplayPreference();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseFirestore.instance.settings = Settings(
+    persistenceEnabled: false,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
+  await FirebaseFirestore.instance.disableNetwork();
+  await FirebaseFirestore.instance.enableNetwork();
 
   runApp(
     ChangeNotifierProvider(
@@ -57,7 +72,8 @@ class FutureBuilderApp extends StatelessWidget {
 
   Future<void> _initializeApp() async {
     try {
-      await DatabaseService.initializeDB();
+      // If you previously had local DB init, remove or comment out:
+      // await DatabaseService.initializeDB();
     } catch (e) {
       if (kDebugMode) {
         print("Database failed to initialize: $e");
@@ -68,14 +84,16 @@ class FutureBuilderApp extends StatelessWidget {
 
 class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
+  bool _autoplayEnabled = false;
 
   ThemeMode get themeMode => _themeMode;
+  bool get autoplayEnabled => _autoplayEnabled;
 
   Future<void> loadThemePreference() async {
     final prefs = await SharedPreferences.getInstance();
     final isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
-    notifyListeners(); // Notify listeners about the loaded theme
+    notifyListeners();
   }
 
   Future<void> toggleTheme(bool isDarkMode) async {
@@ -84,10 +102,6 @@ class ThemeProvider with ChangeNotifier {
     await prefs.setBool('isDarkMode', isDarkMode);
     notifyListeners();
   }
-
-  bool _autoplayEnabled = false;
-
-  bool get autoplayEnabled => _autoplayEnabled;
 
   Future<void> loadAutoplayPreference() async {
     final prefs = await SharedPreferences.getInstance();
@@ -104,23 +118,23 @@ class ThemeProvider with ChangeNotifier {
 }
 
 class BallroomDanceBuddy extends StatelessWidget {
-  final String? fileUri;
-
-  const BallroomDanceBuddy({super.key, this.fileUri});
+  const BallroomDanceBuddy({super.key});
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      title: "Ballroom Dance Buddy",
       debugShowCheckedModeBanner: false,
+      title: 'Ballroom Dance Buddy',
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: fileUri != null
-          ? ImportHandlerScreen(fileUri: fileUri!)
-          : const MainScreen(),
+      initialRoute: FirebaseAuth.instance.currentUser == null ? '/login' : '/mainScreen',
+      routes: {
+        '/login': (context) => LoginScreen(),
+        '/mainScreen': (context) => MainScreen(),  // Ensure this matches your main screen
+      },
     );
   }
 }
@@ -135,7 +149,8 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final GlobalKey<MusicScreenState> _musicScreenKey = GlobalKey();
   final AudioPlayer _audioPlayer = AudioPlayer();
-  String _currentSongTitle = "No Song Playing"; // Store the title
+
+  String _currentSongTitle = "No Song Playing";
   bool _isPlayerExpanded = false;
   bool _isInFullscreen = false;
   int _selectedIndex = 0;
@@ -158,7 +173,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _updateSongTitle(String newTitle) {
     setState(() {
-      _currentSongTitle = newTitle; // Update state when title changes
+      _currentSongTitle = newTitle;
     });
   }
 
@@ -170,7 +185,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: Stack(
         children: [
@@ -181,19 +195,26 @@ class _MainScreenState extends State<MainScreen> {
             child: IndexedStack(
               index: _selectedIndex,
               children: [
-                NotesScreen(onOpenSettings: () => _openSettingsPopup(context)),
+                // Firestore-based notes screen
+                NotesScreenFirestore(
+                  onOpenSettings: () => _openSettingsPopup(context),
+                ),
+                // Music screen
                 MusicScreen(
                   audioPlayer: _audioPlayer,
                   onSongsReady: _onSongsReady,
                   key: _musicScreenKey,
                   onSongTitleChanged: _updateSongTitle,
                 ),
+                // Learn screen
                 LearnScreen(
                   onFullscreenChange: _onFullscreenChange,
                 ),
               ],
             ),
           ),
+
+          // The floating music player on bottom
           if (!_isInFullscreen)
             Align(
               alignment: Alignment.bottomCenter,
@@ -228,13 +249,11 @@ class _MainScreenState extends State<MainScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            "Settings",
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          title: Text("Settings", style: Theme.of(context).textTheme.titleLarge),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Dark Mode toggle
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -249,6 +268,7 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
               const Divider(),
+              // Autoplay toggle
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -262,6 +282,7 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
               const Divider(),
+              // About
               ListTile(
                 leading: Icon(Icons.info_outline, color: Theme.of(context).primaryColor),
                 title: Text("About App", style: Theme.of(context).textTheme.bodyLarge),
@@ -270,6 +291,7 @@ class _MainScreenState extends State<MainScreen> {
                   _showCustomAboutDialog(context);
                 },
               ),
+              // Donate
               ListTile(
                 leading: Icon(Icons.volunteer_activism, color: Theme.of(context).primaryColor),
                 title: Text("Love the app? Consider donating", style: Theme.of(context).textTheme.bodyLarge),
@@ -296,19 +318,13 @@ class _MainScreenState extends State<MainScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            "About Ballroom Dance Buddy",
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          title: Text("About Ballroom Dance Buddy", style: Theme.of(context).textTheme.titleLarge),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.info_outline, size: 60, color: Theme.of(context).primaryColor),
               const SizedBox(height: 16),
-              Text(
-                "Version: 1.0.0",
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+              Text("Version: 1.0.0", style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 8),
               Text(
                 "This app was developed by an unemployed physics graduate trying to market his coding skills.",
@@ -317,7 +333,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                "With that in mind, if you encounter any issues, feel free to reach out to lowerys(at)proton.me.",
+                "Feel free to reach out to lowerys(at)proton.me with issues.",
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
@@ -341,7 +357,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _openDonationLink() async {
-    const donationUrl = "https://www.paypal.com/donate/?business=BA2GYPC746MSQ&no_recurring=0&item_name=Thank+you+for+supporting+Ballroom+Dance+Buddy%21+Donations+like+yours+keep+me+from+doing+anything+annoying+to+make+money+%3A%29&currency_code=USD";
+    const donationUrl =
+        "https://www.paypal.com/donate/?business=BA2GYPC746MSQ&no_recurring=0&item_name=Thank+you+for+supporting+Ballroom+Dance+Buddy%21";
     if (await canLaunch(donationUrl)) {
       await launch(donationUrl);
     } else {
@@ -368,73 +385,8 @@ class ImportHandlerScreen extends StatelessWidget {
   }
 
   Future<void> _handleFile(BuildContext context) async {
-    try {
-      final directory = await _getSafeDirectory();
-      final filePath = '${directory.path}/${Uri.parse(fileUri).path.split('/').last}';
-      final file = File(filePath);
-
-      if (!file.existsSync()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("File not found. Please check the path and try again.")),
-        );
-        Navigator.pop(context);
-        return;
-      }
-
-      final content = await file.readAsString();
-      final data = jsonDecode(content);
-
-      final choreography = data['choreography'];
-      final figures = data['figures'];
-
-      if (choreography == null || figures == null) {
-        throw const FormatException("Invalid file structure. Missing choreography or figures.");
-      }
-
-      final choreographyId = await DatabaseService.addChoreography(
-        name: choreography['name'],
-        styleId: choreography['style_id'],
-        danceId: choreography['dance_id'],
-        level: choreography['level'],
-      );
-
-      for (var figure in figures) {
-        await DatabaseService.addFigureToChoreography(
-          choreographyId: choreographyId,
-          figureId: figure['id'],
-        );
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Choreography '${choreography['name']}' imported successfully!")),
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ViewChoreographyScreen(
-            choreographyId: choreographyId,
-            styleId: choreography['style_id'],
-            danceId: choreography['dance_id'],
-            level: choreography['level'],
-          ),
-        ),
-      );
-    } on FileSystemException {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("File not found. Please check the path and try again.")),
-      );
-    } on FormatException {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid file format. Unable to parse JSON.")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to import choreography: $e")),
-      );
-    } finally {
-      Navigator.pop(context);
-    }
+    // If you want to do Firestore-based import, do it here
+    // or remove this entirely if you no longer do local-file imports
   }
 
   @override
@@ -453,7 +405,6 @@ class ImportHandlerScreen extends StatelessWidget {
 
 class LoadingIndicator extends StatelessWidget {
   const LoadingIndicator({super.key});
-
   @override
   Widget build(BuildContext context) {
     return const Center(child: CircularProgressIndicator());
