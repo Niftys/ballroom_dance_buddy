@@ -22,6 +22,10 @@ import 'themes/dark_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: false);
   if (!kIsWeb) {
     sqfliteFfiInit(); // Only if you still want sqflite for anything else
   }
@@ -29,17 +33,6 @@ void main() async {
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemePreference();
   await themeProvider.loadAutoplayPreference();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  FirebaseFirestore.instance.settings = Settings(
-    persistenceEnabled: false,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
-
-  await FirebaseFirestore.instance.disableNetwork();
-  await FirebaseFirestore.instance.enableNetwork();
 
   runApp(
     ChangeNotifierProvider(
@@ -130,9 +123,9 @@ class BallroomDanceBuddy extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      initialRoute: FirebaseAuth.instance.currentUser == null ? '/login' : '/mainScreen',
+      initialRoute: FirebaseAuth.instance.currentUser == null ? '/' : '/mainScreen',
       routes: {
-        '/login': (context) => LoginScreen(),
+        '/': (context) => LoginScreen(),
         '/mainScreen': (context) => MainScreen(),  // Ensure this matches your main screen
       },
     );

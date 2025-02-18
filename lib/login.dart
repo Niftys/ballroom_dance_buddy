@@ -1,33 +1,9 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_svg/svg.dart';
-
-void testFirestore() async {
-  print("🚀 Attempting Firestore write...");
-
-  try {
-    // Ensure Firestore is online
-    await FirebaseFirestore.instance.disableNetwork();
-    await FirebaseFirestore.instance.enableNetwork();
-    print("🔄 Firestore Network Reset.");
-
-    // Force a timeout to detect issues
-    await FirebaseFirestore.instance
-        .collection('test')
-        .add({'message': 'Firestore connected!', 'timestamp': FieldValue.serverTimestamp()})
-        .timeout(Duration(seconds: 5), onTimeout: () {
-      throw Exception("⚠️ Firestore write timeout! Firestore may be offline or blocked.");
-    });
-
-    print("✅ Firestore Write Successful");
-  } catch (e) {
-    print("❌ Firestore Write Failed: $e");
-  } finally {
-    print("🛠 Firestore test complete.");
-  }
-}
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -35,33 +11,19 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _isLoading = false;
+  String? errorMessage;
 
-  Future<void> _login() async {
-    if (!mounted) return; // Prevents calling setState if the widget is disposed
-    setState(() => _isLoading = true);
-
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/mainScreen');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Login failed: $e")),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+  Future<String> refreshAuthToken(User user) async {
+    String? idToken = await user.getIdToken(true);
+    print("🔄 Refreshed Auth Token: $idToken");
+    return idToken ?? "";
   }
 
   Future<void> _registerUser(String firstName, String lastName, String email, String password) async {
@@ -69,59 +31,81 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      print("🚀 Attempting to register user...");
-
-      // Create user in Firebase Authentication
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
 
-      // Get the newly created user
-      User? user = userCredential.user;
-      if (user == null) {
-        throw Exception("User creation failed! User is null.");
+      User? newUser = userCredential.user;
+      if (newUser == null) throw Exception("User creation failed!");
+
+      print("✅ FirebaseAuth User Created: ${newUser.uid}");
+
+      // 🔥 Get a fresh Auth Token
+      String idToken = await refreshAuthToken(newUser);
+      print("🔑 Verified Firebase Auth Token: $idToken");
+
+      // 🔥 Firestore API URL
+      final String firestoreURL = "https://firestore.googleapis.com/v1/projects/ballroom-dance-buddy/databases/bdbdb/documents/users";
+
+      final userData = {
+        "fields": {
+          "firstName": {"stringValue": firstName.trim()},
+          "lastName": {"stringValue": lastName.trim()},
+          "email": {"stringValue": email.trim()},
+          "uid": {"stringValue": newUser.uid},
+          "createdAt": {"timestampValue": DateTime.now().toUtc().toIso8601String()}
+        }
+      };
+
+      // 🔥 Firestore API Request
+      final response = await http.post(
+        Uri.parse(firestoreURL),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $idToken"
+        },
+        body: jsonEncode(userData),
+      );
+
+      if (response.statusCode == 200) {
+        print("🔥 Firestore HTTP Write SUCCESSFUL");
+        if (mounted) {
+          Navigator.pop(context);
+          Navigator.pushReplacementNamed(context, '/mainScreen'); // ✅ Move navigation here
+        }
+      } else {
+        print("❌ Firestore HTTP Write FAILED: ${response.body}");
       }
 
-      print("✅ FirebaseAuth User Created: ${user.uid}");
-
-      // Save user data to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'firstName': firstName.trim(),
-        'lastName': lastName.trim(),
-        'email': email.trim(),
-        'uid': user.uid,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      print("🔥 User saved to Firestore: ${user.uid}");
-
-      // Navigate to the main screen
       if (mounted) {
-        print("🔄 Navigating to main screen...");
+        Navigator.pushReplacementNamed(context, '/mainScreen');
+      }
+    } catch (e) {
+      print("❌ Unexpected Error: $e");
+      setState(() => errorMessage = e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loginUser(String email, String password) async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await auth.signInWithEmailAndPassword(email: email.trim(), password: password.trim());
+
+      if (mounted) {
         Navigator.pushReplacementNamed(context, '/mainScreen');
       }
     } on FirebaseAuthException catch (authError) {
       print("❌ FirebaseAuth Error: ${authError.message}");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Authentication error: ${authError.message}")),
-        );
-      }
-    } on FirebaseException catch (firestoreError) {
-      print("❌ Firestore Error: ${firestoreError.message}");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to save user data: ${firestoreError.message}")),
-        );
-      }
-    } catch (e) {
-      print("❌ Unexpected Error: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Registration failed: ${e.toString()}")),
-        );
-      }
+      setState(() {
+        errorMessage = authError.message;
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -134,16 +118,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.signInAnonymously();
+      await auth.signInAnonymously();
+
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/mainScreen');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Guest login failed: $e")),
-        );
-      }
+      print("❌ Guest login failed: $e");
+      setState(() => errorMessage = "Guest login failed: $e");
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -165,13 +147,13 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildTextField(_firstNameController, "First Name", Icons.person),
+              TextField(controller: _firstNameController, decoration: InputDecoration(labelText: "First Name")),
               SizedBox(height: 8),
-              _buildTextField(_lastNameController, "Last Name", Icons.person_outline),
+              TextField(controller: _lastNameController, decoration: InputDecoration(labelText: "Last Name")),
               SizedBox(height: 8),
-              _buildTextField(_emailController, "Email", Icons.email),
+              TextField(controller: _emailController, decoration: InputDecoration(labelText: "Email")),
               SizedBox(height: 8),
-              _buildTextField(_passwordController, "Password", Icons.lock, obscureText: true),
+              TextField(controller: _passwordController, decoration: InputDecoration(labelText: "Password"), obscureText: true),
             ],
           ),
         ),
@@ -182,9 +164,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   _lastNameController.text.isEmpty ||
                   _emailController.text.isEmpty ||
                   _passwordController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("All fields are required!")),
-                );
+                setState(() {
+                  errorMessage = "All fields are required!";
+                });
                 return;
               }
 
@@ -194,29 +176,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 _emailController.text.trim(),
                 _passwordController.text.trim(),
               );
+
+              Navigator.pop(context);
             },
             child: Text("Register"),
-            style: ElevatedButton.styleFrom(
-              minimumSize: Size(double.infinity, 45),
-            ),
           ),
-          SizedBox(height: 16),
           TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
         ],
       ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool obscureText = false}) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(icon),
-        hintText: "Enter your $label",
-      ),
-      obscureText: obscureText,
     );
   }
 
@@ -224,76 +191,93 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                'assets/icons/txblogo.svg',
-                color: Theme.of(context).colorScheme.secondary,
-                width: 150,
-                height: 150,
-              ),
-              SizedBox(height: 16),
-              Text("Welcome Back", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              SizedBox(height: 8),
-              Text("Please log in, register, or continue as guest", style: TextStyle(fontSize: 16, color: Colors.grey)),
-              SizedBox(height: 24),
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                  hintText: "Enter your email",
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.65, // 🔥 Limits width to 65% of the screen
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24), // Add vertical padding
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SvgPicture.asset("assets/icons/txblogo.svg", width: 150, height: 150, color: Theme.of(context).colorScheme.secondary),
+                SizedBox(height: 16),
+                Text("Ballroom Dance Buddy", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                SizedBox(height: 8),
+                Text("Please log in, register, or continue as guest", style: TextStyle(fontSize: 16, color: Colors.grey)),
+                SizedBox(height: 24),
+
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(labelText: "Email"),
+                  textInputAction: TextInputAction.next,
                 ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
-                  hintText: "Enter your password",
+                SizedBox(height: 12),
+
+                TextField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(labelText: "Password"),
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _loginUser(_emailController.text, _passwordController.text),
                 ),
-                obscureText: true,
-              ),
-              SizedBox(height: 24),
-              _isLoading
-                  ? CircularProgressIndicator()
-                  : Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: _login,
-                    child: Text("Log In", style: TextStyle(fontSize: 18)),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 50),
+                SizedBox(height: 24),
+
+                _isLoading
+                    ? CircularProgressIndicator()
+                    : Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => _loginUser(_emailController.text, _passwordController.text),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          textStyle: TextStyle(fontSize: 18),
+                        ),
+                        child: Text("Log In"),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: _loginAsGuest,
-                    child: Text("Continue as Guest", style: TextStyle(fontSize: 18)),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 50),
+                    SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _loginAsGuest,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          textStyle: TextStyle(fontSize: 18),
+                        ),
+                        child: Text("Log In as Guest"),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 8),
-                  TextButton(
-                    onPressed: _showRegisterDialog,
-                    child: Text("Create an account", style: TextStyle(fontSize: 16)),
-                  ),
-                  ElevatedButton(
-                    onPressed: testFirestore,
-                    child: Text("Test Firestore"),
-                  ),
-                ],
-              ),
-            ],
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: Divider(thickness: 1, color: Colors.grey[400])),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Text("or", style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                        ),
+                        Expanded(child: Divider(thickness: 1, color: Colors.grey[400])),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: _showRegisterDialog,
+                        child: Text(
+                          "Register Account",
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

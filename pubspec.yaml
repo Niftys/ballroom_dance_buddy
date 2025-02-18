@@ -51,7 +51,6 @@ dependencies:
   firebase_core: ^3.11.0
   firebase_auth: ^5.4.2
   cloud_firestore: ^5.6.3
-  flutterfire_cli: ^1.0.1
   firebase_storage: ^12.4.2
 
 dev_dependencies:
@@ -60,6 +59,7 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
   change_app_package_name: ^1.4.0
+  flutterfire_cli: ^1.0.1
 
 # The following section is specific to Flutter packages.
 flutter_launcher_icons:
