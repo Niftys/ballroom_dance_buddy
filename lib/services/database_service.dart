@@ -22,7 +22,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 58,
+      version: 60,
       onCreate: (database, version) async {
         if (kDebugMode) print("Creating database...");
         await _createTables(database);

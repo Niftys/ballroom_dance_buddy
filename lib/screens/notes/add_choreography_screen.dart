@@ -1,8 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/firestore_service.dart';
-import '/services/database_service.dart'; // Keep only for styles JSON if you want
-import 'view_choreography_screen_firestore.dart'; // <-- A new Firestore-based view screen?
+import '/services/database_service.dart';
+import 'view_choreography_screen_firestore.dart';
 
 class AddChoreographyScreen extends StatefulWidget {
   // Instead of int choreographyId, we store the Firestore doc ID
@@ -30,6 +31,7 @@ class AddChoreographyScreen extends StatefulWidget {
 
 class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   final TextEditingController _nameController = TextEditingController();
+  bool _isPublic = false;
 
   String? _selectedStyle;
   String? _selectedDance;
@@ -46,7 +48,6 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   @override
   void initState() {
     super.initState();
-    // If there's a docId, it means we might be editing
     if (widget.docId != null) {
       _loadStylesForEditing();
     } else {
@@ -57,14 +58,17 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   Future<void> _loadStyles() async {
     try {
       final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
-      setState(() {
-        _styles = stylesAndDances.keys.toList();
-        _selectedStyle = _styles.isNotEmpty ? _styles.first : null;
-        _availableDances =
-        _selectedStyle != null ? stylesAndDances[_selectedStyle!] ?? [] : [];
-        _selectedDance = _availableDances.isNotEmpty ? _availableDances.first : null;
-        _selectedLevel = _levels.first;
-      });
+      if (mounted) {
+        setState(() {
+          _styles = stylesAndDances.keys.toList();
+          _selectedStyle = _styles.isNotEmpty ? _styles.first : null;
+          _availableDances =
+          _selectedStyle != null ? stylesAndDances[_selectedStyle!] ?? [] : [];
+          _selectedDance =
+          _availableDances.isNotEmpty ? _availableDances.first : null;
+          _selectedLevel = _levels.first;
+        });
+      }
     } catch (e) {
       if (kDebugMode) {
         print("Error loading styles: $e");
@@ -78,9 +82,11 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   Future<void> _loadStylesForEditing() async {
     try {
       final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
-      setState(() {
-        _styles = stylesAndDances.keys.toList();
-      });
+      if (mounted) {
+        setState(() {
+          _styles = stylesAndDances.keys.toList();
+        });
+      }
 
       // If you want to pre-fill from widget.initialName, etc.:
       _nameController.text = widget.initialName ?? '';
@@ -110,16 +116,19 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
   Future<void> _loadDancesForStyle(String styleName) async {
     try {
       final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
-      setState(() {
-        _availableDances = stylesAndDances[styleName] ?? [];
-        _selectedDance = _availableDances.isNotEmpty ? _availableDances.first : null;
+      if (mounted) {
+        setState(() {
+          _availableDances = stylesAndDances[styleName] ?? [];
+          _selectedDance =
+          _availableDances.isNotEmpty ? _availableDances.first : null;
 
-        if (styleName.toLowerCase().contains('country western')) {
-          _selectedLevel = _countryWesternLevels.first;
-        } else {
-          _selectedLevel = _levels.first;
-        }
-      });
+          if (styleName.toLowerCase().contains('country western')) {
+            _selectedLevel = _countryWesternLevels.first;
+          } else {
+            _selectedLevel = _levels.first;
+          }
+        });
+      }
     } catch (e) {
       if (kDebugMode) {
         print("Error loading dances for style '$styleName': $e");
@@ -142,15 +151,29 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
     }
 
     try {
-      final styleId = await DatabaseService.getStyleIdByName(_selectedStyle!);
-      final danceId = await DatabaseService.getDanceIdByNameAndStyle(
-        _selectedDance!,
-        styleId,
-      );
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+      final styleId = await FirestoreService.getStyleIdByName(_selectedStyle!);
+      if (styleId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Style not found: ${_selectedStyle!}")),
+        );
+        return;
+      }
+
+      final danceId = await FirestoreService.getDanceIdByNameAndStyle(_selectedDance!, styleId);
+      if (danceId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Dance not found: ${_selectedDance!}")),
+        );
+        return;
+      }
+
+      print("🚀 Saving choreography for user: $userId");
 
       String docId;
       if (widget.docId != null) {
         await FirestoreService.updateChoreography(
+          userId: userId,
           choreoDocId: widget.docId!,
           name: _nameController.text,
           styleId: styleId,
@@ -164,25 +187,32 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
           styleId: styleId,
           danceId: danceId,
           level: _selectedLevel!,
+          isPublic: _isPublic, // ✅ Pass the correct value
         );
       }
 
-      print("Navigating to View Choreography for $docId");
+      print("✅ Choreography saved successfully with ID: $docId");
 
-      // Open the choreography immediately
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ViewChoreographyScreenFirestore(
-            choreoDocId: docId,
-            styleId: styleId,
-            danceId: danceId,
-            level: _selectedLevel!,
+      if (mounted) {
+        setState(() {});
+
+        await Future.delayed(Duration(milliseconds: 300));
+
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ViewChoreographyScreenFirestore(
+              choreoDocId: docId,
+              styleId: styleId,
+              danceId: danceId,
+              level: _selectedLevel!,
+            ),
           ),
-        ),
-      );
+        );
+      }
     } catch (e) {
-      print("Error saving choreography: $e");
+      print("❌ ERROR: Failed to save choreography: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error saving choreography: $e")),
       );
@@ -217,12 +247,14 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
                 return DropdownMenuItem(value: style, child: Text(style));
               }).toList(),
               onChanged: (value) {
-                setState(() {
-                  _selectedStyle = value;
-                  if (value != null) {
-                    _loadDancesForStyle(value);
-                  }
-                });
+                if (mounted) {
+                  setState(() {
+                    _selectedStyle = value;
+                    if (value != null) {
+                      _loadDancesForStyle(value);
+                    }
+                  });
+                }
               },
               decoration: InputDecoration(labelText: "Style"),
             ),
@@ -234,9 +266,11 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
                 return DropdownMenuItem(value: dance, child: Text(dance));
               }).toList(),
               onChanged: (value) {
-                setState(() {
-                  _selectedDance = value;
-                });
+                if (mounted) {
+                  setState(() {
+                    _selectedDance = value;
+                  });
+                }
               },
               decoration: InputDecoration(labelText: "Dance"),
             ),
@@ -248,17 +282,22 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
                 return DropdownMenuItem(value: level, child: Text(level));
               }).toList(),
               onChanged: (value) {
-                setState(() {
-                  _selectedLevel = value;
-                });
+                if (mounted) {
+                  setState(() {
+                    _selectedLevel = value;
+                  });
+                }
               },
               decoration: InputDecoration(labelText: "Level"),
             ),
             SizedBox(height: 20),
-            // Save button
-            ElevatedButton(
-              onPressed: _saveChoreography,
-              child: Text("Save"),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _saveChoreography,
+                child: Text("Save"),
+              ),
             ),
           ],
         ),

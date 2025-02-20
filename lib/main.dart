@@ -1,19 +1,18 @@
 import 'package:ballroom_dance_buddy/screens/notes/notes_screen_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
-import 'dart:convert';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'login.dart';
-import 'services/firestore_service.dart';
 import 'screens/music/music_screen.dart';
 import 'screens/learn/learn_screen.dart';
 import 'widgets/floating_music_player.dart';
@@ -27,7 +26,7 @@ void main() async {
   );
   FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: false);
   if (!kIsWeb) {
-    sqfliteFfiInit(); // Only if you still want sqflite for anything else
+    sqfliteFfiInit();
   }
 
   final themeProvider = ThemeProvider();
@@ -37,42 +36,9 @@ void main() async {
   runApp(
     ChangeNotifierProvider(
       create: (_) => themeProvider,
-      child: const FutureBuilderApp(),
+      child: const BallroomDanceBuddy(),
     ),
   );
-}
-
-class FutureBuilderApp extends StatelessWidget {
-  const FutureBuilderApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _initializeApp(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return const BallroomDanceBuddy();
-        } else {
-          return const MaterialApp(
-            home: Scaffold(
-              body: LoadingIndicator(),
-            ),
-          );
-        }
-      },
-    );
-  }
-
-  Future<void> _initializeApp() async {
-    try {
-      // If you previously had local DB init, remove or comment out:
-      // await DatabaseService.initializeDB();
-    } catch (e) {
-      if (kDebugMode) {
-        print("Database failed to initialize: $e");
-      }
-    }
-  }
 }
 
 class ThemeProvider with ChangeNotifier {
@@ -123,10 +89,31 @@ class BallroomDanceBuddy extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      initialRoute: FirebaseAuth.instance.currentUser == null ? '/' : '/mainScreen',
+      home: AuthWrapper(), // Ensures correct navigation based on auth state
       routes: {
-        '/': (context) => LoginScreen(),
-        '/mainScreen': (context) => MainScreen(),  // Ensure this matches your main screen
+        '/mainScreen': (context) => MainScreen(),
+      },
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+
+        if (snapshot.hasData && snapshot.data != null) {
+          print("✅ User logged in: ${snapshot.data!.uid}");
+          return MainScreen(); // 🔥 Go to MainScreen
+        } else {
+          print("🔴 No user logged in");
+          return LoginScreen(); // 🔥 Stay on login screen
+        }
       },
     );
   }

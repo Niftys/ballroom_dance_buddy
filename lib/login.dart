@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -41,48 +39,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
       print("✅ FirebaseAuth User Created: ${newUser.uid}");
 
-      // 🔥 Get a fresh Auth Token
-      String idToken = await refreshAuthToken(newUser);
-      print("🔑 Verified Firebase Auth Token: $idToken");
+      // Save User to Firestore
+      await firestore.collection('users').doc(newUser.uid).set({
+        'firstName': firstName.trim(),
+        'lastName': lastName.trim(),
+        'email': email.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-      // 🔥 Firestore API URL
-      final String firestoreURL = "https://firestore.googleapis.com/v1/projects/ballroom-dance-buddy/databases/bdbdb/documents/users";
+      print("✅ Firestore User Document Created!");
 
-      final userData = {
-        "fields": {
-          "firstName": {"stringValue": firstName.trim()},
-          "lastName": {"stringValue": lastName.trim()},
-          "email": {"stringValue": email.trim()},
-          "uid": {"stringValue": newUser.uid},
-          "createdAt": {"timestampValue": DateTime.now().toUtc().toIso8601String()}
-        }
-      };
+      // 🔥 Ensure user is signed in
+      await auth.signInWithEmailAndPassword(email: email.trim(), password: password.trim());
 
-      // 🔥 Firestore API Request
-      final response = await http.post(
-        Uri.parse(firestoreURL),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $idToken"
-        },
-        body: jsonEncode(userData),
-      );
-
-      if (response.statusCode == 200) {
-        print("🔥 Firestore HTTP Write SUCCESSFUL");
-        if (mounted) {
-          Navigator.pop(context);
-          Navigator.pushReplacementNamed(context, '/mainScreen'); // ✅ Move navigation here
-        }
-      } else {
-        print("❌ Firestore HTTP Write FAILED: ${response.body}");
-      }
+      print("✅ User Logged In After Registration!");
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/mainScreen');
       }
     } catch (e) {
-      print("❌ Unexpected Error: $e");
+      print("❌ Error: $e");
       setState(() => errorMessage = e.toString());
     } finally {
       if (mounted) {
@@ -142,7 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Center(child: Text("Create an Account", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold))),
+        title: Center(
+          child: Text(
+            "Create an Account",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -157,31 +138,45 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+        actionsAlignment: MainAxisAlignment.center, // Center actions
         actions: [
-          ElevatedButton(
-            onPressed: () async {
-              if (_firstNameController.text.isEmpty ||
-                  _lastNameController.text.isEmpty ||
-                  _emailController.text.isEmpty ||
-                  _passwordController.text.isEmpty) {
-                setState(() {
-                  errorMessage = "All fields are required!";
-                });
-                return;
-              }
+          SizedBox(
+            width: double.infinity, // Full-width button
+            child: ElevatedButton(
+              onPressed: () async {
+                if (_firstNameController.text.isEmpty ||
+                    _lastNameController.text.isEmpty ||
+                    _emailController.text.isEmpty ||
+                    _passwordController.text.isEmpty) {
+                  setState(() {
+                    errorMessage = "All fields are required!";
+                  });
+                  return;
+                }
 
-              await _registerUser(
-                _firstNameController.text.trim(),
-                _lastNameController.text.trim(),
-                _emailController.text.trim(),
-                _passwordController.text.trim(),
-              );
+                await _registerUser(
+                  _firstNameController.text.trim(),
+                  _lastNameController.text.trim(),
+                  _emailController.text.trim(),
+                  _passwordController.text.trim(),
+                );
 
-              Navigator.pop(context);
-            },
-            child: Text("Register"),
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 20), // Adjust height here
+                textStyle: TextStyle(fontSize: 18),
+              ),
+              child: Text("Register"),
+            ),
           ),
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+          SizedBox(height: 8), // Space between buttons
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel", style: Theme.of(context).textTheme.titleSmall),
+            ),
+          ),
         ],
       ),
     );
@@ -246,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: EdgeInsets.symmetric(vertical: 14),
                           textStyle: TextStyle(fontSize: 18),
                         ),
-                        child: Text("Log In as Guest"),
+                        child: Text("Continue as Guest"),
                       ),
                     ),
                     SizedBox(height: 16),

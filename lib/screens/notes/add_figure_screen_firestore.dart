@@ -1,16 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-// Keep DatabaseService ONLY IF you want to load the standard figure definitions
-// from your local JSON. We won't call any write methods from it.
 import '../../themes/colors.dart';
 import '/services/database_service.dart';
 
-/// A Firestore-based "Add Figure" screen that:
-/// 1) Shows available figures from local data (grouped by level).
-/// 2) Lets user search or select a figure to add.
-/// 3) Writes each figure as a doc in Firestore under choreographies/{choreoDocId}/figures.
 class AddFigureScreenFirestore extends StatefulWidget {
   final String choreoDocId;
   final int styleId;
@@ -30,14 +24,11 @@ class AddFigureScreenFirestore extends StatefulWidget {
 }
 
 class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
-  // Organized as: { "Bronze": [ {id, description, ...}, ... ], "Silver": [...], ... }
   Map<String, List<Map<String, dynamic>>> _organizedFigures = {};
 
-  // For searching
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Which level tab is selected on the left panel
   String? _selectedLevel;
 
   @override
@@ -53,53 +44,51 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     super.dispose();
   }
 
-  /// Handle live search text changes
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.trim().toLowerCase();
     });
   }
 
-  /// Load standard figures from local data or JSON
-  /// and group them by level (e.g. Bronze, Silver, etc.).
   Future<void> _loadAvailableFigures() async {
     try {
-      // 1) Load standard or recommended figures from local data
-      final figures = await DatabaseService.getFigures(
-        styleId: widget.styleId,
-        danceId: widget.danceId,
-        level: widget.level,
+      List<Map<String, dynamic>> figures = List.from(
+        await DatabaseService.getFigures(
+          styleId: widget.styleId,
+          danceId: widget.danceId,
+          level: widget.level,
+        ),
       );
 
-      // 2) If you still want to find custom definitions, you can do so:
-      final customFigures = await DatabaseService.getCustomFiguresByStyleAndDance(
-        styleId: widget.styleId,
-        danceId: widget.danceId,
-      );
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+      final figuresSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('choreographies')
+          .doc(widget.choreoDocId) // ✅ Load only figures from this choreography
+          .collection('figures')
+          .get();
 
-      // 3) Group them by 'level'
+      final customFigures = figuresSnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+
+      figures.addAll(customFigures);
+
       final Map<String, List<Map<String, dynamic>>> organized = _groupFiguresByLevel(figures);
-      if (customFigures.isNotEmpty) {
-        organized['Custom'] = customFigures;
-      }
-
-      // Remove empty groups
-      organized.removeWhere((_, list) => list.isEmpty);
-
       setState(() {
         _organizedFigures = organized;
       });
     } catch (e) {
-      if (kDebugMode) {
-        print("Error loading figures: $e");
-      }
+      print("Error loading figures: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load figures.")),
       );
     }
   }
 
-  /// Local helper to group a list of figures by their 'level' field
   Map<String, List<Map<String, dynamic>>> _groupFiguresByLevel(
       List<Map<String, dynamic>> figures) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
@@ -110,25 +99,28 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     return grouped;
   }
 
-  /// Create a new figure doc in the sub-collection, e.g.
-  /// choreographies/{choreoDocId}/figures.
-  /// We'll do a position-based approach so you can reorder them later.
   Future<void> _addFigureToFirestore(Map<String, dynamic> figure) async {
     try {
       final nextPosition = await _getNextPosition();
+      final userId = FirebaseAuth.instance.currentUser!.uid;
 
-      await FirebaseFirestore.instance
-          .collection('choreographies')
-          .doc(widget.choreoDocId)
-          .collection('figures')
-          .add({
+      final figureData = {
         'description': figure['description'],
         'notes': figure['notes'] ?? '',
         'level': figure['level'] ?? 'Bronze',
         'position': nextPosition,
-      });
+        'custom': figure['custom'] ?? false,
+      };
 
-      Navigator.pop(context, true);  // Go back after adding figure
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('choreographies')
+          .doc(widget.choreoDocId)
+          .collection('figures')
+          .add(figureData);
+
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to add figure: $e")),
@@ -136,10 +128,11 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     }
   }
 
-  /// If you want them sorted by a 'position' field, find the largest position so far
-  /// and add 1. If no existing docs, position=0.
   Future<int> _getNextPosition() async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
     final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
         .collection('choreographies')
         .doc(widget.choreoDocId)
         .collection('figures')
@@ -154,8 +147,6 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     return 0;
   }
 
-  /// For custom figure creation: user enters a new name,
-  /// we store it as `level: 'Custom'`, `notes: ''`, etc.
   void _addCustomFigure() async {
     final TextEditingController _descriptionController = TextEditingController();
 
@@ -167,17 +158,33 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
           content: TextField(
             controller: _descriptionController,
             decoration: InputDecoration(labelText: "Description"),
+            onSubmitted: (_) => _saveCustomFigure(_descriptionController.text),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, null),
-              child: Text("Cancel"),
+              child: Text("Cancel", style: Theme.of(context).textTheme.titleSmall),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final description = _descriptionController.text.trim();
                 if (description.isNotEmpty) {
-                  Navigator.pop(context, {'description': description});
+                  final userId = FirebaseAuth.instance.currentUser!.uid;
+                  final customFigure = {
+                    'description': description,
+                    'level': 'Custom',
+                    'notes': '',
+                    'created_by': userId,
+                  };
+
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(userId)
+                      .collection('custom_figures')
+                      .add(customFigure);
+
+                  await _loadAvailableFigures();
+                  Navigator.pop(context);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text("Description cannot be empty.")),
@@ -192,17 +199,43 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     );
 
     if (result != null) {
-      // We treat it as a brand new figure with 'Custom' level
-      final newFig = {
-        'description': result['description']!,
-        'level': 'Custom',
-        'notes': '',
-      };
-      await _addFigureToFirestore(newFig);
+      await _loadAvailableFigures();
     }
   }
 
-  /// Searching over all figures
+  void _saveCustomFigure(String description) async {
+    if (description.trim().isNotEmpty) {
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+      final customFigure = {
+        'description': description.trim(),
+        'level': 'Custom',
+        'notes': '',
+        'created_by': userId,
+        'custom': true,
+      };
+
+      // ✅ Save inside the choreography instead of globally
+      final docRef = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('choreographies')
+          .doc(widget.choreoDocId) // Ensure it's saved inside the correct choreography
+          .collection('figures') // Store it alongside normal figures
+          .add(customFigure);
+
+      setState(() {
+        _organizedFigures['Custom'] ??= [];
+        _organizedFigures['Custom']!.add({...customFigure, 'id': docRef.id, 'custom': true});
+      });
+
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Description cannot be empty.")),
+      );
+    }
+  }
+
   List<Map<String, dynamic>> _filterFigures(List<Map<String, dynamic>> figures) {
     if (_searchQuery.isEmpty) return figures;
     return figures.where((f) {
@@ -215,7 +248,7 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add Figure (Firestore)"),
+        title: Text("Add Figure"),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -223,7 +256,6 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
       ),
       body: Column(
         children: [
-          // Search box
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: TextField(
@@ -235,7 +267,6 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
               ),
             ),
           ),
-          // The main area
           Expanded(
             child: _searchQuery.isNotEmpty
                 ? _buildSearchResults()
@@ -253,8 +284,6 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     );
   }
 
-  /// If the user typed something in the search box,
-  /// we flatten all levels into one list, filter them, and show them.
   Widget _buildSearchResults() {
     final allFigures = _organizedFigures.values.expand((list) => list).toList();
     final searchResults = _filterFigures(allFigures);
@@ -270,30 +299,26 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
       itemBuilder: (context, index) {
         final figure = searchResults[index];
         return ListTile(
-          title: Text(figure['description'] ?? 'Unknown'),
-          subtitle: Text(figure['level'] ?? ''),
+          title: Text(figure['description'] ?? 'Unknown', style: TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(figure['level'] ?? '', style: Theme.of(context).textTheme.titleSmall),
           onTap: () => _addFigureToFirestore(figure),
         );
       },
     );
   }
 
-  /// If the search is blank, we show the "folder structure" by level:
-  /// left panel of levels, right panel of figures for that level.
   Widget _buildDefaultFigureList() {
     if (_organizedFigures.isEmpty) {
       return Center(child: CircularProgressIndicator());
     }
 
     return StatefulBuilder(builder: (context, setState) {
-      // We define a desired order for levels, e.g. Bronze, Silver, Gold, etc.
       const desiredOrder = [
         'Bronze', 'Silver', 'Gold',
         'Newcomer IV', 'Newcomer III', 'Newcomer II',
         'Custom'
       ];
 
-      // Sort the map keys
       final sortedLevels = _organizedFigures.keys.toList()
         ..sort((a, b) {
           final indexA = desiredOrder.indexOf(a);
@@ -302,14 +327,12 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
               .compareTo(indexB == -1 ? 999999 : indexB);
         });
 
-      // If no level selected yet, pick the first
       if (_selectedLevel == null && sortedLevels.isNotEmpty) {
         _selectedLevel = sortedLevels.first;
       }
 
       return Row(
         children: [
-          // Left panel: list of levels
           Expanded(
             flex: 1,
             child: Container(
@@ -348,9 +371,7 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
               ),
             ),
           ),
-          // Divider
           Container(width: 2, color: Colors.grey),
-          // Right panel: figures for the selected level
           Expanded(
             flex: 2,
             child: Container(
@@ -364,10 +385,9 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
                     visualDensity: VisualDensity(vertical: 1),
                     title: Text(figure['description'] ?? 'Unnamed'),
                     onTap: () => _addFigureToFirestore(figure),
-                    trailing: (figure['custom'] == 1)
+                    trailing: (figure['custom'] == true)
                         ? IconButton(
-                      icon: Icon(Icons.delete,
-                          color: Theme.of(context).colorScheme.error),
+                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                       onPressed: () => _deleteLocalCustomFigure(figure),
                     )
                         : null,
@@ -381,22 +401,30 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     });
   }
 
-  /// Optional: if you still handle "delete custom figure" from your local DB
   void _deleteLocalCustomFigure(Map<String, dynamic> figure) async {
-    // This only removes it from the local definitions, not from Firestore
     try {
+      final userId = FirebaseAuth.instance.currentUser!.uid;
       final figureId = figure['id'];
-      await DatabaseService.deleteCustomFigure(figureId);
-      _loadAvailableFigures();
+
+      // ✅ Delete only from the specific choreography
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('choreographies')
+          .doc(widget.choreoDocId) // ✅ Ensure it's deleted only from this choreography
+          .collection('figures')
+          .doc(figureId)
+          .delete();
+
+      _loadAvailableFigures(); // Refresh UI
     } catch (e) {
-      if (kDebugMode) print("Error deleting custom figure: $e");
+      print("Error deleting custom figure: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to delete custom figure from local.")),
+        SnackBar(content: Text("Failed to delete custom figure.")),
       );
     }
   }
 
-  /// Just for color-coding levels
   Color _getLevelColor(String level) {
     switch (level) {
       case 'Bronze':
@@ -412,7 +440,7 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
       case 'Custom':
         return AppColors.highlight;
       default:
-        return Colors.purple; // fallback
+        return AppColors.highlight;
     }
   }
 }

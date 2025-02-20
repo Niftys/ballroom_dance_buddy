@@ -40,10 +40,12 @@ class _LearnScreenState extends State<LearnScreen> {
   Future<void> _loadAllMoves() async {
     try {
       final moves = await DatabaseService.getAllFigures();
-      setState(() {
-        _allMoves = moves;
-        _filteredMoves = List.from(_allMoves);
-      });
+      if (mounted) {
+        setState(() {
+          _allMoves = moves;
+          _filteredMoves = List.from(_allMoves);
+        });
+      }
     } catch (e) {
       if (kDebugMode) print("Error loading all moves: $e");
     }
@@ -51,15 +53,18 @@ class _LearnScreenState extends State<LearnScreen> {
 
   void _onSearchChanged() {
     final query = _searchController.text.trim().toLowerCase();
-    setState(() {
-      _isSearching = query.isNotEmpty;
-      _filteredMoves = _allMoves.where((move) {
-        final description = move['description'].toLowerCase();
-        final style = move['style_name'].toLowerCase();
-        final dance = move['dance_name'].toLowerCase();
-        return description.contains(query) || style.contains(query) || dance.contains(query);
-      }).toList();
-    });
+    if (mounted) {
+      setState(() {
+        _isSearching = query.isNotEmpty;
+        _filteredMoves = _allMoves.where((move) {
+          final description = move['description'].toLowerCase();
+          final style = move['style_name'].toLowerCase();
+          final dance = move['dance_name'].toLowerCase();
+          return description.contains(query) || style.contains(query) ||
+              dance.contains(query);
+        }).toList();
+      });
+    }
   }
 
   @override
@@ -78,9 +83,13 @@ class _LearnScreenState extends State<LearnScreen> {
             ? IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            setState(() {
-              _currentDanceId != null ? _currentDanceId = null : _currentStyleId = null;
-            });
+            if (mounted) {
+              setState(() {
+                _currentDanceId != null
+                    ? _currentDanceId = null
+                    : _currentStyleId = null;
+              });
+            }
           },
         )
             : null,
@@ -244,10 +253,12 @@ class _LearnScreenState extends State<LearnScreen> {
         return Expanded(
           child: GestureDetector(
             onTap: () {
-              setState(() {
-                _currentStyleId = style['id'];
-                _currentDanceId = null;
-              });
+              if (mounted) {
+                setState(() {
+                  _currentStyleId = style['id'];
+                  _currentDanceId = null;
+                });
+              }
             },
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
@@ -284,9 +295,11 @@ class _LearnScreenState extends State<LearnScreen> {
         return Expanded(
           child: GestureDetector(
             onTap: () {
-              setState(() {
-                _currentDanceId = dance['id'];
-              });
+              if (mounted) {
+                setState(() {
+                  _currentDanceId = dance['id'];
+                });
+              }
             },
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
@@ -342,7 +355,9 @@ class _LearnScreenState extends State<LearnScreen> {
 
                   return GestureDetector(
                     onTap: () {
-                      setState(() => _selectedLevel = level);
+                      if (mounted) {
+                        setState(() => _selectedLevel = level);
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.all(16.0),
