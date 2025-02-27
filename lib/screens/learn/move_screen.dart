@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
@@ -30,8 +31,8 @@ class _MoveScreenState extends State<MoveScreen> {
 
   Future<void> _loadFigureData() async {
     try {
-      print("Move data received: ${widget.move}");
-      print("Video URL type: ${widget.move['video_url']?.runtimeType}");
+      debugPrint("Move data received: ${widget.move}");
+      debugPrint("Video URL type: ${widget.move['video_url']?.runtimeType}");
 
       var rawVideoUrl = widget.move['video_url'];
       String processedVideoUrl;
@@ -57,19 +58,19 @@ class _MoveScreenState extends State<MoveScreen> {
 
       _initializePlayer();
     } catch (e) {
-      print("Error in _loadFigureData: $e");
+      debugPrint("Error in _loadFigureData: $e");
       setState(() => _videoError = true);
     }
   }
 
   Future<void> _initializePlayer() async {
     try {
-      print("Using videoUrl: $videoUrl (${videoUrl.runtimeType})");
+      debugPrint("Using videoUrl: $videoUrl (${videoUrl.runtimeType})");
 
       String safeVideoId = videoUrl.toString();
 
       if (safeVideoId.isEmpty) {
-        print("Error: Video ID is empty");
+        debugPrint("Error: Video ID is empty");
         setState(() => _videoError = true);
         return;
       }
@@ -91,7 +92,7 @@ class _MoveScreenState extends State<MoveScreen> {
 
       _startLoopCheck();
     } catch (e) {
-      print("Error initializing player: $e");
+      debugPrint("Error initializing player: $e");
       setState(() => _videoError = true);
     }
   }
@@ -113,7 +114,7 @@ class _MoveScreenState extends State<MoveScreen> {
           );
         } catch (e) {
           if (kDebugMode) {
-            print("Error reloading video: $e");
+            debugPrint("Error reloading video: $e");
           }
         }
       }

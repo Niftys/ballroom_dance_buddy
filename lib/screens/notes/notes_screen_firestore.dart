@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../../login.dart';
 import '../../services/firestore_service.dart';
 import 'add_choreography_screen.dart';
@@ -148,7 +147,7 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
           ),
         );
       }
-      print("Delete error: $e");
+      debugPrint("Delete error: $e");
     }
   }
 
@@ -161,7 +160,7 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
           await _deleteUserData(user.uid);
           await user.delete();
         } catch (e) {
-          print("Error deleting guest account: $e");
+          debugPrint("Error deleting guest account: $e");
         }
       }
       await FirebaseAuth.instance.signOut();
@@ -191,9 +190,9 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
 
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();
 
-      print("All guest data deleted for user: $userId");
+      debugPrint("All guest data deleted for user: $userId");
     } catch (e) {
-      print("Error deleting guest data: $e");
+      debugPrint("Error deleting guest data: $e");
     }
   }
 
@@ -338,7 +337,7 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
                                   SnackBar(content: Text("Choreography imported!")),
                                 );
                               } catch (e) {
-                                print("Error: $e");
+                                debugPrint("Error: $e");
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text("Import error: Choreography is either private or deleted.")),
                                 );

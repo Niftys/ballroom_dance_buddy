@@ -1,7 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+
 import '../../services/firestore_service.dart';
 import '../../themes/colors.dart';
 import '../learn/move_screen.dart';
@@ -250,29 +251,16 @@ class _ViewChoreographyScreenFirestoreState extends State<ViewChoreographyScreen
 
   Future<void> _editNotes(Map<String, dynamic> figure) async {
     final userId = FirebaseAuth.instance.currentUser!.uid;
-    final docRef = FirebaseFirestore.instance
+
+    final figureDocRef = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .collection('choreographies')
         .doc(widget.choreoDocId)
-        .collection('figures');
+        .collection('figures')
+        .doc(figure['id']);
 
     try {
-      final querySnapshot = await docRef
-          .where('description', isEqualTo: figure['description'])
-          .where('video_url', isEqualTo: figure['video_url'])
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        print("Error: No matching figure found to update.");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Figure not found in Firestore.")),
-        );
-        return;
-      }
-
-      final figureDocRef = querySnapshot.docs.first.reference;
-
       final controller = TextEditingController(text: figure['notes'] ?? '');
       final newNotes = await showDialog<String>(
         context: context,
@@ -298,11 +286,10 @@ class _ViewChoreographyScreenFirestoreState extends State<ViewChoreographyScreen
 
       if (newNotes != null) {
         await figureDocRef.update({'notes': newNotes});
-        print("Notes updated successfully.");
+        debugPrint("Notes updated successfully.");
       }
-
     } catch (e) {
-      print("Error updating notes: $e");
+      debugPrint("Error updating notes: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to update notes: $e")),
       );
@@ -321,9 +308,9 @@ class _ViewChoreographyScreenFirestoreState extends State<ViewChoreographyScreen
         figureId: figureId,
       );
 
-      print("Successfully deleted figure: ${figure['description']}");
+      debugPrint("Successfully deleted figure: ${figure['description']}");
     } catch (e) {
-      print("Error deleting figure: $e");
+      debugPrint("Error deleting figure: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to delete figure: $e")),
       );
@@ -333,7 +320,7 @@ class _ViewChoreographyScreenFirestoreState extends State<ViewChoreographyScreen
   void _addFigure() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print("User not authenticated.");
+      debugPrint("User not authenticated.");
       return;
     }
 
@@ -366,7 +353,7 @@ class _ViewChoreographyScreenFirestoreState extends State<ViewChoreographyScreen
         }
       }
     }).catchError((e) {
-      print("Error fetching choreography: $e");
+      debugPrint("Error fetching choreography: $e");
     });
   }
 

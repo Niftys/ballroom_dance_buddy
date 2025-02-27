@@ -1,22 +1,22 @@
 import 'package:ballroom_dance_buddy/screens/notes/notes_screen_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'firebase_options.dart';
 import 'login.dart';
-import 'screens/music/music_screen.dart';
 import 'screens/learn/learn_screen.dart';
-import 'widgets/floating_music_player.dart';
-import 'themes/light_theme.dart';
+import 'screens/music/music_screen.dart';
 import 'themes/dark_theme.dart';
+import 'themes/light_theme.dart';
+import 'widgets/floating_music_player.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,10 +107,10 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          print("User logged in: ${snapshot.data!.uid}");
+          debugPrint("User logged in: ${snapshot.data!.uid}");
           return MainScreen();
         } else {
-          print("No user logged in");
+          debugPrint("No user logged in");
           return LoginScreen();
         }
       },
@@ -338,9 +338,7 @@ class _MainScreenState extends State<MainScreen> {
     if (await canLaunch(donationUrl)) {
       await launch(donationUrl);
     } else {
-      if (kDebugMode) {
-        print("Could not launch $donationUrl");
-      }
+      debugPrint("Could not launch $donationUrl");
     }
   }
 

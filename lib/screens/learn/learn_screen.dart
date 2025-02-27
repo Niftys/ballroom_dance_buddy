@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+
 import '../../services/firestore_service.dart';
 import '../../themes/colors.dart';
 import 'move_screen.dart';
@@ -60,7 +61,7 @@ class _LearnScreenState extends State<LearnScreen> {
         });
       }
     } catch (e) {
-      print("❌ Error loading styles: $e");
+      debugPrint("❌ Error loading styles: $e");
     }
   }
 
@@ -86,7 +87,7 @@ class _LearnScreenState extends State<LearnScreen> {
         });
       }
     } catch (e) {
-      print("❌ Error loading dances: $e");
+      debugPrint("Error loading dances: $e");
     }
   }
 
@@ -94,7 +95,7 @@ class _LearnScreenState extends State<LearnScreen> {
     if (_currentStyleName == null || _currentDanceName == null) return;
 
     try {
-      print("🔍 Fetching figures for $_currentStyleName - $_currentDanceName");
+      debugPrint("Fetching figures for $_currentStyleName - $_currentDanceName");
 
       final figures = await FirestoreService.getFiguresByStyleAndDance(
         _currentStyleName!,
@@ -114,13 +115,13 @@ class _LearnScreenState extends State<LearnScreen> {
         });
       }
     } catch (e) {
-      print("❌ Error loading figures: $e");
+      debugPrint("Error loading figures: $e");
     }
   }
 
   Future<void> _loadAllMovesForSearch() async {
     try {
-      print("🔍 Fetching ALL figures for search...");
+      debugPrint("Fetching ALL figures for search...");
       final allFigures = await FirestoreService.getAllFigures();
 
       if (mounted) {
@@ -136,7 +137,7 @@ class _LearnScreenState extends State<LearnScreen> {
         });
       }
     } catch (e) {
-      print("❌ Error loading moves: $e");
+      debugPrint("❌ Error loading moves: $e");
     }
   }
 
@@ -527,7 +528,7 @@ class _LearnScreenState extends State<LearnScreen> {
   }
 
   void _navigateToMoveScreen(Map<String, dynamic> move) {
-    if (kDebugMode) print("Navigating to MoveScreen with move: $move");
+    debugPrint("Navigating to MoveScreen with move: $move");
     Navigator.push(
       context,
       MaterialPageRoute(

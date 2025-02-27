@@ -1,13 +1,13 @@
-import 'dart:typed_data';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:path_provider/path_provider.dart';
 
 class MusicScreen extends StatefulWidget {
   final AudioPlayer audioPlayer;
@@ -44,7 +44,14 @@ class MusicScreenState extends State<MusicScreen> {
     _loadMusicData();
   }
 
+  @override
+  void dispose() {
+    widget.audioPlayer.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadMusicData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
@@ -59,18 +66,20 @@ class MusicScreenState extends State<MusicScreen> {
         styles.putIfAbsent(style, () => []).add(genre);
       });
 
-      setState(() {
-        _musicData = parsedData;
-        _styles = styles;
-      });
+      if (mounted) {
+        setState(() {
+          _musicData = parsedData;
+          _styles = styles;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load music data: $e")),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      debugPrint("Failed to load music data: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -159,13 +168,8 @@ class MusicScreenState extends State<MusicScreen> {
         ..._currentGenreSongs,
       ];
 
-      setState(() {
-        currentSongIndex = allSongs.indexOf(songUrl);
-      });
-
-      if (currentSongIndex == -1) {
-        throw Exception('Song not found in playlist');
-      }
+      final songIndex = allSongs.indexOf(songUrl);
+      if (songIndex == -1) throw Exception('Song not found in playlist');
 
       final songTitle = _cleanSongName(songUrl);
       widget.onSongTitleChanged(songTitle);
@@ -183,18 +187,21 @@ class MusicScreenState extends State<MusicScreen> {
         tag: songTitle,
       );
 
+      if (mounted) {
+        setState(() {
+          currentSongIndex = songIndex;
+        });
+      }
+
       await widget.audioPlayer.setAudioSource(newSource);
       await widget.audioPlayer.play();
-
-      if (kDebugMode) {
-        print('Now playing: $songTitle');
-        print('Playlist index: $currentSongIndex/${allSongs.length}');
-      }
     } catch (e) {
-      print('Playback error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error playing song: ${e.toString()}")),
-      );
+      debugPrint('Playback error: $e');
+      if (mounted) {
+        setState(() {
+          currentSongIndex = -1;
+        });
+      }
     }
   }
 
@@ -366,8 +373,8 @@ class MusicScreenState extends State<MusicScreen> {
           });
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0), // Slight margin for spacing
-          padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding for text alignment
+          margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           decoration: BoxDecoration(
             color: color.withAlpha(50),
             borderRadius: BorderRadius.circular(10),
@@ -415,7 +422,7 @@ class MusicScreenState extends State<MusicScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      _getFolderDisplayName(genre).replaceAll(RegExp(r"\s*\(.*?\)"), ""), // Remove BPM from genre name
+                      _getFolderDisplayName(genre).replaceAll(RegExp(r"\s*\(.*?\)"), ""),
                       textAlign: TextAlign.left,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),

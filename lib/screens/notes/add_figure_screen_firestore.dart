@@ -1,7 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 import '../../services/firestore_service.dart';
 import '../../themes/colors.dart';
 
@@ -47,6 +47,8 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   List<Map<String, dynamic>> _allMoves = [];
   List<Map<String, dynamic>> _filteredMoves = [];
   bool _isSearching = false;
+  Set<String> _loadingFigures = {};
+  bool _isAddingCustomFigure = false;
 
   @override
   void initState() {
@@ -128,7 +130,7 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
         });
       }
     } catch (e) {
-      print("❌ Error loading figures: $e");
+      debugPrint("Error loading figures: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -154,6 +156,16 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   void _addFigureToFirestore(Map<String, dynamic> figure, BuildContext context) async {
     if (!mounted) return;
 
+    final loadingId = figure['id'] ?? '${figure['description']}_${DateTime.now().millisecondsSinceEpoch}';
+
+    if (_loadingFigures.contains(loadingId)) {
+      return;
+    }
+
+    setState(() {
+      _loadingFigures.add(loadingId);
+    });
+
     try {
       final nextPosition = await _getNextPosition();
 
@@ -174,10 +186,20 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
       );
 
       if (!mounted) return;
+
+      setState(() {
+        _loadingFigures.remove(loadingId);
+      });
+
       Navigator.pop(context);
     } catch (e) {
-      print("❌ Error adding figure: $e");
+      debugPrint("Error adding figure: $e");
       if (!mounted) return;
+
+      setState(() {
+        _loadingFigures.remove(loadingId);
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to add figure")),
       );
@@ -205,19 +227,19 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
 
   void _showDeleteConfirmation(Map<String, dynamic> figure, BuildContext context) {
     showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-            title: Text("Delete Custom Figure?"),
-            content: Text("This will permanently remove it from your collection."),
-            actions: [
-              TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text("Cancel", style: Theme.of(context).textTheme.titleSmall),
-              ),
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Delete Custom Figure?"),
+        content: Text("This will permanently remove it from your collection."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("Cancel", style: Theme.of(context).textTheme.titleSmall),
+          ),
           TextButton(
             onPressed: () {
-            Navigator.pop(ctx);
-            _deleteLocalCustomFigure(figure, context);
+              Navigator.pop(ctx);
+              _deleteLocalCustomFigure(figure, context);
             },
             child: Text("Delete", style: TextStyle(color: Colors.red)),
           ),
@@ -227,6 +249,12 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   }
 
   void _addCustomFigure(BuildContext context) async {
+    if (_isAddingCustomFigure) return;
+
+    setState(() {
+      _isAddingCustomFigure = true;
+    });
+
     final TextEditingController descriptionController = TextEditingController();
 
     if (!mounted) return;
@@ -250,6 +278,12 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
                 onPressed: () async {
                   final description = descriptionController.text.trim();
                   if (description.isNotEmpty) {
+                    showDialog(
+                      context: dialogContext,
+                      barrierDismissible: false,
+                      builder: (context) => Center(child: CircularProgressIndicator()),
+                    );
+
                     await FirestoreService.addCustomFigure(
                       description: description,
                       styleName: widget.styleName,
@@ -257,6 +291,8 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
                     );
 
                     if (!dialogContext.mounted) return;
+
+                    Navigator.pop(dialogContext);
                     Navigator.pop(dialogContext, true);
                   }
                 },
@@ -271,15 +307,23 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
 
       if (result == true) {
         await _loadAvailableFigures();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Custom figure saved!")),
         );
       }
     } catch (e) {
-      print("❌ Error adding custom figure: $e");
+      debugPrint("Error adding custom figure: $e");
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to add custom figure")),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingCustomFigure = false;
+        });
+      }
     }
   }
 
@@ -316,8 +360,10 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addCustomFigure(context),
-        child: const Icon(Icons.add),
+        onPressed: _isAddingCustomFigure ? null : () => _addCustomFigure(context),
+        child: _isAddingCustomFigure
+            ? CircularProgressIndicator(color: Colors.white)
+            : const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -338,8 +384,11 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
         final level = move['level'] as String? ?? "Unknown";
         final levelColor = _getLevelColor(level);
 
+        final loadingId = move['id'] ?? '${move['description']}_${index}';
+        final isLoading = _loadingFigures.contains(loadingId);
+
         return GestureDetector(
-          onTap: () => _addFigureToFirestore(move, context),
+          onTap: isLoading ? null : () => _addFigureToFirestore(move, context),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
             decoration: BoxDecoration(
@@ -349,37 +398,52 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    move['description'] ?? 'Unnamed',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Row(
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: levelColor.withAlpha(50),
-                            borderRadius: BorderRadius.circular(4),
+                        Text(
+                          move['description'] ?? 'Unnamed',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
-                          child: Text(
-                            level,
-                            style: TextStyle(
-                              color: levelColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: levelColor.withAlpha(50),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  level,
+                                  style: TextStyle(
+                                    color: levelColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
+                  if (isLoading)
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: levelColor,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -456,8 +520,12 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
                   ? Center(child: Text("Select a level"))
                   : ListView(
                 children: (_organizedFigures[_selectedLevel] ?? []).map((figure) {
+
+                  final loadingId = figure['id'] ?? '${figure['description']}_${DateTime.now().millisecondsSinceEpoch}';
+                  final isLoading = _loadingFigures.contains(loadingId);
+
                   return GestureDetector(
-                    onTap: () => _addFigureToFirestore(figure, context),
+                    onTap: isLoading ? null : () => _addFigureToFirestore(figure, context),
                     child: Container(
                       padding: const EdgeInsets.all(16.0),
                       margin: const EdgeInsets.only(bottom: 12.0),
@@ -472,11 +540,22 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            figure['description'] ?? 'Unnamed',
-                            style: Theme.of(context).textTheme.titleMedium,
+                          Expanded(
+                            child: Text(
+                              figure['description'] ?? 'Unnamed',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                           ),
-                          if (figure['level'] == 'Custom')
+                          if (isLoading)
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _getLevelColor(_selectedLevel!),
+                              ),
+                            )
+                          else if (figure['level'] == 'Custom')
                             IconButton(
                               icon: Icon(Icons.delete, color: Colors.red.shade300),
                               onPressed: () => _showDeleteConfirmation(figure, context),
@@ -497,6 +576,12 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   void _deleteLocalCustomFigure(Map<String, dynamic> figure, BuildContext context) async {
     if (!mounted) return;
 
+    final loadingId = figure['id'] ?? '${figure['description']}_delete';
+
+    setState(() {
+      _loadingFigures.add(loadingId);
+    });
+
     try {
       await FirestoreService.deleteCustomFigure(figureId: figure['id']);
 
@@ -508,10 +593,17 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
 
       await _loadAvailableFigures();
     } catch (e) {
-      print("Error deleting figure: $e");
+      debugPrint("Error deleting figure: $e");
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to delete figure.")),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingFigures.remove(loadingId);
+        });
+      }
     }
   }
 }
