@@ -1,27 +1,23 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/firestore_service.dart';
-import '/services/database_service.dart';
 import 'view_choreography_screen_firestore.dart';
 
 class AddChoreographyScreen extends StatefulWidget {
-  // Instead of int choreographyId, we store the Firestore doc ID
   final String? docId;
   final String? initialName;
-  final int? initialStyleId;
-  final int? initialDanceId;
+  final String? initialStyle;
+  final String? initialDance;
   final String? initialLevel;
 
-  // If you want a callback, change the signature to handle docId
   final void Function(String docId, int styleId, int danceId, String level)? onSave;
 
   AddChoreographyScreen({
     this.docId,
     this.onSave,
     this.initialName,
-    this.initialStyleId,
-    this.initialDanceId,
+    this.initialStyle,
+    this.initialDance,
     this.initialLevel,
   });
 
@@ -57,85 +53,82 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
 
   Future<void> _loadStyles() async {
     try {
-      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
+      final styles = await FirestoreService.getAllStyles();
+      styles.sort((a, b) {
+        final indexA = _desiredStyleOrder.indexOf(a['name']);
+        final indexB = _desiredStyleOrder.indexOf(b['name']);
+        return (indexA == -1 ? 999 : indexA).compareTo(indexB == -1 ? 999 : indexB);
+      });
+
       if (mounted) {
         setState(() {
-          _styles = stylesAndDances.keys.toList();
+          _styles = styles.map((s) => s['name'] as String).toList();
           _selectedStyle = _styles.isNotEmpty ? _styles.first : null;
-          _availableDances =
-          _selectedStyle != null ? stylesAndDances[_selectedStyle!] ?? [] : [];
-          _selectedDance =
-          _availableDances.isNotEmpty ? _availableDances.first : null;
-          _selectedLevel = _levels.first;
+          _selectedLevel = _selectedStyle?.toLowerCase().contains('country western') ?? false
+              ? _countryWesternLevels.first
+              : _levels.first;
+          _selectedDance = null;
+          _availableDances = [];
+          if (_selectedStyle != null) {
+            _loadDancesForStyle(_selectedStyle!);
+          }
         });
       }
     } catch (e) {
-      if (kDebugMode) {
-        print("Error loading styles: $e");
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load styles")),
-      );
+      print("Error loading styles: $e");
     }
   }
 
   Future<void> _loadStylesForEditing() async {
     try {
-      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
+      final styles = await FirestoreService.getAllStyles();
+      styles.sort((a, b) {
+        final indexA = _desiredStyleOrder.indexOf(a['name']);
+        final indexB = _desiredStyleOrder.indexOf(b['name']);
+        return (indexA == -1 ? 999 : indexA).compareTo(indexB == -1 ? 999 : indexB);
+      });
+
       if (mounted) {
         setState(() {
-          _styles = stylesAndDances.keys.toList();
+          _styles = styles.map((s) => s['name'] as String).toList();
+          _selectedStyle = widget.initialStyle;
+          _selectedDance = widget.initialDance;
+          _selectedLevel = widget.initialLevel ??
+              (widget.initialStyle?.toLowerCase().contains('country western') ?? false
+                  ? _countryWesternLevels.first
+                  : _levels.first);
         });
       }
 
-      // If you want to pre-fill from widget.initialName, etc.:
       _nameController.text = widget.initialName ?? '';
-      _selectedLevel = widget.initialLevel ?? _levels.first;
 
-      // Resolve the style name from ID
-      if (widget.initialStyleId != null) {
-        final styleName = await DatabaseService.getStyleNameById(widget.initialStyleId!);
-        _selectedStyle = styleName;
-        _availableDances = stylesAndDances[styleName] ?? [];
-
-        if (widget.initialDanceId != null) {
-          final danceName = await DatabaseService.getDanceNameById(widget.initialDanceId!);
-          _selectedDance = danceName;
-        }
+      if (widget.initialStyle != null) {
+        await _loadDancesForStyle(widget.initialStyle!, initialDance: widget.initialDance);
       }
     } catch (e) {
-      if (kDebugMode) {
-        print("Error initializing for editing: $e");
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to initialize editor")),
-      );
+      print("Error initializing for editing: $e");
     }
   }
 
-  Future<void> _loadDancesForStyle(String styleName) async {
+  Future<void> _loadDancesForStyle(String styleName, {String? initialDance}) async {
     try {
-      final stylesAndDances = await DatabaseService.getStylesAndDancesFromJson();
+      final dances = await FirestoreService.getDancesByStyleName(styleName);
+      dances.sort((a, b) {
+        final indexA = _desiredDanceOrder.indexOf(a['name']);
+        final indexB = _desiredDanceOrder.indexOf(b['name']);
+        return (indexA == -1 ? 999 : indexA).compareTo(indexB == -1 ? 999 : indexB);
+      });
+
       if (mounted) {
         setState(() {
-          _availableDances = stylesAndDances[styleName] ?? [];
-          _selectedDance =
-          _availableDances.isNotEmpty ? _availableDances.first : null;
-
-          if (styleName.toLowerCase().contains('country western')) {
-            _selectedLevel = _countryWesternLevels.first;
-          } else {
-            _selectedLevel = _levels.first;
-          }
+          _availableDances = dances.map((d) => d['name'] as String).toList();
+          _selectedDance = initialDance != null && _availableDances.contains(initialDance)
+              ? initialDance
+              : (_availableDances.isNotEmpty ? _availableDances.first : null);
         });
       }
     } catch (e) {
-      if (kDebugMode) {
-        print("Error loading dances for style '$styleName': $e");
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load dances.")),
-      );
+      print("Error loading dances: $e");
     }
   }
 
@@ -152,21 +145,8 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
 
     try {
       final userId = FirebaseAuth.instance.currentUser!.uid;
-      final styleId = await FirestoreService.getStyleIdByName(_selectedStyle!);
-      if (styleId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Style not found: ${_selectedStyle!}")),
-        );
-        return;
-      }
-
-      final danceId = await FirestoreService.getDanceIdByNameAndStyle(_selectedDance!, styleId);
-      if (danceId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Dance not found: ${_selectedDance!}")),
-        );
-        return;
-      }
+      final styleName = _selectedStyle!;
+      final danceName = _selectedDance!;
 
       print("🚀 Saving choreography for user: $userId");
 
@@ -176,22 +156,22 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
           userId: userId,
           choreoDocId: widget.docId!,
           name: _nameController.text,
-          styleId: styleId,
-          danceId: danceId,
+          styleName: _selectedStyle!,
+          danceName: _selectedDance!,
           level: _selectedLevel!,
         );
         docId = widget.docId!;
       } else {
         docId = await FirestoreService.addChoreography(
           name: _nameController.text,
-          styleId: styleId,
-          danceId: danceId,
+          styleName: styleName,
+          danceName: danceName,
           level: _selectedLevel!,
-          isPublic: _isPublic, // ✅ Pass the correct value
+          isPublic: _isPublic,
         );
       }
 
-      print("✅ Choreography saved successfully with ID: $docId");
+      print("Choreography saved successfully with ID: $docId");
 
       if (mounted) {
         setState(() {});
@@ -204,15 +184,15 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
           MaterialPageRoute(
             builder: (_) => ViewChoreographyScreenFirestore(
               choreoDocId: docId,
-              styleId: styleId,
-              danceId: danceId,
+              styleName: _selectedStyle!,
+              danceName: _selectedDance!,
               level: _selectedLevel!,
             ),
           ),
         );
       }
     } catch (e) {
-      print("❌ ERROR: Failed to save choreography: $e");
+      print("ERROR: Failed to save choreography: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error saving choreography: $e")),
       );
@@ -234,15 +214,13 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Name field
             TextField(
               controller: _nameController,
               decoration: InputDecoration(labelText: "Choreography Name"),
             ),
             SizedBox(height: 20),
-            // Style dropdown
             DropdownButtonFormField<String>(
-              value: _selectedStyle,
+              value: _styles.contains(_selectedStyle) ? _selectedStyle : null,
               items: _styles.map((style) {
                 return DropdownMenuItem(value: style, child: Text(style));
               }).toList(),
@@ -250,6 +228,11 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
                 if (mounted) {
                   setState(() {
                     _selectedStyle = value;
+                    _selectedDance = null;
+                    _availableDances = [];
+                    _selectedLevel = value?.toLowerCase().contains('country western') ?? false
+                        ? _countryWesternLevels.first
+                        : _levels.first;
                     if (value != null) {
                       _loadDancesForStyle(value);
                     }
@@ -259,9 +242,8 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
               decoration: InputDecoration(labelText: "Style"),
             ),
             SizedBox(height: 20),
-            // Dance dropdown
             DropdownButtonFormField<String>(
-              value: _selectedDance,
+              value: _availableDances.contains(_selectedDance) ? _selectedDance : null,
               items: _availableDances.map((dance) {
                 return DropdownMenuItem(value: dance, child: Text(dance));
               }).toList(),
@@ -275,9 +257,8 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
               decoration: InputDecoration(labelText: "Dance"),
             ),
             SizedBox(height: 20),
-            // Level dropdown
             DropdownButtonFormField<String>(
-              value: _selectedLevel,
+              value: levelsToShow.contains(_selectedLevel) ? _selectedLevel : null,
               items: levelsToShow.map((level) {
                 return DropdownMenuItem(value: level, child: Text(level));
               }).toList(),
@@ -305,3 +286,21 @@ class _AddChoreographyScreenState extends State<AddChoreographyScreen> {
     );
   }
 }
+
+
+const _desiredStyleOrder = [
+  "International Standard",
+  "International Latin",
+  "American Smooth",
+  "American Rhythm",
+  "Country Western",
+  "Social Dances"
+];
+
+const _desiredDanceOrder = [
+  "Waltz", "Tango", "Foxtrot", "Quickstep", "Viennese Waltz",
+  "Cha Cha", "Rumba", "Swing", "Mambo", "Bolero", "Samba",
+  "Paso Doble", "Jive", "Triple Two", "Nightclub", "Country Waltz",
+  "Polka", "Country Cha Cha", "East Coast Swing", "Two Step",
+  "West Coast Swing"
+];

@@ -6,7 +6,6 @@ import '../../login.dart';
 import '../../services/firestore_service.dart';
 import 'add_choreography_screen.dart';
 import 'view_choreography_screen_firestore.dart';
-import '/services/database_service.dart';
 
 class NotesScreenFirestore extends StatefulWidget {
   final VoidCallback? onOpenSettings;
@@ -17,8 +16,8 @@ class NotesScreenFirestore extends StatefulWidget {
 }
 
 class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
-  // If you want searching, you can keep a _searchController
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _shareCodeController = TextEditingController();
   bool _isSearching = false;
   String _searchQuery = '';
 
@@ -39,8 +38,7 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
     super.dispose();
   }
 
-  // Stream all choreographies from Firestore for current user
-  Stream<List<Map<String, dynamic>>> _choreosStream() {
+  Stream<Map<String, Map<String, List<Map<String, dynamic>>>>> _groupedChoreosStream() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const Stream.empty();
 
@@ -49,96 +47,70 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
         .doc(user.uid)
         .collection('choreographies')
         .snapshots()
-        .asyncMap((snapshot) async {
-      final choreos = await Future.wait(snapshot.docs.map((doc) async {
-        try {
-          final data = doc.data();
-          data['id'] = doc.id;
+        .map((snapshot) {
+      final grouped = <String, Map<String, List<Map<String, dynamic>>>>{};
 
-          // Validate required fields
-          final styleId = data['style_id'] as int? ?? 0;
-          final danceId = data['dance_id'] as int? ?? 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final String style = data['style_name'] ?? 'Unknown Style';
+        final String dance = data['dance_name'] ?? 'Unknown Dance';
 
-          // Get names with fallbacks
-          final styleName = await DatabaseService.getStyleNameById(styleId);
-          final danceName = await DatabaseService.getDanceNameById(danceId);
-
-          return {
-            ...data,
-            'style_name': styleName,
-            'dance_name': danceName,
-          };
-        } catch (e) {
-          print("Error processing choreo ${doc.id}: $e");
-          return {
-            ...doc.data(),
-            'id': doc.id,
-            'style_name': 'Error loading style',
-            'dance_name': 'Error loading dance',
-          };
-        }
-      }));
-
-      return choreos.where((c) => c != null).toList();
+        grouped.putIfAbsent(style, () => {});
+        grouped[style]!.putIfAbsent(dance, () => []);
+        grouped[style]![dance]!.add({
+          ...data,
+          'id': doc.id,
+        });
+      }
+      return grouped;
     });
   }
 
+
   void _addChoreography() {
-    // Navigate to your Firestore-based AddChoreographyScreen
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => AddChoreographyScreen(
-        // no docId => new choreo
-        onSave: (docId, styleId, danceId, level) {
-          // after save
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddChoreographyScreen(),
       ),
-    ));
+    );
   }
 
   void _viewChoreography(Map<String, dynamic> c) {
-    final docId = c['id'] as String; // Firestore doc ID
-    final styleId = c['style_id'] as int? ?? 0;
-    final danceId = c['dance_id'] as int? ?? 0;
-    final level = c['level'] as String? ?? 'Bronze';
-
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => ViewChoreographyScreenFirestore(
-        choreoDocId: docId,
-        styleId: styleId,
-        danceId: danceId,
-        level: level,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewChoreographyScreenFirestore(
+          choreoDocId: c['id'],
+          styleName: c['style_name'] ?? 'Unknown Style',
+          danceName: c['dance_name'] ?? 'Unknown Dance',
+          level: c['level'] ?? 'Unknown',
+        ),
       ),
-    ));
+    );
   }
 
   void _editChoreography(Map<String, dynamic> c) {
-    final docId   = c['id'] as String;
-    final name    = c['name'] as String? ?? '';
-    final styleId = c['style_id'] as int? ?? 0;
-    final danceId = c['dance_id'] as int? ?? 0;
-    final level   = c['level'] as String? ?? 'Bronze';
-
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => AddChoreographyScreen(
-        docId: docId,
-        initialName: name,
-        initialStyleId: styleId,
-        initialDanceId: danceId,
-        initialLevel: level,
-        onSave: (docId, styleId, danceId, level) {
-          // do something after editing
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddChoreographyScreen(
+          docId: c['id'],
+          initialName: c['name'] ?? '',
+          initialStyle: c['style_name'],
+          initialDance: c['dance_name'],
+          initialLevel: c['level'] ?? 'Bronze',
+        ),
       ),
-    ));
+    );
   }
 
   void _deleteChoreography(Map<String, dynamic> c) async {
-    final docId = c['id'] as String;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text("Confirm Deletion"),
-        content: Text("Are you sure you want to delete '${c['name']}'?"),
+        content: Text("Are you sure you want to delete '${c['name']}'? This action cannot be undone."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -151,14 +123,32 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
         ],
       ),
     );
-    if (confirmed == true) {
+
+    if (confirmed != true) return;
+
+    try {
       final userId = FirebaseAuth.instance.currentUser!.uid;
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('choreographies')
-          .doc(docId)
-          .delete();
+      await FirestoreService.deleteChoreography(userId, c['id']);
+
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Choreography deleted successfully"),
+            backgroundColor: Colors.green.shade300,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error deleting choreography: ${e.toString()}"),
+            backgroundColor: Colors.red.shade300,
+          ),
+        );
+      }
+      print("Delete error: $e");
     }
   }
 
@@ -168,15 +158,12 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
     if (user != null) {
       if (user.isAnonymous) {
         try {
-          // Delete user document and subcollections
           await _deleteUserData(user.uid);
-          // Delete auth account
           await user.delete();
         } catch (e) {
           print("Error deleting guest account: $e");
         }
       }
-      // Sign out regardless of account type
       await FirebaseAuth.instance.signOut();
     }
 
@@ -194,7 +181,6 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
           .collection('choreographies')
           .get();
 
-      // ✅ Delete all figures inside choreographies
       for (final choreo in choreosSnapshot.docs) {
         final figuresSnapshot = await choreo.reference.collection('figures').get();
         for (final figure in figuresSnapshot.docs) {
@@ -203,13 +189,35 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
         await choreo.reference.delete();
       }
 
-      // ✅ Delete user document
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();
 
-      print("✅ All guest data deleted for user: $userId");
+      print("All guest data deleted for user: $userId");
     } catch (e) {
-      print("❌ Error deleting guest data: $e");
+      print("Error deleting guest data: $e");
     }
+  }
+
+  Widget _buildEmptyChoreographyMessage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.library_books_outlined, size: 80, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            "No choreographies yet!",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            "Tap the + button to create your first choreography.",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -230,7 +238,6 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
       ),
       body: Column(
         children: [
-          // Search box
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -243,51 +250,49 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
             ),
           ),
           Expanded(
-            child: RefreshIndicator(
-              onRefresh:  () async {
-                setState(() {});
-                return Future.delayed(Duration(milliseconds: 500));
-              },
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _choreosStream(),
+            child: StreamBuilder<Map<String, Map<String, List<Map<String, dynamic>>>>>(
+              stream: _groupedChoreosStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text("Tap the plus icon to create your first choreography!"));
-                }
 
-                final allChoreos = snapshot.data!;
-                // optional search filtering
-                final filtered = _isSearching
-                    ? allChoreos.where((c) {
-                  final name = (c['name'] ?? '').toString().toLowerCase();
-                  final level = (c['level'] ?? '').toString().toLowerCase();
-                  final styleName = (c['style_name'] ?? '').toString().toLowerCase();
-                  final danceName = (c['dance_name'] ?? '').toString().toLowerCase();
-                  return name.contains(_searchQuery)
-                      || level.contains(_searchQuery)
-                      || styleName.contains(_searchQuery)
-                      || danceName.contains(_searchQuery);
+                final allChoreos = snapshot.data?.entries.expand((styleEntry) =>
+                    styleEntry.value.entries.expand((danceEntry) => danceEntry.value)
+                ).map<Map<String, dynamic>>((item) => item).toList() ?? [];
+
+                final filteredChoreos = _isSearching
+                    ? allChoreos.where((choreo) {
+                  final name = choreo['name']?.toString().toLowerCase() ?? '';
+                  final style = choreo['style_name']?.toString().toLowerCase() ?? '';
+                  final dance = choreo['dance_name']?.toString().toLowerCase() ?? '';
+                  final level = choreo['level']?.toString().toLowerCase() ?? '';
+
+                  return name.contains(_searchQuery) ||
+                      style.contains(_searchQuery) ||
+                      dance.contains(_searchQuery) ||
+                      level.contains(_searchQuery);
                 }).toList()
-                    : allChoreos;
+                    : [];
 
-                if (filtered.isEmpty) {
-                  return Center(child: Text("No results found."));
+                if (_isSearching) {
+                  return _buildChoreographyList(filteredChoreos.cast<Map<String, dynamic>>());
                 }
 
-                return _buildChoreographyList(filtered);
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return _buildEmptyChoreographyMessage();
+                }
+
+                final groupedChoreos = snapshot.data!;
+                return _buildGroupedView(groupedChoreos);
               },
             ),
-          ),
           ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Stack(
         children: [
-          // If you still want an import from file
           Padding(
             padding: const EdgeInsets.only(left: 16, bottom: 16),
             child: Align(
@@ -295,8 +300,6 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
               child: FloatingActionButton(
                 heroTag: "importChoreography",
                 onPressed: () async {
-                  TextEditingController _shareCodeController = TextEditingController();
-
                   await showDialog(
                     context: context,
                     builder: (context) {
@@ -304,7 +307,10 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
                         title: Text("Import Choreography"),
                         content: TextField(
                           controller: _shareCodeController,
-                          decoration: InputDecoration(labelText: "Enter Share Code"),
+                          decoration: InputDecoration(
+                            labelText: "Enter Share Code",
+                            hintText: "e.g. CHOREO-abc123",
+                          ),
                         ),
                         actions: [
                           TextButton(
@@ -313,21 +319,32 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
                           ),
                           ElevatedButton(
                             onPressed: () async {
-                              final choreoId = _shareCodeController.text.trim();
-                              if (choreoId.isNotEmpty) {
-                                try {
-                                  await FirestoreService.copyChoreography(choreoId);
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text("✅ Choreography imported successfully!"),
-                                  ));
-                                } catch (e) {
-                                  print("❌ ERROR: $e");
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text("❌ Invalid code or choreography not found."),
-                                  ));
-                                }
+                              final shareCode = _shareCodeController.text.trim();
+                              if (shareCode.isEmpty) return;
+
+                              if (!shareCode.startsWith('CHOREO-')) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Import error: Invalid share code format!")),
+                                );
+                                Navigator.pop(context);
+                                return;
+                              }
+                              final choreoId = shareCode.substring('CHOREO-'.length);
+
+                              try {
+                                final userId = FirebaseAuth.instance.currentUser!.uid;
+                                await FirestoreService.copyChoreography(choreoId, userId);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Choreography imported!")),
+                                );
+                              } catch (e) {
+                                print("Error: $e");
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Import error: Choreography is either private or deleted.")),
+                                );
                               }
                               Navigator.pop(context);
+                              _shareCodeController.clear();
                             },
                             child: Text("Import"),
                           ),
@@ -336,11 +353,10 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
                     },
                   );
                 },
-                child: Icon(Icons.link),
+                child: Icon(Icons.download),
               ),
             ),
           ),
-          // The add choreo button
           Padding(
             padding: const EdgeInsets.only(right: 16, bottom: 16),
             child: Align(
@@ -357,55 +373,36 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
     );
   }
 
-  // Instead of grouping by styleId/danceId, let's assume your Firestore doc
-  // also stores style_name / dance_name. If you only store IDs, then you must do local lookups:
-  Widget _buildChoreographyList(List<Map<String, dynamic>> choreos) {
-    print('[DEBUG] Total choreographies: ${choreos.length}');
-    choreos.forEach((c) {
-      print('''
-    Choreo ID: ${c['id']}
-    Name: ${c['name']}
-    Style: ${c['style_name']} (${c['style_id']})
-    Dance: ${c['dance_name']} (${c['dance_id']})
-    ---------------------''');
-    });
-
-    if (_isSearching) {
-      return ListView(
-        children: choreos.map((choreo) => _buildChoreoItem(choreo)).toList(),
-      );
-    }
-
-    final grouped = <String, Map<String, List<Map<String, dynamic>>>>{};
-    for (var c in choreos) {
-      final style = (c['style_name'] ?? '(Unknown Style)') as String;
-      final dance = (c['dance_name'] ?? '(Unknown Dance)') as String;
-      grouped.putIfAbsent(style, () => {});
-      grouped[style]!.putIfAbsent(dance, () => []);
-      grouped[style]![dance]!.add(c);
-    }
-
+  Widget _buildGroupedView(Map<String, Map<String, List<Map<String, dynamic>>>> groupedChoreos) {
     return ListView(
-      children: grouped.entries.map((styleEntry) {
-        final style = styleEntry.key;
+      children: groupedChoreos.entries.map((styleEntry) {
+        final String style = styleEntry.key;
         final dances = styleEntry.value;
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+          margin: EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
           child: ExpansionTile(
-            title: Text(style),
+            title: Text(style, style: Theme.of(context).textTheme.titleLarge),
             children: dances.entries.map((danceEntry) {
-              final dance = danceEntry.key;
-              final items = danceEntry.value;
+              final String dance = danceEntry.key;
+              final choreographies = danceEntry.value;
               return ExpansionTile(
-                title: Text(dance),
-                children: items.isEmpty
-                    ? [ListTile(title: Text("No choreographies available."))]
-                    : items.map((choreo) => _buildChoreoItem(choreo)).toList(),
+                title: Text(dance, style: Theme.of(context).textTheme.titleMedium),
+                children: choreographies.map((choreo) => _buildChoreoItem(choreo)).toList(),
               );
             }).toList(),
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildChoreographyList(List<Map<String, dynamic>> choreos) {
+    if (choreos.isEmpty) {
+      return Center(child: Text("No matching choreographies found"));
+    }
+
+    return ListView(
+      children: choreos.map((choreo) => _buildChoreoItem(choreo)).toList(),
     );
   }
 
@@ -423,12 +420,16 @@ class _NotesScreenFirestoreState extends State<NotesScreenFirestore> {
           IconButton(
             icon: Icon(Icons.edit),
             onPressed: () => _editChoreography(c),
-              color: Theme.of(context).colorScheme.secondary
+            style: IconButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.secondary,
+            ),
           ),
           IconButton(
             icon: Icon(Icons.delete),
             onPressed: () => _deleteChoreography(c),
-            color: Theme.of(context).colorScheme.error
+            style: IconButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
           ),
         ],
       ),

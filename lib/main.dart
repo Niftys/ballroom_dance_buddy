@@ -6,7 +6,6 @@ import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -89,7 +88,7 @@ class BallroomDanceBuddy extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: AuthWrapper(), // Ensures correct navigation based on auth state
+      home: AuthWrapper(),
       routes: {
         '/mainScreen': (context) => MainScreen(),
       },
@@ -108,11 +107,11 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          print("✅ User logged in: ${snapshot.data!.uid}");
-          return MainScreen(); // 🔥 Go to MainScreen
+          print("User logged in: ${snapshot.data!.uid}");
+          return MainScreen();
         } else {
-          print("🔴 No user logged in");
-          return LoginScreen(); // 🔥 Stay on login screen
+          print("No user logged in");
+          return LoginScreen();
         }
       },
     );
@@ -175,18 +174,15 @@ class _MainScreenState extends State<MainScreen> {
             child: IndexedStack(
               index: _selectedIndex,
               children: [
-                // Firestore-based notes screen
                 NotesScreenFirestore(
                   onOpenSettings: () => _openSettingsPopup(context),
                 ),
-                // Music screen
                 MusicScreen(
                   audioPlayer: _audioPlayer,
                   onSongsReady: _onSongsReady,
                   key: _musicScreenKey,
                   onSongTitleChanged: _updateSongTitle,
                 ),
-                // Learn screen
                 LearnScreen(
                   onFullscreenChange: _onFullscreenChange,
                 ),
@@ -194,7 +190,6 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
 
-          // The floating music player on bottom
           if (!_isInFullscreen)
             Align(
               alignment: Alignment.bottomCenter,
@@ -233,22 +228,25 @@ class _MainScreenState extends State<MainScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Dark Mode toggle
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Dark Mode", style: Theme.of(context).textTheme.bodyLarge),
-                  Switch(
-                    value: isDarkMode,
-                    onChanged: (bool value) {
-                      Navigator.pop(context);
-                      themeProvider.toggleTheme(value);
+                  StatefulBuilder(
+                    builder: (context, setState) {
+                      return Switch(
+                        value: isDarkMode,
+                        onChanged: (bool value) async {
+                          Navigator.pop(context);
+                          await Future.delayed(Duration(milliseconds: 100));
+                          themeProvider.toggleTheme(value);
+                        },
+                      );
                     },
                   ),
                 ],
               ),
               const Divider(),
-              // Autoplay toggle
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -262,7 +260,6 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
               const Divider(),
-              // About
               ListTile(
                 leading: Icon(Icons.info_outline, color: Theme.of(context).primaryColor),
                 title: Text("About App", style: Theme.of(context).textTheme.bodyLarge),
@@ -271,7 +268,6 @@ class _MainScreenState extends State<MainScreen> {
                   _showCustomAboutDialog(context);
                 },
               ),
-              // Donate
               ListTile(
                 leading: Icon(Icons.volunteer_activism, color: Theme.of(context).primaryColor),
                 title: Text("Love the app? Consider donating", style: Theme.of(context).textTheme.bodyLarge),
@@ -352,34 +348,6 @@ class _MainScreenState extends State<MainScreen> {
   void dispose() {
     _audioPlayer.dispose();
     super.dispose();
-  }
-}
-
-class ImportHandlerScreen extends StatelessWidget {
-  final String fileUri;
-
-  const ImportHandlerScreen({super.key, required this.fileUri});
-
-  Future<Directory> _getSafeDirectory() async {
-    return Directory.systemTemp;
-  }
-
-  Future<void> _handleFile(BuildContext context) async {
-    // If you want to do Firestore-based import, do it here
-    // or remove this entirely if you no longer do local-file imports
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Importing File...")),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () => _handleFile(context),
-          child: const Text("Import Choreography"),
-        ),
-      ),
-    );
   }
 }
 

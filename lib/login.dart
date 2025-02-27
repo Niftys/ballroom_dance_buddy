@@ -37,9 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
       User? newUser = userCredential.user;
       if (newUser == null) throw Exception("User creation failed!");
 
-      print("✅ FirebaseAuth User Created: ${newUser.uid}");
+      print("FirebaseAuth User Created: ${newUser.uid}");
 
-      // Save User to Firestore
       await firestore.collection('users').doc(newUser.uid).set({
         'firstName': firstName.trim(),
         'lastName': lastName.trim(),
@@ -47,18 +46,17 @@ class _LoginScreenState extends State<LoginScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      print("✅ Firestore User Document Created!");
+      print("Firestore User Document Created!");
 
-      // 🔥 Ensure user is signed in
       await auth.signInWithEmailAndPassword(email: email.trim(), password: password.trim());
 
-      print("✅ User Logged In After Registration!");
+      print("User Logged In After Registration!");
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/mainScreen');
       }
     } catch (e) {
-      print("❌ Error: $e");
+      print("Error: $e");
       setState(() => errorMessage = e.toString());
     } finally {
       if (mounted) {
@@ -78,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/mainScreen');
       }
     } on FirebaseAuthException catch (authError) {
-      print("❌ FirebaseAuth Error: ${authError.message}");
+      print("FirebaseAuth Error: ${authError.message}");
       setState(() {
         errorMessage = authError.message;
       });
@@ -100,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/mainScreen');
       }
     } catch (e) {
-      print("❌ Guest login failed: $e");
+      print("Guest login failed: $e");
       setState(() => errorMessage = "Guest login failed: $e");
     } finally {
       if (mounted) {
@@ -138,10 +136,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
-        actionsAlignment: MainAxisAlignment.center, // Center actions
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
           SizedBox(
-            width: double.infinity, // Full-width button
+            width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
                 if (_firstNameController.text.isEmpty ||
@@ -164,13 +162,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 20), // Adjust height here
+                padding: EdgeInsets.symmetric(vertical: 20),
                 textStyle: TextStyle(fontSize: 18),
               ),
               child: Text("Register"),
             ),
           ),
-          SizedBox(height: 8), // Space between buttons
+          SizedBox(height: 8),
           Center(
             child: TextButton(
               onPressed: () => Navigator.pop(context),
@@ -187,9 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Center(
         child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.65, // 🔥 Limits width to 65% of the screen
+          width: MediaQuery.of(context).size.width * 0.65,
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 24), // Add vertical padding
+            padding: EdgeInsets.symmetric(vertical: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -260,12 +258,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       child: TextButton(
                         onPressed: _showRegisterDialog,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
                         child: Text(
                           "Register Account",
                           style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),

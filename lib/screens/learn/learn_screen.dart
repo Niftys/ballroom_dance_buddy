@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import '../../services/firestore_service.dart';
 import '../../themes/colors.dart';
-import '/services/database_service.dart';
 import 'move_screen.dart';
 
 class LearnScreen extends StatefulWidget {
@@ -19,8 +19,8 @@ class _LearnScreenState extends State<LearnScreen> {
   List<Map<String, dynamic>> _allMoves = [];
   List<Map<String, dynamic>> _filteredMoves = [];
   bool _isSearching = false;
-  int? _currentStyleId;
-  int? _currentDanceId;
+  String? _currentStyleName;
+  String? _currentDanceName;
   List<Map<String, dynamic>> _styles = [];
   List<Map<String, dynamic>> _dances = [];
 
@@ -28,7 +28,8 @@ class _LearnScreenState extends State<LearnScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    _loadAllMoves();
+    _loadAllMovesForSearch();
+    _loadStyles();
   }
 
   @override
@@ -37,34 +38,138 @@ class _LearnScreenState extends State<LearnScreen> {
     super.dispose();
   }
 
-  Future<void> _loadAllMoves() async {
+  Future<void> _loadStyles() async {
     try {
-      final moves = await DatabaseService.getAllFigures();
+      final styles = await FirestoreService.getAllStyles();
+
+      styles.sort((a, b) {
+        final indexA = desiredStyleOrder.indexOf(a['name']);
+        final indexB = desiredStyleOrder.indexOf(b['name']);
+        return (indexA == -1 ? double.infinity : indexA.toDouble())
+            .compareTo(indexB == -1 ? double.infinity : indexB.toDouble());
+      });
+
       if (mounted) {
         setState(() {
-          _allMoves = moves;
-          _filteredMoves = List.from(_allMoves);
+          _styles = styles;
+          _currentStyleName = null;
+          _currentDanceName = null;
+          _dances = [];
+          _allMoves = [];
+          _filteredMoves = [];
         });
       }
     } catch (e) {
-      if (kDebugMode) print("Error loading all moves: $e");
+      print("❌ Error loading styles: $e");
+    }
+  }
+
+
+  Future<void> _loadDances() async {
+    if (_currentStyleName == null) return;
+
+    try {
+      final dances = await FirestoreService.getDancesByStyleName(_currentStyleName!);
+
+      dances.sort((a, b) {
+        final indexA = desiredDanceOrder.indexOf(a['name']);
+        final indexB = desiredDanceOrder.indexOf(b['name']);
+        return (indexA == -1 ? double.infinity : indexA.toDouble())
+            .compareTo(indexB == -1 ? double.infinity : indexB.toDouble());
+      });
+
+      if (mounted) {
+        setState(() {
+          _dances = dances;
+          _currentDanceName = null;
+          _filteredMoves = [];
+        });
+      }
+    } catch (e) {
+      print("❌ Error loading dances: $e");
+    }
+  }
+
+  Future<void> _loadDanceFigures() async {
+    if (_currentStyleName == null || _currentDanceName == null) return;
+
+    try {
+      print("🔍 Fetching figures for $_currentStyleName - $_currentDanceName");
+
+      final figures = await FirestoreService.getFiguresByStyleAndDance(
+        _currentStyleName!,
+        _currentDanceName!,
+      );
+
+      if (mounted) {
+        setState(() {
+          _filteredMoves = figures.where((figure) {
+            final description = (figure['description'] as String?)?.toLowerCase() ?? '';
+            final level = (figure['level'] as String?) ?? '';
+
+            return level != 'Custom' &&
+                !description.contains('long wall') &&
+                !description.contains('short wall');
+          }).toList();
+        });
+      }
+    } catch (e) {
+      print("❌ Error loading figures: $e");
+    }
+  }
+
+  Future<void> _loadAllMovesForSearch() async {
+    try {
+      print("🔍 Fetching ALL figures for search...");
+      final allFigures = await FirestoreService.getAllFigures();
+
+      if (mounted) {
+        setState(() {
+          _allMoves = allFigures.where((figure) {
+            final description = (figure['description'] as String?)?.toLowerCase() ?? '';
+            final level = (figure['level'] as String?) ?? '';
+
+            return level != 'Custom' &&
+                !description.contains('long wall') &&
+                !description.contains('short wall');
+          }).toList();
+        });
+      }
+    } catch (e) {
+      print("❌ Error loading moves: $e");
     }
   }
 
   void _onSearchChanged() {
     final query = _searchController.text.trim().toLowerCase();
-    if (mounted) {
+
+    if (query.isEmpty) {
       setState(() {
-        _isSearching = query.isNotEmpty;
-        _filteredMoves = _allMoves.where((move) {
-          final description = move['description'].toLowerCase();
-          final style = move['style_name'].toLowerCase();
-          final dance = move['dance_name'].toLowerCase();
-          return description.contains(query) || style.contains(query) ||
-              dance.contains(query);
-        }).toList();
+        _isSearching = false;
+        _filteredMoves = _currentDanceName != null
+            ? _allMoves.where((move) =>
+        move['style'] == _currentStyleName &&
+            move['dance'] == _currentDanceName).toList()
+            : List.from(_allMoves);
       });
+      return;
     }
+
+    setState(() {
+      _isSearching = true;
+      _filteredMoves = _allMoves.where((move) {
+        final description = move['description'].toString().toLowerCase();
+        final matchesQuery = description.contains(query);
+
+        if (_currentDanceName != null) {
+          return matchesQuery &&
+              move['style'] == _currentStyleName &&
+              move['dance'] == _currentDanceName;
+        }
+
+        return matchesQuery;
+      }).toList();
+    });
   }
 
   @override
@@ -72,22 +177,24 @@ class _LearnScreenState extends State<LearnScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _currentStyleId == null
+          _currentStyleName == null
               ? "Figure Finder"
-              : _currentDanceId == null
+              : _currentDanceName == null
               ? "Select Dance"
               : "Figures",
           style: Theme.of(context).textTheme.titleLarge,
         ),
-        leading: _currentStyleId != null
+        leading: _currentStyleName != null
             ? IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             if (mounted) {
               setState(() {
-                _currentDanceId != null
-                    ? _currentDanceId = null
-                    : _currentStyleId = null;
+                if (_currentDanceName != null) {
+                  _currentDanceName = null;
+                } else {
+                  _currentStyleName = null;
+                }
               });
             }
           },
@@ -133,204 +240,185 @@ class _LearnScreenState extends State<LearnScreen> {
   }
 
   Widget _buildSearchResultList(List<Map<String, dynamic>> moves) {
-    return ListView.builder(
-      itemCount: moves.length,
-      itemBuilder: (context, index) {
-        final move = moves[index];
-        final level = move['level'] as String? ?? "Unknown";
-        final levelColor = _levelColors[level] ?? Theme.of(context).colorScheme.surface;
-
-        return GestureDetector(
-          onTap: () => _navigateToMoveScreen(move),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-            decoration: BoxDecoration(
-              color: levelColor.withAlpha(25),
-              borderRadius: BorderRadius.circular(10),
+    return Column(
+      children: [
+        Expanded(
+          child: moves.isEmpty
+              ? Center(
+            child: Text(
+              "No figures found matching your search.",
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Move Name
-                  Text(
-                    move['description'],
-                    style: Theme.of(context).textTheme.titleMedium,
+          )
+              : ListView.builder(
+            itemCount: moves.length,
+            itemBuilder: (context, index) {
+              final move = moves[index];
+              final level = move['level'] as String? ?? "Unknown";
+              final levelColor = _getLevelColor(level);
+
+              return GestureDetector(
+                onTap: () => _navigateToMoveScreen(move),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                  decoration: BoxDecoration(
+                    color: levelColor.withAlpha(25),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: levelColor.withAlpha(75), width: 1),
                   ),
-                  // Move Details (Style | Dance | Level)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      "${move['style_name']} | ${move['dance_name']} | $level",
-                      style: Theme.of(context).textTheme.titleSmall,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          move['description'],
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: levelColor.withAlpha(50),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  level,
+                                  style: TextStyle(
+                                    color: levelColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "${move['style']} | ${move['dance']}",
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
   Widget _buildContent() {
-    if (_isSearching) return _buildSearchResultList(_filteredMoves);
-
-    if (_currentStyleId != null) {
-      if (_currentDanceId != null) {
-        return FutureBuilder<List<Map<String, dynamic>>>(
-          future: DatabaseService.getFigures(
-            styleId: _currentStyleId!,
-            danceId: _currentDanceId!,
-            level: '',
-          ),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
-            } else if (snapshot.hasError) {
-              return Center(child: const Text("Error loading figures."));
-            } else {
-              final filteredFigures = (snapshot.data ?? []).where((figure) {
-                final description = figure['description'];
-                return description != null &&
-                    description.toLowerCase() != 'long wall' &&
-                    description.toLowerCase() != 'short wall';
-              }).toList();
-
-              final styleName = _styles.firstWhere(
-                    (style) => style['id'] == _currentStyleId,
-                orElse: () => {'name': 'Unknown'},
-              )['name'];
-
-              final danceName = _dances.firstWhere(
-                    (dance) => dance['id'] == _currentDanceId,
-                orElse: () => {'name': 'Unknown'},
-              )['name'];
-
-              return _buildFigureList(filteredFigures, styleName, danceName);
-            }
-          },
-        );
-      }
-
-      return FutureBuilder<List<Map<String, dynamic>>>(
-        future: DatabaseService.getDancesByStyleId(_currentStyleId!),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
-          } else if (snapshot.hasError) {
-            return Center(child: const Text("Error loading dances."));
-          } else {
-            return _buildDanceList(snapshot.data ?? []);
-          }
-        },
-      );
+    if (_isSearching) {
+      return _buildSearchResultList(_filteredMoves);
     }
 
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: DatabaseService.getAllStyles(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
-        } else if (snapshot.hasError) {
-          return Center(child: const Text("Error loading styles."));
-        } else {
-          return _buildStyleList(snapshot.data ?? []);
-        }
-      },
-    );
+    if (_currentStyleName == null) {
+      return _buildStyleList(_styles);
+    }
+
+    if (_currentDanceName == null) {
+      return _buildDanceList(_dances);
+    }
+
+    return _buildFigureList(_filteredMoves, _currentStyleName!, _currentDanceName!);
   }
 
   Widget _buildStyleList(List<Map<String, dynamic>> styles) {
-    _styles = styles;
-
-    return Column(
-      children: styles.map((style) {
-        final styleName = style['name'];
-
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              if (mounted) {
+      return Column(
+        children: styles.map((style) {
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
                 setState(() {
-                  _currentStyleId = style['id'];
-                  _currentDanceId = null;
+                  _currentStyleName = style['name'];
+                  _currentDanceName = null;
+                  _loadDances();
                 });
-              }
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withAlpha(50),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  _getStyleIcon(styleName, context),
-                  const SizedBox(width: 16), // Space between icon and text
-                  Expanded(
-                    child: Text(
-                      styleName,
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.titleLarge,
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withAlpha(50),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    _getStyleIcon(style['name'], context),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        style['name'],
+                        textAlign: TextAlign.left,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      }).toList(),
-    );
+          );
+        }).toList(),
+      );
   }
 
   Widget _buildDanceList(List<Map<String, dynamic>> dances) {
-    _dances = dances;
-
-    return Column(
-      children: dances.map((dance) {
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              if (mounted) {
-                setState(() {
-                  _currentDanceId = dance['id'];
-                });
-              }
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withAlpha(50),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      dance['name'],
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
+      return Column(
+        children: dances.map((dance) {
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (mounted) {
+                  setState(() {
+                    _currentDanceName = dance['name'];
+                    _loadDanceFigures();
+                  });
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withAlpha(50),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    dance['name'],
+                    textAlign: TextAlign.left,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        );
-      }).toList(),
-    );
+          );
+        }).toList(),
+      );
   }
+
 
   Widget _buildFigureList(List<Map<String, dynamic>> figures, String styleName, String danceName) {
     final groupedFigures = _groupFiguresDynamically(figures);
 
-    // Sort levels in a specific order
-    const desiredOrder = ['Bronze', 'Silver', 'Gold', 'Newcomer IV', 'Newcomer III', 'Newcomer II'];
     final sortedLevels = groupedFigures.keys.toList()
       ..sort((a, b) {
         final indexA = desiredOrder.indexOf(a);
@@ -344,14 +432,13 @@ class _LearnScreenState extends State<LearnScreen> {
     return StatefulBuilder(builder: (context, setState) {
       return Row(
         children: [
-          // Left: Level Selection
           Expanded(
-            flex: 1, // Takes up 40% of the screen
+            flex: 1,
             child: Container(
               color: Theme.of(context).colorScheme.surface.withAlpha(50),
               child: ListView(
                 children: sortedLevels.map((level) {
-                  final levelColor = _levelColors[level] ?? Theme.of(context).colorScheme.onSurface;
+                  final levelColor = _getLevelColor(level);
 
                   return GestureDetector(
                     onTap: () {
@@ -389,9 +476,8 @@ class _LearnScreenState extends State<LearnScreen> {
             width: 2,
             color: Colors.grey,
           ),
-          // Right: Figure List
           Expanded(
-            flex: 2, // Takes up 60% of the screen
+            flex: 2,
             child: Container(
               padding: const EdgeInsets.all(16.0),
               color: Theme.of(context).colorScheme.surface,
@@ -404,9 +490,10 @@ class _LearnScreenState extends State<LearnScreen> {
               )
                   : ListView(
                 children: groupedFigures[_selectedLevel]!.map((figure) {
+                  final levelColor = _getLevelColor(_selectedLevel!);
                   final move = {
-                    'style': styleName,
-                    'dance': danceName,
+                    'style': _currentStyleName,
+                    'dance': _currentDanceName,
                     'level': _selectedLevel,
                     'description': figure['description'] ?? 'Unknown Description',
                     'video_url': figure['video_url'] ?? '',
@@ -418,14 +505,15 @@ class _LearnScreenState extends State<LearnScreen> {
                     onTap: () => _navigateToMoveScreen(move),
                     child: Container(
                       padding: const EdgeInsets.all(16.0),
-                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      margin: const EdgeInsets.only(bottom: 12.0),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface.withAlpha(50),
+                        color: levelColor.withAlpha(25),
                         borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(color: levelColor.withAlpha(50), width: 1),
                       ),
                       child: Text(
                         figure['description'] ?? 'Unknown Description',
-                        style: Theme.of(context).textTheme.bodyLarge,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
                   );
@@ -464,16 +552,68 @@ class _LearnScreenState extends State<LearnScreen> {
       iconPaths[styleName]!,
       width: 40,
       height: 40,
-      color: Theme.of(context).colorScheme.secondary, // Access `context` here
+      color: Theme.of(context).colorScheme.secondary,
     );
   }
+}
 
-  final Map<String, Color> _levelColors = {
-    "Bronze": AppColors.bronze,
-    "Silver": AppColors.silver,
-    "Gold": AppColors.gold,
-    "Newcomer IV": AppColors.primary,
-    "Newcomer III": AppColors.primary,
-    "Newcomer II": AppColors.primary,
-  };
+const desiredDanceOrder = [
+  "Waltz",
+  "Tango",
+  "Foxtrot",
+  "Quickstep",
+  "Viennese Waltz",
+  "Cha Cha",
+  "Rumba",
+  "Swing",
+  "Mambo",
+  "Bolero",
+  "Samba",
+  "Paso Doble",
+  "Jive",
+  "Triple Two",
+  "Nightclub",
+  "Country Waltz",
+  "Polka",
+  "Country Cha Cha",
+  "East Coast Swing",
+  "Two Step",
+  "West Coast Swing",
+];
+
+const desiredStyleOrder = [
+  "International Standard",
+  "International Latin",
+  "American Smooth",
+  "American Rhythm",
+  "Country Western",
+  "Social Dances"
+];
+
+const desiredOrder = [
+  'Bronze',
+  'Silver',
+  'Gold',
+  'Newcomer IV',
+  'Newcomer III',
+  'Newcomer II'
+];
+
+Color _getLevelColor(String level) {
+  switch (level) {
+    case 'Bronze':
+      return AppColors.bronze;
+    case 'Silver':
+      return AppColors.silver;
+    case 'Gold':
+      return AppColors.gold;
+    case 'Newcomer IV':
+    case 'Newcomer III':
+    case 'Newcomer II':
+      return AppColors.primary;
+    case 'Custom':
+      return AppColors.highlight;
+    default:
+      return AppColors.highlight;
+  }
 }

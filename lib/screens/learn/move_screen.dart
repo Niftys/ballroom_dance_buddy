@@ -29,25 +29,46 @@ class _MoveScreenState extends State<MoveScreen> {
   }
 
   Future<void> _loadFigureData() async {
-    setState(() {
-      videoUrl = widget.move['video_url']?.toString() ?? '';
-      start = (widget.move['start'] ?? 0).toDouble();
-      end = (widget.move['end'] ?? 0).toDouble();
-    });
+    try {
+      print("Move data received: ${widget.move}");
+      print("Video URL type: ${widget.move['video_url']?.runtimeType}");
 
-    if (videoUrl.isEmpty || start >= end) {
+      var rawVideoUrl = widget.move['video_url'];
+      String processedVideoUrl;
+
+      if (rawVideoUrl is String) {
+        processedVideoUrl = rawVideoUrl;
+      } else if (rawVideoUrl is Map) {
+        processedVideoUrl = rawVideoUrl.toString();
+      } else {
+        processedVideoUrl = '';
+      }
+
+      setState(() {
+        videoUrl = processedVideoUrl;
+        start = (widget.move['start'] ?? 0).toDouble();
+        end = (widget.move['end'] ?? 0).toDouble();
+      });
+
+      if (videoUrl.isEmpty || start >= end) {
+        setState(() => _videoError = true);
+        return;
+      }
+
+      _initializePlayer();
+    } catch (e) {
+      print("Error in _loadFigureData: $e");
       setState(() => _videoError = true);
-      return;
     }
-
-    _initializePlayer();
   }
 
   Future<void> _initializePlayer() async {
     try {
-      videoId = videoUrl.trim();
+      print("Using videoUrl: $videoUrl (${videoUrl.runtimeType})");
 
-      if (videoId == null || videoId!.isEmpty) {
+      String safeVideoId = videoUrl.toString();
+
+      if (safeVideoId.isEmpty) {
         print("Error: Video ID is empty");
         setState(() => _videoError = true);
         return;
@@ -62,9 +83,11 @@ class _MoveScreenState extends State<MoveScreen> {
       );
 
       _controller!.loadVideoById(
-        videoId: videoId!.toString(),
+        videoId: safeVideoId,
         startSeconds: start,
       );
+
+      videoId = safeVideoId;
 
       _startLoopCheck();
     } catch (e) {

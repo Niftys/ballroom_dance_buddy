@@ -8,10 +8,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:just_audio/just_audio.dart';
+
 class MusicScreen extends StatefulWidget {
   final AudioPlayer audioPlayer;
   final ValueChanged<List<String>> onSongsReady;
-  final GlobalKey<MusicScreenState> key;  // Explicit key type
+  final GlobalKey<MusicScreenState> key;
   final ValueChanged<String> onSongTitleChanged;
 
   const MusicScreen({
@@ -374,8 +375,8 @@ class MusicScreenState extends State<MusicScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              icon, // Left-aligned icon
-              const SizedBox(width: 16), // Space between icon and text
+              icon,
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   style,

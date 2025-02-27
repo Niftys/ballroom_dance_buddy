@@ -2,20 +2,33 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/firestore_service.dart';
 import '../../themes/colors.dart';
-import '/services/database_service.dart';
+
+List<String> _getApplicableLevels(String level) {
+  const standardLevels = ['Bronze', 'Silver', 'Gold'];
+  const countryWesternLevels = ['Newcomer IV', 'Newcomer III', 'Newcomer II'];
+
+  if (standardLevels.contains(level)) {
+    return standardLevels.sublist(0, standardLevels.indexOf(level) + 1);
+  } else if (countryWesternLevels.contains(level)) {
+    return countryWesternLevels.sublist(0, countryWesternLevels.indexOf(level) + 1);
+  }
+  return [level];
+}
 
 class AddFigureScreenFirestore extends StatefulWidget {
   final String choreoDocId;
-  final int styleId;
-  final int danceId;
+  final String styleName;
+  final String danceName;
+
   final String level;
 
   const AddFigureScreenFirestore({
     Key? key,
     required this.choreoDocId,
-    required this.styleId,
-    required this.danceId,
+    required this.styleName,
+    required this.danceName,
     required this.level,
   }) : super(key: key);
 
@@ -25,16 +38,24 @@ class AddFigureScreenFirestore extends StatefulWidget {
 
 class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   Map<String, List<Map<String, dynamic>>> _organizedFigures = {};
-
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-
   String? _selectedLevel;
+  String? _currentStyleName;
+  String? _currentDanceName;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _allMoves = [];
+  List<Map<String, dynamic>> _filteredMoves = [];
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+
+    _currentStyleName = widget.styleName;
+    _currentDanceName = widget.danceName;
+
     _loadAvailableFigures();
   }
 
@@ -45,85 +66,120 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   }
 
   void _onSearchChanged() {
-    setState(() {
-      _searchQuery = _searchController.text.trim().toLowerCase();
-    });
+    final query = _searchController.text.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _searchQuery = '';
+          _isSearching = false;
+          _filteredMoves = [];
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _searchQuery = query;
+        _isSearching = true;
+        _filteredMoves = _allMoves.where((figure) {
+          final description = figure['description'].toString().toLowerCase();
+          return description.contains(query);
+        }).toList();
+      });
+    }
   }
 
   Future<void> _loadAvailableFigures() async {
+    if (_currentStyleName == null || _currentDanceName == null) return;
+
+    setState(() => _isLoading = true);
+
     try {
-      List<Map<String, dynamic>> figures = List.from(
-        await DatabaseService.getFigures(
-          styleId: widget.styleId,
-          danceId: widget.danceId,
-          level: widget.level,
-        ),
+      final standardFigures = await FirestoreService.getFiguresByStyleAndDance(
+        _currentStyleName!,
+        _currentDanceName!,
       );
 
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final figuresSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('choreographies')
-          .doc(widget.choreoDocId) // ✅ Load only figures from this choreography
-          .collection('figures')
-          .get();
+      final userCustomFigures = await FirestoreService.getUserCustomFigures(
+        styleName: _currentStyleName!,
+        danceName: _currentDanceName!,
+      );
 
-      final customFigures = figuresSnapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+      final applicableLevels = _getApplicableLevels(widget.level);
 
-      figures.addAll(customFigures);
+      final combinedFigures = [...standardFigures, ...userCustomFigures]
+          .where((figure) {
+        final figureLevel = figure['level'] ?? 'Custom';
+        return applicableLevels.contains(figureLevel) || figureLevel == 'Custom';
+      })
+          .toList();
 
-      final Map<String, List<Map<String, dynamic>>> organized = _groupFiguresByLevel(figures);
-      setState(() {
-        _organizedFigures = organized;
-      });
+      if (mounted) {
+        setState(() {
+          _allMoves = combinedFigures;
+          _organizedFigures = _groupFiguresByLevel(combinedFigures);
+          _isLoading = false;
+          _selectedLevel = _organizedFigures.keys.firstWhere(
+                (k) => k == widget.level,
+            orElse: () => _organizedFigures.keys.first,
+          );
+        });
+      }
     } catch (e) {
-      print("Error loading figures: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load figures.")),
-      );
+      print("❌ Error loading figures: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Map<String, List<Map<String, dynamic>>> _groupFiguresByLevel(
-      List<Map<String, dynamic>> figures) {
-    final Map<String, List<Map<String, dynamic>>> grouped = {};
+  Map<String, List<Map<String, dynamic>>> _groupFiguresByLevel(List<Map<String, dynamic>> figures) {
+    final grouped = <String, List<Map<String, dynamic>>>{};
+
     for (final figure in figures) {
-      final level = figure['level'] as String;
+      final level = figure['level'] ?? 'Custom';
       grouped.putIfAbsent(level, () => []).add(figure);
     }
-    return grouped;
+
+    final sortedKeys = grouped.keys.toList()
+      ..sort((a, b) {
+        final indexA = _desiredLevelOrder.indexOf(a);
+        final indexB = _desiredLevelOrder.indexOf(b);
+        return (indexA == -1 ? 999 : indexA).compareTo(indexB == -1 ? 999 : indexB);
+      });
+
+    return Map.fromEntries(sortedKeys.map((key) => MapEntry(key, grouped[key]!)));
   }
 
-  Future<void> _addFigureToFirestore(Map<String, dynamic> figure) async {
+  void _addFigureToFirestore(Map<String, dynamic> figure, BuildContext context) async {
+    if (!mounted) return;
+
     try {
       final nextPosition = await _getNextPosition();
-      final userId = FirebaseAuth.instance.currentUser!.uid;
 
       final figureData = {
         'description': figure['description'],
-        'notes': figure['notes'] ?? '',
-        'level': figure['level'] ?? 'Bronze',
+        'level': figure['level'],
+        'video_url': figure['video_url'] ?? '',
+        'start': figure['start'] ?? 0,
+        'end': figure['end'] ?? 0,
         'position': nextPosition,
-        'custom': figure['custom'] ?? false,
+        'notes': '',
       };
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('choreographies')
-          .doc(widget.choreoDocId)
-          .collection('figures')
-          .add(figureData);
+      await FirestoreService.addFigureToChoreography(
+        userId: FirebaseAuth.instance.currentUser!.uid,
+        choreoId: widget.choreoDocId,
+        figureData: figureData,
+      );
 
-      Navigator.pop(context, true);
+      if (!mounted) return;
+      Navigator.pop(context);
     } catch (e) {
+      print("❌ Error adding figure: $e");
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to add figure: $e")),
+        const SnackBar(content: Text("Failed to add figure")),
       );
     }
   }
@@ -147,101 +203,84 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     return 0;
   }
 
-  void _addCustomFigure() async {
-    final TextEditingController _descriptionController = TextEditingController();
-
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Add Custom Figure"),
-          content: TextField(
-            controller: _descriptionController,
-            decoration: InputDecoration(labelText: "Description"),
-            onSubmitted: (_) => _saveCustomFigure(_descriptionController.text),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, null),
+  void _showDeleteConfirmation(Map<String, dynamic> figure, BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+            title: Text("Delete Custom Figure?"),
+            content: Text("This will permanently remove it from your collection."),
+            actions: [
+              TextButton(
+              onPressed: () => Navigator.pop(ctx),
               child: Text("Cancel", style: Theme.of(context).textTheme.titleSmall),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final description = _descriptionController.text.trim();
-                if (description.isNotEmpty) {
-                  final userId = FirebaseAuth.instance.currentUser!.uid;
-                  final customFigure = {
-                    'description': description,
-                    'level': 'Custom',
-                    'notes': '',
-                    'created_by': userId,
-                  };
-
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(userId)
-                      .collection('custom_figures')
-                      .add(customFigure);
-
-                  await _loadAvailableFigures();
-                  Navigator.pop(context);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Description cannot be empty.")),
-                  );
-                }
-              },
-              child: Text("Save"),
-            ),
-          ],
-        );
-      },
+              ),
+          TextButton(
+            onPressed: () {
+            Navigator.pop(ctx);
+            _deleteLocalCustomFigure(figure, context);
+            },
+            child: Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
-
-    if (result != null) {
-      await _loadAvailableFigures();
-    }
   }
 
-  void _saveCustomFigure(String description) async {
-    if (description.trim().isNotEmpty) {
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final customFigure = {
-        'description': description.trim(),
-        'level': 'Custom',
-        'notes': '',
-        'created_by': userId,
-        'custom': true,
-      };
+  void _addCustomFigure(BuildContext context) async {
+    final TextEditingController descriptionController = TextEditingController();
 
-      // ✅ Save inside the choreography instead of globally
-      final docRef = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('choreographies')
-          .doc(widget.choreoDocId) // Ensure it's saved inside the correct choreography
-          .collection('figures') // Store it alongside normal figures
-          .add(customFigure);
+    if (!mounted) return;
 
-      setState(() {
-        _organizedFigures['Custom'] ??= [];
-        _organizedFigures['Custom']!.add({...customFigure, 'id': docRef.id, 'custom': true});
-      });
+    try {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text("Add Custom Figure"),
+            content: TextField(
+              controller: descriptionController,
+              decoration: const InputDecoration(labelText: "Figure Description"),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text("Cancel", style: Theme.of(context).textTheme.titleSmall),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final description = descriptionController.text.trim();
+                  if (description.isNotEmpty) {
+                    await FirestoreService.addCustomFigure(
+                      description: description,
+                      styleName: widget.styleName,
+                      danceName: widget.danceName,
+                    );
 
-      Navigator.pop(context);
-    } else {
+                    if (!dialogContext.mounted) return;
+                    Navigator.pop(dialogContext, true);
+                  }
+                },
+                child: const Text("Save"),
+              ),
+            ],
+          );
+        },
+      );
+
+      descriptionController.dispose();
+
+      if (result == true) {
+        await _loadAvailableFigures();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Custom figure saved!")),
+        );
+      }
+    } catch (e) {
+      print("❌ Error adding custom figure: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Description cannot be empty.")),
+        const SnackBar(content: Text("Failed to add custom figure")),
       );
     }
-  }
-
-  List<Map<String, dynamic>> _filterFigures(List<Map<String, dynamic>> figures) {
-    if (_searchQuery.isEmpty) return figures;
-    return figures.where((f) {
-      final desc = (f['description'] ?? '').toString().toLowerCase();
-      return desc.contains(_searchQuery);
-    }).toList();
   }
 
   @override
@@ -254,7 +293,9 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -268,16 +309,15 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
             ),
           ),
           Expanded(
-            child: _searchQuery.isNotEmpty
+            child: _isSearching
                 ? _buildSearchResults()
                 : _buildDefaultFigureList(),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        heroTag: "addCustomFigure",
-        onPressed: _addCustomFigure,
-        child: Icon(Icons.add),
+        onPressed: () => _addCustomFigure(context),
+        child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -285,33 +325,71 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
   }
 
   Widget _buildSearchResults() {
-    final allFigures = _organizedFigures.values.expand((list) => list).toList();
-    final searchResults = _filterFigures(allFigures);
-
-    if (searchResults.isEmpty) {
+    if (_filteredMoves.isEmpty) {
       return Center(
-        child: Text("No figures found."),
+        child: Text("No figures found matching your search."),
       );
     }
 
     return ListView.builder(
-      itemCount: searchResults.length,
+      itemCount: _filteredMoves.length,
       itemBuilder: (context, index) {
-        final figure = searchResults[index];
-        return ListTile(
-          title: Text(figure['description'] ?? 'Unknown', style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(figure['level'] ?? '', style: Theme.of(context).textTheme.titleSmall),
-          onTap: () => _addFigureToFirestore(figure),
+        final move = _filteredMoves[index];
+        final level = move['level'] as String? ?? "Unknown";
+        final levelColor = _getLevelColor(level);
+
+        return GestureDetector(
+          onTap: () => _addFigureToFirestore(move, context),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: levelColor.withAlpha(25),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: levelColor.withAlpha(75), width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    move['description'] ?? 'Unnamed',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: levelColor.withAlpha(50),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            level,
+                            style: TextStyle(
+                              color: levelColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
   }
 
   Widget _buildDefaultFigureList() {
-    if (_organizedFigures.isEmpty) {
-      return Center(child: CircularProgressIndicator());
-    }
-
     return StatefulBuilder(builder: (context, setState) {
       const desiredOrder = [
         'Bronze', 'Silver', 'Gold',
@@ -346,14 +424,10 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
                     child: Container(
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? levelColor.withAlpha(75)
-                            : Colors.transparent,
+                        color: isSelected ? levelColor.withAlpha(75) : Colors.transparent,
                         border: Border(
                           left: BorderSide(
-                            color: isSelected
-                                ? levelColor
-                                : Colors.transparent,
+                            color: isSelected ? levelColor : Colors.transparent,
                             width: 4.0,
                           ),
                         ),
@@ -372,6 +446,7 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
             ),
           ),
           Container(width: 2, color: Colors.grey),
+
           Expanded(
             flex: 2,
             child: Container(
@@ -381,16 +456,34 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
                   ? Center(child: Text("Select a level"))
                   : ListView(
                 children: (_organizedFigures[_selectedLevel] ?? []).map((figure) {
-                  return ListTile(
-                    visualDensity: VisualDensity(vertical: 1),
-                    title: Text(figure['description'] ?? 'Unnamed'),
-                    onTap: () => _addFigureToFirestore(figure),
-                    trailing: (figure['custom'] == true)
-                        ? IconButton(
-                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                      onPressed: () => _deleteLocalCustomFigure(figure),
-                    )
-                        : null,
+                  return GestureDetector(
+                    onTap: () => _addFigureToFirestore(figure, context),
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      margin: const EdgeInsets.only(bottom: 12.0),
+                      decoration: BoxDecoration(
+                        color: _getLevelColor(_selectedLevel!).withAlpha(25),
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(
+                          color: _getLevelColor(_selectedLevel!).withAlpha(50),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            figure['description'] ?? 'Unnamed',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (figure['level'] == 'Custom')
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red.shade300),
+                              onPressed: () => _showDeleteConfirmation(figure, context),
+                            ),
+                        ],
+                      ),
+                    ),
                   );
                 }).toList(),
               ),
@@ -401,46 +494,49 @@ class _AddFigureScreenFirestoreState extends State<AddFigureScreenFirestore> {
     });
   }
 
-  void _deleteLocalCustomFigure(Map<String, dynamic> figure) async {
+  void _deleteLocalCustomFigure(Map<String, dynamic> figure, BuildContext context) async {
+    if (!mounted) return;
+
     try {
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final figureId = figure['id'];
+      await FirestoreService.deleteCustomFigure(figureId: figure['id']);
 
-      // ✅ Delete only from the specific choreography
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('choreographies')
-          .doc(widget.choreoDocId) // ✅ Ensure it's deleted only from this choreography
-          .collection('figures')
-          .doc(figureId)
-          .delete();
+      await FirestoreService.deleteFigureFromChoreography(
+        userId: FirebaseAuth.instance.currentUser!.uid,
+        choreoId: widget.choreoDocId,
+        figureId: figure['id'],
+      );
 
-      _loadAvailableFigures(); // Refresh UI
+      await _loadAvailableFigures();
     } catch (e) {
-      print("Error deleting custom figure: $e");
+      print("Error deleting figure: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to delete custom figure.")),
+        const SnackBar(content: Text("Failed to delete figure.")),
       );
     }
   }
+}
 
-  Color _getLevelColor(String level) {
-    switch (level) {
-      case 'Bronze':
-        return AppColors.bronze;
-      case 'Silver':
-        return AppColors.silver;
-      case 'Gold':
-        return AppColors.gold;
-      case 'Newcomer IV':
-      case 'Newcomer III':
-      case 'Newcomer II':
-        return AppColors.primary;
-      case 'Custom':
-        return AppColors.highlight;
-      default:
-        return AppColors.highlight;
-    }
+Color _getLevelColor(String level) {
+  switch (level) {
+    case 'Bronze':
+      return AppColors.bronze;
+    case 'Silver':
+      return AppColors.silver;
+    case 'Gold':
+      return AppColors.gold;
+    case 'Newcomer IV':
+    case 'Newcomer III':
+    case 'Newcomer II':
+      return AppColors.primary;
+    case 'Custom':
+      return AppColors.highlight;
+    default:
+      return AppColors.highlight;
   }
 }
+
+const _desiredLevelOrder = [
+  'Bronze', 'Silver', 'Gold',
+  'Newcomer IV', 'Newcomer III', 'Newcomer II',
+  'Custom'
+];
